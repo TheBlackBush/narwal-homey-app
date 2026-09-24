@@ -2,7 +2,7 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-Local-first Homey SDK v3 app (`com.narwal`, Homey `>=12.4.0`) that controls Narwal robot vacuums over the LAN (WebSocket, default port `9002`). No cloud, telemetry, or external services may be added.
+Local-first Homey SDK v3 app (`com.narwal.global`, Homey `>=12.4.0`) that controls Narwal robot vacuums over the LAN (WebSocket, default port `9002`). No cloud, telemetry, or external services may be added.
 
 `AGENTS.md` (local, gitignored) holds the full project rules, agent ownership boundaries, current priorities, and testing policy. Read it before non-trivial work. Other local, gitignored references:
 
@@ -29,7 +29,7 @@ npm run deploy:local   # install to the local Homey (reads HOMEY_ADDRESS and HOM
 - Do not deploy with `--skip-build`: widgets need Homey preprocessing to generate `__assets__`.
 - Deploying must preserve paired Homey devices. Never clean-install, reset, remove, or recreate devices, and never change the app id, unless explicitly asked.
 - Two install routes: `homey app install` with `/projects/.env` sourced (`set -a; . /projects/.env; set +a`) when `homey list` shows a Homey, otherwise `npm run deploy:local` (local devkit fallback). `HOMEY_PAT` is for cloud/CLI use; `HOMEY_LOCAL_TOKEN` is for the local API. Never echo token values.
-- After an install, read back from Homey: `com.narwal` is installed and running, and paired devices are still present.
+- After an install, read back from Homey: `com.narwal.global` is installed and running, and paired devices are still present.
 
 ## Architecture
 
