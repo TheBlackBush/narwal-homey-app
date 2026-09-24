@@ -22,5 +22,8 @@
   },
   "1.1.1": {
     "en": "The Cleaning mode settings are now stored on robots paired before 1.1.0. Note: the Homey mobile app shows - for dropdown settings on the Advanced Settings page; open a setting to see its value."
+  },
+  "1.1.2": {
+    "en": "Fixed Status, Docked and Charging showing docked while the robot cleans on newer Flow 2 firmware, the current room going blank during a clean, a leftover 1.8 m² cleaning area after docking, and flipping between Cleaning and Docked while docking."
   }
 }

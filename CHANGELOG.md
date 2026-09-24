@@ -3,6 +3,14 @@
 All notable changes to this project are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [1.1.2] - 2026-09-24
+
+### Fixed
+- Status, Docked and Charging now show the robot as cleaning while it cleans. Newer Flow 2 firmware reports a status code the app treated as docked.
+- The current room stays visible during a clean instead of going blank.
+- Cleaning area no longer shows a leftover 1.8 m² after docking. That value was a dock timer, not area.
+- The robot no longer flips between Cleaning and Docked while it drives onto the dock, so Flow triggers fire once.
+
 ## [1.1.1] - 2026-09-24
 
 ### Changed
