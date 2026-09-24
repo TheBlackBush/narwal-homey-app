@@ -1,0 +1,216 @@
+{
+  "title": {
+    "en": "Clean with settings"
+  },
+  "titleFormatted": {
+    "en": "[[device]]: Clean [[rooms]] with mode [[work_mode]], suction [[suction]], water [[water]], mop strength [[mop_strength]], [[passes]] passes, route [[route]]"
+  },
+  "hint": {
+    "en": "Settings apply to this clean only. Use device setting falls back to the device's Cleaning mode settings and Fan speed."
+  },
+  "args": [
+    {
+      "type": "device",
+      "name": "device"
+    },
+    {
+      "name": "rooms",
+      "type": "autocomplete",
+      "placeholder": {
+        "en": "Whole home, default rooms or a room"
+      }
+    },
+    {
+      "name": "work_mode",
+      "type": "dropdown",
+      "values": [
+        {
+          "id": "device",
+          "label": {
+            "en": "Use device setting"
+          }
+        },
+        {
+          "id": "vacuum_and_mop",
+          "label": {
+            "en": "Vacuum and mop"
+          }
+        },
+        {
+          "id": "vacuum",
+          "label": {
+            "en": "Vacuum only"
+          }
+        },
+        {
+          "id": "mop",
+          "label": {
+            "en": "Mop only"
+          }
+        },
+        {
+          "id": "vacuum_then_mop",
+          "label": {
+            "en": "Vacuum then mop"
+          }
+        }
+      ]
+    },
+    {
+      "name": "suction",
+      "type": "dropdown",
+      "values": [
+        {
+          "id": "device",
+          "label": {
+            "en": "Use device setting"
+          }
+        },
+        {
+          "id": "quiet",
+          "label": {
+            "en": "Quiet"
+          }
+        },
+        {
+          "id": "normal",
+          "label": {
+            "en": "Standard"
+          }
+        },
+        {
+          "id": "strong",
+          "label": {
+            "en": "Strong"
+          }
+        },
+        {
+          "id": "max",
+          "label": {
+            "en": "Super Powerful"
+          }
+        },
+        {
+          "id": "ultra",
+          "label": {
+            "en": "Ultra Powerful"
+          }
+        }
+      ]
+    },
+    {
+      "name": "water",
+      "type": "dropdown",
+      "values": [
+        {
+          "id": "device",
+          "label": {
+            "en": "Use device setting"
+          }
+        },
+        {
+          "id": "dry",
+          "label": {
+            "en": "Dry"
+          }
+        },
+        {
+          "id": "normal",
+          "label": {
+            "en": "Normal"
+          }
+        },
+        {
+          "id": "wet",
+          "label": {
+            "en": "Wet"
+          }
+        }
+      ]
+    },
+    {
+      "name": "mop_strength",
+      "type": "dropdown",
+      "values": [
+        {
+          "id": "device",
+          "label": {
+            "en": "Use device setting"
+          }
+        },
+        {
+          "id": "normal",
+          "label": {
+            "en": "Normal"
+          }
+        },
+        {
+          "id": "high",
+          "label": {
+            "en": "High"
+          }
+        }
+      ]
+    },
+    {
+      "name": "passes",
+      "type": "dropdown",
+      "values": [
+        {
+          "id": "device",
+          "label": {
+            "en": "Use device setting"
+          }
+        },
+        {
+          "id": "1",
+          "label": {
+            "en": "1"
+          }
+        },
+        {
+          "id": "2",
+          "label": {
+            "en": "2"
+          }
+        },
+        {
+          "id": "3",
+          "label": {
+            "en": "3"
+          }
+        }
+      ]
+    },
+    {
+      "name": "route",
+      "type": "dropdown",
+      "values": [
+        {
+          "id": "device",
+          "label": {
+            "en": "Use device setting"
+          }
+        },
+        {
+          "id": "robot",
+          "label": {
+            "en": "Robot default"
+          }
+        },
+        {
+          "id": "standard",
+          "label": {
+            "en": "Standard"
+          }
+        },
+        {
+          "id": "meticulous",
+          "label": {
+            "en": "Meticulous"
+          }
+        }
+      ]
+    }
+  ]
+}

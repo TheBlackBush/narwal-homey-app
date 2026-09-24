@@ -6,7 +6,7 @@ const { once } = require('node:events');
 
 const { NarwalClient } = require('../lib/NarwalClient');
 const C = require('../lib/constants');
-const { decodeProto, parseFrame } = require('../lib/NarwalBinaryProtocol');
+const { NarwalBinaryProtocol, decodeProto, parseFrame } = require('../lib/NarwalBinaryProtocol');
 
 const { RobotState, FanSpeed } = C;
 
@@ -260,5 +260,127 @@ test('binary status reports keep a fan speed saved while docked until the next c
 
   const cleaning = client._ingestBinaryStatus({ shortTopic: 'status/robot_base_status', decoded: { 3: { 1: 4 }, 26: 3 } });
   assert.strictEqual(cleaning.fanSpeed, FanSpeed.STRONG, 'once cleaning, the robot reports the level in use');
+  client.stop();
+});
+
+test('binary start and room cleans send the clean options they are given', async () => {
+  for (const run of [
+    (client) => client.startClean({ workMode: 2, water: 3, route: 2 }),
+    (client) => client.cleanRoom(['1'], { workMode: 2, water: 3, route: 2 }),
+  ]) {
+    const { client, sent } = binaryClientWithFakeSocket();
+    client.lastStatus = { state: RobotState.DOCKED, docked: true };
+    client.lastMap = { meta: { mapId: 7 }, rooms: [{ id: '1' }] };
+
+    await sentFramesFor(client, sent, () => run(client));
+
+    const frame = sent.find((f) => f.shortTopic === 'clean/start_clean');
+    const task = decodeProto(frame.payload)['1'];
+    const item = Array.isArray(task['2']) ? task['2'][0] : task['2'];
+    const param = decodeProto(Buffer.from(item['2'].slice(2), 'hex'));
+    assert.strictEqual(task['5'], 2);
+    assert.strictEqual(param['4'], 3);
+    assert.strictEqual(param['8'], 2);
+  }
+});
+
+test('binary clean option suction overrides the saved fan speed for that run only', async () => {
+  const { client, sent } = binaryClientWithFakeSocket();
+  client.lastStatus = { state: RobotState.DOCKED, docked: true };
+  client.lastMap = { meta: { mapId: 7 }, rooms: [{ id: '1' }] };
+  await client.setFanSpeed(FanSpeed.QUIET);
+
+  await sentFramesFor(client, sent, () => client.cleanRoom(['1'], { fanSpeed: FanSpeed.ULTRA }));
+
+  const frame = sent.find((f) => f.shortTopic === 'clean/start_clean');
+  assert.strictEqual(startCleanFanLevel(frame), 5);
+  assert.strictEqual(client.fanSpeed, FanSpeed.QUIET);
+});
+
+test('binary progress messages sent while docking do not flip a docked robot back to cleaning', () => {
+  // Order recorded from a Flow 2 (v01.09.10.02) arriving at the dock.
+  const { client } = binaryClientWithFakeSocket();
+  const base = (f3, f11, f47) => client._ingestBinaryStatus({
+    shortTopic: 'status/robot_base_status', decoded: { 3: f3, 11: f11, 47: f47 },
+  });
+  const progress = (decoded) => client._ingestBinaryStatus({ shortTopic: 'status/working_status', decoded });
+
+  base({ 1: 2, 4: 6 }, 1, 2);
+  let status = progress({ 2: 5.8001, 3: 660, 6: 3 });
+  assert.strictEqual(status.state, RobotState.CLEANING, 'off the dock the robot is cleaning');
+
+  base({ 1: 2, 4: 6 }, 3, 1);
+  status = progress({ 2: 5.8001, 3: 660, 6: 3 });
+  assert.strictEqual(status.state, RobotState.DOCKED);
+  assert.strictEqual(status.docked, true);
+  assert.strictEqual(status.currentRoomId, null);
+  assert.strictEqual(status.cleanArea, 5.8, 'final metrics are still recorded');
+
+  base({ 1: 19, 2: 1, 18: 4 }, 3, 1);
+  status = progress({ 6: 3, 13: 18000 });
+  assert.strictEqual(status.state, RobotState.DOCKED);
+  client.stop();
+});
+
+test('binary progress message with only a room id is not evidence of cleaning', () => {
+  const protocol = new NarwalBinaryProtocol({ productKey: 'QxMSPG6VSO', deviceId: 'device' });
+
+  const status = protocol.normalizeStatus({ 6: 3, 13: 18000 }, 'status/working_status');
+
+  assert.notStrictEqual(status.state, RobotState.CLEANING);
+});
+
+// Sequences from the Home Assistant integration's state tests, which cover
+// firmware that sends partial base status messages (Freo Z10 Ultra, #98).
+function ingestBase(client, packets) {
+  let status;
+  for (const decoded of packets) status = client._ingestBinaryStatus({ shortTopic: 'status/robot_base_status', decoded });
+  return status;
+}
+
+test('binary dock presence 1 or 6 counts as docked, so a finished task is not stuck on returning', () => {
+  for (const presence of [1, 6]) {
+    const client = new NarwalClient({ ip: '127.0.0.1', productKey: 'DrzDKQ0MU8' });
+    const status = ingestBase(client, [{ 3: { 1: 19, 3: presence } }]);
+    assert.strictEqual(status.docked, true, `presence ${presence}`);
+    assert.strictEqual(status.state, RobotState.DOCKED, `presence ${presence}`);
+    client.stop();
+  }
+});
+
+test('binary partial base status messages keep the known dock state', () => {
+  const f80 = (() => {
+    const b = Buffer.alloc(4); b.writeFloatLE(80); return b.readUInt32LE(0);
+  })();
+  const cases = [
+    ['battery only', [{ 3: { 1: 19, 3: 6 } }, { 2: f80 }]],
+    ['repeated task finished without dock fields', [{ 3: { 1: 19, 3: 6 } }, { 3: { 1: 19, 12: 0 } }]],
+  ];
+  for (const [name, packets] of cases) {
+    const client = new NarwalClient({ ip: '127.0.0.1', productKey: 'DrzDKQ0MU8' });
+    const status = ingestBase(client, packets);
+    assert.strictEqual(status.docked, true, name);
+    assert.strictEqual(status.state, RobotState.DOCKED, name);
+    client.stop();
+  }
+});
+
+test('binary dock-only base status moves a returning robot to docked', () => {
+  const client = new NarwalClient({ ip: '127.0.0.1', productKey: 'DrzDKQ0MU8' });
+
+  const status = ingestBase(client, [{ 3: { 1: 19, 3: 2, 10: 2 } }, { 11: 2, 47: 3 }]);
+
+  assert.strictEqual(status.docked, true);
+  assert.strictEqual(status.state, RobotState.DOCKED);
+  client.stop();
+});
+
+test('binary robot leaving the dock with a stale docked code is not shown as docked', () => {
+  const client = new NarwalClient({ ip: '127.0.0.1', productKey: 'DrzDKQ0MU8' });
+
+  const status = ingestBase(client, [{ 3: { 1: 10, 10: 1 }, 11: 2, 47: 3 }, { 3: { 1: 10 }, 11: 1 }]);
+
+  assert.strictEqual(status.docked, false);
+  assert.notStrictEqual(status.state, RobotState.DOCKED);
   client.stop();
 });

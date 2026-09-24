@@ -16,5 +16,20 @@
   },
   "1.0.15": {
     "en": "Added five suction levels named as in the Narwal app, including Ultra Powerful. A fan speed chosen while docked is now used for the next clean. Fixed whole-home starts that could report success without cleaning, stopped waking a docked robot on every poll, and corrected unnamed room names."
+  },
+  "1.1.0": {
+    "en": "Added cleaning mode settings (mode, water level, mop strength, passes and route) used by every clean, and a Clean with settings Flow card that sets them for a single clean of the whole home, the default rooms or one room."
+  },
+  "1.1.1": {
+    "en": "The Cleaning mode settings are now stored on robots paired before 1.1.0. Note: the Homey mobile app shows - for dropdown settings on the Advanced Settings page; open a setting to see its value."
+  },
+  "1.1.2": {
+    "en": "Fixed Status, Docked and Charging showing docked while the robot cleans on newer Flow 2 firmware, the current room going blank during a clean, a leftover 1.8 m² cleaning area after docking, and flipping between Cleaning and Docked while docking."
+  },
+  "1.1.3": {
+    "en": "Docked detection now recognises every off-the-dock signal used across Narwal firmware versions, so older and newer firmware report Docked, Charging and Status consistently."
+  },
+  "1.1.4": {
+    "en": "Fixed robots staying on Returning after finishing on the dock (seen on the Freo Z10 Ultra), partial status updates marking a docked robot as undocked, and a robot that left the dock still showing Docked."
   }
 }

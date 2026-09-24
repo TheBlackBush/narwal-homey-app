@@ -3,6 +3,40 @@
 All notable changes to this project are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [1.1.4] - 2026-09-24
+
+### Fixed
+- Robots that finish a task on the dock no longer stay on Returning (seen on the Freo Z10 Ultra). The dock presence signal now counts as docked.
+- Partial status messages, such as battery-only updates sent by some firmware, no longer mark a docked robot as undocked.
+- A robot that reports it has left the dock is no longer shown as Docked.
+
+## [1.1.3] - 2026-09-24
+
+### Changed
+- Docked detection now recognises every off-the-dock signal used across Narwal firmware versions, so robots on older and newer firmware report Docked, Charging and Status consistently.
+
+## [1.1.2] - 2026-09-24
+
+### Fixed
+- Status, Docked and Charging now show the robot as cleaning while it cleans. Newer Flow 2 firmware reports a status code the app treated as docked.
+- The current room stays visible during a clean instead of going blank.
+- Cleaning area no longer shows a leftover 1.8 m² after docking. That value was a dock timer, not area.
+- The robot no longer flips between Cleaning and Docked while it drives onto the dock, so Flow triggers fire once.
+
+## [1.1.1] - 2026-09-24
+
+### Changed
+- The Cleaning mode settings are now stored on robots paired before 1.1.0. Cleaning behaved the same before, because missing values already fell back to the defaults.
+
+### Known issues
+- The Homey mobile app shows "-" instead of the selected value for dropdown settings on the Advanced Settings page, in every app. Open a setting to see its current value.
+
+## [1.1.0] - 2026-09-24
+
+### Added
+- Cleaning mode settings in each device's Advanced settings: mode (vacuum and mop, vacuum only, mop only, vacuum then mop), water level, mop strength, passes and route. Start cleaning, Clean default rooms and Clean selected room use them. The defaults match earlier versions, so nothing changes until you edit them.
+- Flow card "Clean with settings": clean the whole home, the default rooms or one room with its own mode, suction, water level, mop strength, passes and route for that run only.
+
 ## [1.0.15] - 2026-09-24
 
 ### Added
