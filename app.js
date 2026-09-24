@@ -1,7 +1,7 @@
 'use strict';
 
 const Homey = require('homey');
-const { resultSuffix, pickIPv4, matchesDeviceId } = require('./lib/Discovery');
+const { DiscoveryWatcher } = require('./lib/DiscoveryWatcher');
 
 /**
  * Narwal app entry point.
@@ -22,36 +22,28 @@ class NarwalApp extends Homey.App {
 
     // Follow robots that move to a new IP. Discovery is optional: robots that
     // never appear in mDNS keep their saved IP.
+    let strategy = null;
     try {
-      this._discoveryStrategy = this.homey.discovery.getStrategy('narwal');
-      this._discoveryStrategy.on('result', (result) => this._onDiscoveryResult(result));
+      strategy = this.homey.discovery.getStrategy('narwal');
     } catch (err) {
       this.log(`mDNS discovery unavailable: ${err.message}`);
     }
-  }
-
-  _onDiscoveryResult(result, devices = this._narwalDevices) {
-    const suffix = resultSuffix(result);
-    const ip = pickIPv4(result);
-    if (!suffix || !ip) return;
-    for (const device of devices) {
-      if (matchesDeviceId(device.getStoreValue('deviceId'), suffix)) {
-        device.onDiscoveredAddress(ip).catch((err) => this.error('IP update failed:', err.message));
-      }
-    }
-  }
-
-  // Devices start after the app, so check robots already found when each
-  // device registers, not only on new discovery results.
-  _checkDiscoveredAddress(device) {
-    if (!this._discoveryStrategy) return;
-    const results = Object.values(this._discoveryStrategy.getDiscoveryResults() || {});
-    for (const result of results) this._onDiscoveryResult(result, [device]);
+    this._discoveryWatcher = new DiscoveryWatcher({
+      strategy,
+      getDevices: () => [...this._narwalDevices],
+      log: (...args) => this.log(...args),
+      error: (...args) => this.error(...args),
+    });
+    this._discoveryWatcher.start();
   }
 
   registerNarwalDevice(device) {
     this._narwalDevices.add(device);
-    this._checkDiscoveredAddress(device);
+  }
+
+  // Called by a device once its client has started.
+  checkDiscoveredAddress(device) {
+    if (this._discoveryWatcher) this._discoveryWatcher.checkDevice(device);
   }
 
   unregisterNarwalDevice(device) {

@@ -4,7 +4,7 @@ const test = require('node:test');
 const assert = require('node:assert');
 
 const {
-  suffixFromName, resultSuffix, pickIPv4, matchesDeviceId, uniqueResults, buildPairEntry,
+  suffixFromName, resultSuffix, pickIPv4, matchesDeviceId, uniqueResults, buildPairEntry, markAdded,
 } = require('../lib/Discovery');
 
 const FLOW_2 = { id: 'narwal_flow_2', name: 'Narwal Flow 2' };
@@ -75,4 +75,24 @@ test('buildPairEntry groups robots by model', () => {
 test('buildPairEntry marks robots already added under this driver', () => {
   const entry = buildPairEntry({ ip: '10.0.0.2', port: 9002, probe: { topicPrefix: '/QxMSPG6VSO', deviceId: DEVICE_ID } }, FLOW_2, new Set([DEVICE_ID]));
   assert.strictEqual(entry.added, true);
+});
+
+test('buildPairEntry treats models without a driver as unknown, not as another model', () => {
+  for (const key of ['hEA7OEshlx', 'BYWBPqSxeC', 'CGjuB6dzq7']) {
+    const entry = buildPairEntry({ ip: '10.0.0.6', port: 9002, probe: { topicPrefix: `/${key}`, deviceId: DEVICE_ID } }, FLOW_2, new Set());
+    assert.strictEqual(entry.group, 'unknown', key);
+  }
+});
+
+test('buildPairEntry matches every Flow 2 product key', () => {
+  for (const key of ['QxMSPG6VSO', 'iSuVlI1If2', 'mkbqaprvrb']) {
+    const entry = buildPairEntry({ ip: '10.0.0.2', port: 9002, probe: { topicPrefix: `/${key}`, deviceId: DEVICE_ID } }, FLOW_2, new Set());
+    assert.strictEqual(entry.group, 'match', key);
+  }
+});
+
+test('markAdded flags robots already paired, from stored device ids, before any probe', () => {
+  const found = [{ suffix: 'ab7721', ip: '10.0.0.2' }, { suffix: 'cccccc', ip: '10.0.0.3' }];
+  const marked = markAdded(found, [DEVICE_ID, 'narwal_flow_2-10.0.0.9-9002', null]);
+  assert.deepStrictEqual(marked.map((r) => r.added), [true, false]);
 });
