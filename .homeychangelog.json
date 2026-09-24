@@ -34,5 +34,8 @@
   },
   "1.1.5": {
     "en": "First App Store release under the app ID com.narwal.global. Local control of Narwal robot vacuums with cleaning mode settings, a Clean with settings Flow card, five suction levels, and reliable status for newer firmware."
+  },
+  "1.1.6": {
+    "en": "Pairing now lists Narwal robots found on your network, and paired robots follow IP address changes automatically. Manual IP entry is still available."
   }
 }
