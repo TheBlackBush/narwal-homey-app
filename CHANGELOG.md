@@ -3,6 +3,16 @@
 All notable changes to this project are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [1.1.7] - 2026-09-25
+
+### Changed
+- Redesigned the pairing screen with Homey's own styles. The Connect button no longer covers the fields when the keyboard is open.
+- Robots found on the network are listed right away and checked one by one, so the list no longer waits on a sleeping robot. A robot that does not answer can be retried, and the search can be run again.
+
+### Fixed
+- The robot search now starts once Homey's pairing session is ready, so it no longer stays on "Searching…".
+- Entering an IP address of a robot that does not answer now shows an error instead of adding the robot without its device ID.
+
 ## [1.1.6] - 2026-09-25
 
 ### Added

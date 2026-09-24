@@ -37,5 +37,8 @@
   },
   "1.1.6": {
     "en": "Pairing now lists Narwal robots found on your network, and paired robots follow IP address changes automatically. Manual IP entry is still available."
+  },
+  "1.1.7": {
+    "en": "Redesigned pairing: robots on your network are listed right away and checked one by one, with Retry and Search again. The Connect button no longer covers the fields, and a robot that does not answer shows an error instead of being added incomplete."
   }
 }
