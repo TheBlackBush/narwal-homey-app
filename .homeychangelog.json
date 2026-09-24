@@ -40,5 +40,8 @@
   },
   "1.1.7": {
     "en": "Redesigned pairing: robots on your network are listed right away and checked one by one, with Retry and Search again. The Connect button no longer covers the fields, and a robot that does not answer shows an error instead of being added incomplete."
+  },
+  "1.1.8": {
+    "en": "Restored the original pairing screen design with the layout fixed: the Continue button no longer covers the fields while typing."
   }
 }

@@ -3,6 +3,11 @@
 All notable changes to this project are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [1.1.8] - 2026-09-25
+
+### Changed
+- Restored the original pairing screen design (header, card and styling). The layout fixes are kept: the Continue button stays in the page flow below the fields, so it no longer covers them while typing, and the tips sit below the button.
+
 ## [1.1.7] - 2026-09-25
 
 ### Changed
