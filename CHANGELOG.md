@@ -3,6 +3,11 @@
 All notable changes to this project are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [1.1.5] - 2026-09-24
+
+### Changed
+- The app ID is now `com.narwal.global`, because `com.narwal` is registered to another developer on the Homey App Store. Homey treats this as a new app: robots added under a development build with the old ID need to be added again, and Flows that use them need their Narwal cards selected again.
+
 ## [1.1.4] - 2026-09-24
 
 ### Fixed

@@ -1,8 +1,8 @@
 # Narwal for Homey
 
 ![Homey](https://img.shields.io/badge/Homey-SDK%20v3-00AEEF?style=for-the-badge)
-![App ID](https://img.shields.io/badge/App%20ID-com.narwal-683df5?style=for-the-badge)
-![Version](https://img.shields.io/badge/Version-1.1.4-683df5?style=for-the-badge)
+![App ID](https://img.shields.io/badge/App%20ID-com.narwal.global-683df5?style=for-the-badge)
+![Version](https://img.shields.io/badge/Version-1.1.5-683df5?style=for-the-badge)
 ![Local First](https://img.shields.io/badge/Local--First-No%20Cloud-2ea44f?style=for-the-badge)
 ![License](https://img.shields.io/badge/License-MIT-111827?style=for-the-badge)
 
