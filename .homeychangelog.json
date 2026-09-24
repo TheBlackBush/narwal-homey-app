@@ -13,5 +13,8 @@
   },
   "1.0.14": {
     "en": "Fixed fan speed setting one level too low, live status and map stopping after about 10 minutes of cleaning, custom room cleans and remapping not showing as cleaning, and a docked robot staying on returning after finishing a task."
+  },
+  "1.0.15": {
+    "en": "Added five suction levels named as in the Narwal app, including Ultra Powerful. A fan speed chosen while docked is now used for the next clean. Fixed whole-home starts that could report success without cleaning, stopped waking a docked robot on every poll, and corrected unnamed room names."
   }
 }

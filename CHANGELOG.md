@@ -3,6 +3,19 @@
 All notable changes to this project are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [1.0.15] - 2026-09-24
+
+### Added
+- Five suction levels named as in the Narwal app: Quiet, Standard, Strong, Super Powerful and Ultra Powerful. Existing Flows keep working: Normal is now labelled Standard and Max is labelled Super Powerful, with the same suction. The Freo Z10 Pro / Turbo goes up to Super Powerful.
+
+### Changed
+- A fan speed chosen while the robot is docked is saved and used for the next clean. Whole-home and room cleans now start with the chosen suction instead of always using Standard.
+- Unnamed rooms use the official Narwal room type names on every model. Some unnamed rooms may show a different name; room IDs are unchanged.
+
+### Fixed
+- Starting a whole-home clean without map data no longer reports success when the robot does not start. It now asks you to refresh rooms / map.
+- A docked robot is no longer woken up on every status poll.
+
 ## [1.0.14] - 2026-09-24
 
 ### Fixed
