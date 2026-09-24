@@ -3,7 +3,7 @@
 const test = require('node:test');
 const assert = require('node:assert');
 
-const { resolveCleanOptions, DEVICE_SETTING } = require('../lib/CleanOptions');
+const { resolveCleanOptions, cleanSettingsToPersist, DEVICE_SETTING } = require('../lib/CleanOptions');
 const { WorkMode } = require('../lib/NarwalBinaryProtocol');
 const { FanSpeed } = require('../lib/constants');
 
@@ -62,4 +62,14 @@ test('unknown values fall back instead of sending garbage to the robot', () => {
   assert.strictEqual(options.workMode, WorkMode.VACUUM_AND_MOP);
   assert.strictEqual(options.passes, 1);
   assert.strictEqual(options.fanSpeed, undefined);
+});
+
+test('clean settings to persist keep valid values and fill the rest with defaults', () => {
+  assert.deepStrictEqual(cleanSettingsToPersist({ clean_water: 'wet', clean_passes: '7', ip: '1.2.3.4' }), {
+    clean_work_mode: 'vacuum_and_mop',
+    clean_water: 'wet',
+    clean_mop_strength: 'normal',
+    clean_passes: '1',
+    clean_route: 'robot',
+  });
 });
