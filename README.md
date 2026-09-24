@@ -2,7 +2,7 @@
 
 ![Homey](https://img.shields.io/badge/Homey-SDK%20v3-00AEEF?style=for-the-badge)
 ![App ID](https://img.shields.io/badge/App%20ID-com.narwal-683df5?style=for-the-badge)
-![Version](https://img.shields.io/badge/Version-1.0.15-683df5?style=for-the-badge)
+![Version](https://img.shields.io/badge/Version-1.1.0-683df5?style=for-the-badge)
 ![Local First](https://img.shields.io/badge/Local--First-No%20Cloud-2ea44f?style=for-the-badge)
 ![License](https://img.shields.io/badge/License-MIT-111827?style=for-the-badge)
 
@@ -19,6 +19,7 @@ Control your Narwal robot vacuum directly from Homey Pro over your local network
 - Live battery, charging, docked, connected, cleaning area/time, firmware, status and last error.
 - Fan-speed control: `Quiet`, `Standard`, `Strong`, `Super Powerful`, `Ultra Powerful` (Freo Z10 Pro / Turbo: up to Super Powerful). A level chosen while docked is used for the next clean.
 - Room cleaning with Flow autocomplete when rooms are available locally.
+- Cleaning mode settings (mode, water level, mop strength, passes, route) and a Clean with settings Flow card for one-off cleans.
 - Flow actions, conditions and triggers for common automation scenarios.
 - Narwal Map widget for a best-effort map snapshot and compact status bar.
 - Resilient reconnect, heartbeat keep-alive and polling fallback.

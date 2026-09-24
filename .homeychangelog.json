@@ -16,5 +16,8 @@
   },
   "1.0.15": {
     "en": "Added five suction levels named as in the Narwal app, including Ultra Powerful. A fan speed chosen while docked is now used for the next clean. Fixed whole-home starts that could report success without cleaning, stopped waking a docked robot on every poll, and corrected unnamed room names."
+  },
+  "1.1.0": {
+    "en": "Added cleaning mode settings (mode, water level, mop strength, passes and route) used by every clean, and a Clean with settings Flow card that sets them for a single clean of the whole home, the default rooms or one room."
   }
 }

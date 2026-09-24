@@ -3,6 +3,12 @@
 All notable changes to this project are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [1.1.0] - 2026-09-24
+
+### Added
+- Cleaning mode settings in each device's Advanced settings: mode (vacuum and mop, vacuum only, mop only, vacuum then mop), water level, mop strength, passes and route. Start cleaning, Clean default rooms and Clean selected room use them. The defaults match earlier versions, so nothing changes until you edit them.
+- Flow card "Clean with settings": clean the whole home, the default rooms or one room with its own mode, suction, water level, mop strength, passes and route for that run only.
+
 ## [1.0.15] - 2026-09-24
 
 ### Added
