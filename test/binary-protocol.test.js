@@ -138,3 +138,48 @@ test('binary clean payload and float32 helpers decode expected primitives', () =
   assert.ok(decoded['1']);
   assert.strictEqual(Math.round(toFloat32(1118044160)), 82);
 });
+
+test('binary fan speed frame sends the robot suction levels 1 to 4', () => {
+  const protocol = new NarwalBinaryProtocol({ productKey: 'QxMSPG6VSO', deviceId: 'device' });
+  const expected = {
+    [FanSpeed.QUIET]: 1,
+    [FanSpeed.NORMAL]: 2,
+    [FanSpeed.STRONG]: 3,
+    [FanSpeed.MAX]: 4,
+  };
+
+  for (const [fanSpeed, level] of Object.entries(expected)) {
+    const parsed = parseFrame(protocol.buildSetFanSpeedFrame(fanSpeed));
+    assert.strictEqual(parsed.shortTopic, 'clean/set_fan_level');
+    assert.deepStrictEqual(decodeProto(parsed.payload), { 1: level }, fanSpeed);
+  }
+});
+
+test('binary base status treats working statuses 3, 7 and 17 as cleaning', () => {
+  const protocol = new NarwalBinaryProtocol({ productKey: 'QxMSPG6VSO', deviceId: 'device' });
+
+  for (const workingStatus of [3, 7, 17]) {
+    const status = protocol.normalizeStatus({ 3: { 1: workingStatus } }, 'status/robot_base_status');
+    assert.strictEqual(status.state, RobotState.CLEANING, `working status ${workingStatus}`);
+    assert.strictEqual(status.homeyState, HomeyVacuumState.CLEANING, `working status ${workingStatus}`);
+  }
+});
+
+test('binary base status reports task-completed 19 as docked once the dock confirms presence', () => {
+  const protocol = new NarwalBinaryProtocol({ productKey: 'DrzDKQ0MU8', deviceId: 'device' });
+
+  const status = protocol.normalizeStatus({ 3: { 1: 19, 10: 1 } }, 'status/robot_base_status');
+
+  assert.strictEqual(status.state, RobotState.DOCKED);
+  assert.strictEqual(status.homeyState, HomeyVacuumState.DOCKED);
+  assert.strictEqual(status.docked, true);
+});
+
+test('binary base status keeps task-completed 19 as returning while still off the dock', () => {
+  const protocol = new NarwalBinaryProtocol({ productKey: 'DrzDKQ0MU8', deviceId: 'device' });
+
+  const status = protocol.normalizeStatus({ 3: { 1: 19 } }, 'status/robot_base_status');
+
+  assert.strictEqual(status.state, RobotState.RETURNING);
+  assert.strictEqual(status.docked, false);
+});

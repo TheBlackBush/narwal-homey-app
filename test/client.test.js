@@ -5,7 +5,10 @@ const assert = require('node:assert');
 const { once } = require('node:events');
 
 const { NarwalClient } = require('../lib/NarwalClient');
-const { RobotState, FanSpeed } = require('../lib/constants');
+const C = require('../lib/constants');
+const { decodeProto, parseFrame } = require('../lib/NarwalBinaryProtocol');
+
+const { RobotState, FanSpeed } = C;
 
 function mockClient() {
   return new NarwalClient({ ip: '127.0.0.1', mock: true, pollInterval: 60000 });
@@ -88,4 +91,49 @@ test('probe resolves with a status for a reachable (mock) robot', async () => {
   const status = await NarwalClient.probe({ ip: '127.0.0.1', mock: true });
   assert.ok(status);
   assert.strictEqual(status.firmware, '1.0.0-mock');
+});
+
+function binaryClientWithFakeSocket() {
+  const client = new NarwalClient({ ip: '127.0.0.1', productKey: 'QxMSPG6VSO', pollInterval: 60000 });
+  const sent = [];
+  client._ws = {
+    readyState: 1, // WebSocket.OPEN
+    send: (frame) => sent.push(parseFrame(frame)),
+    ping: () => {},
+    removeAllListeners: () => {},
+    terminate: () => {},
+  };
+  return { client, sent };
+}
+
+test('binary client sends suction level 1 to 4 when setting fan speed', async () => {
+  const { client, sent } = binaryClientWithFakeSocket();
+
+  const pending = client.setFanSpeed(FanSpeed.QUIET);
+  await new Promise((resolve) => setImmediate(resolve));
+  client.stop();
+  await assert.rejects(pending);
+
+  const frame = sent.find((f) => f.shortTopic === 'clean/set_fan_level');
+  assert.ok(frame, 'set_fan_level frame should be sent');
+  assert.deepStrictEqual(decodeProto(frame.payload), { 1: 1 });
+});
+
+test('binary client renews the broadcast subscription on its own timer', () => {
+  test.mock.timers.enable({ apis: ['setInterval', 'setTimeout'] });
+  const { client, sent } = binaryClientWithFakeSocket();
+  try {
+    client._onOpen();
+    test.mock.timers.tick(1000);
+    sent.length = 0;
+
+    test.mock.timers.tick(C.SUBSCRIPTION_RENEW_MS);
+
+    const topics = sent.map((f) => f.shortTopic);
+    assert.ok(topics.includes('common/active_robot_publish'), 'subscription should be renewed');
+    assert.ok(!topics.includes('common/notify_app_event'), 'renewal should not be a full wake burst');
+  } finally {
+    client.stop();
+    test.mock.timers.reset();
+  }
 });

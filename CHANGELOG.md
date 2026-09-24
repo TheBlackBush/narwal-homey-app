@@ -3,6 +3,14 @@
 All notable changes to this project are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [Unreleased]
+
+### Fixed
+- Fan speed now sets the selected suction level. Every level was previously one step too low, and Quiet sent no level at all.
+- Live cleaning status and the live map no longer stop updating after about 10 minutes of cleaning. The robot's broadcast subscription is now renewed every 4 minutes.
+- Custom per-room cleans, remapping, and cleans on newer Flow 2 firmware now show as cleaning instead of keeping the previous state.
+- A robot that finished its task and is back on the dock now shows as docked instead of staying on returning.
+
 ## [1.0.13] - 2026-09-01
 
 ### Added
