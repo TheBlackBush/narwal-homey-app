@@ -108,6 +108,7 @@ function binaryClientWithFakeSocket() {
 
 test('binary client sends suction level 1 to 4 when setting fan speed', async () => {
   const { client, sent } = binaryClientWithFakeSocket();
+  client.lastStatus = { state: RobotState.CLEANING, docked: false };
 
   const pending = client.setFanSpeed(FanSpeed.QUIET);
   await new Promise((resolve) => setImmediate(resolve));
@@ -136,4 +137,128 @@ test('binary client renews the broadcast subscription on its own timer', () => {
     client.stop();
     test.mock.timers.reset();
   }
+});
+
+test('binary start refuses to fall back to the stored-plan command when no map is available', async () => {
+  const { client, sent } = binaryClientWithFakeSocket();
+  client.refreshMap = async () => null;
+
+  const pending = client.startClean();
+  pending.catch(() => {});
+  await new Promise((resolve) => setImmediate(resolve));
+  const topics = sent.map((f) => f.shortTopic);
+  client.stop();
+
+  assert.ok(!topics.includes('clean/plan/start'), 'clean/plan/start can report success without cleaning');
+  await assert.rejects(pending, /map/i);
+});
+
+function pollOnce(client) {
+  client._connected = true;
+  client._lastMessageAt = 0;
+  client._startPolling();
+  test.mock.timers.tick(client.pollIntervalMs);
+}
+
+test('binary poll of a quiet docked robot only asks for base status', () => {
+  test.mock.timers.enable({ apis: ['setInterval', 'setTimeout'] });
+  const { client, sent } = binaryClientWithFakeSocket();
+  try {
+    client.lastStatus = { docked: true, state: RobotState.DOCKED };
+    pollOnce(client);
+
+    const topics = sent.map((f) => f.shortTopic);
+    assert.ok(topics.includes('status/get_device_base_status'), 'poll should request base status');
+    assert.ok(!topics.includes('common/notify_app_event'), 'docked poll should not send a wake burst');
+    assert.ok(!topics.includes('common/get_device_info'), 'docked poll should not rerun discovery');
+  } finally {
+    client.stop();
+    test.mock.timers.reset();
+  }
+});
+
+test('binary poll of a silent robot off the dock still sends a wake burst', () => {
+  test.mock.timers.enable({ apis: ['setInterval', 'setTimeout'] });
+  const { client, sent } = binaryClientWithFakeSocket();
+  try {
+    client.lastStatus = { docked: false, state: RobotState.CLEANING };
+    pollOnce(client);
+
+    assert.ok(sent.some((f) => f.shortTopic === 'common/notify_app_event'), 'off-dock silence should wake the robot');
+  } finally {
+    client.stop();
+    test.mock.timers.reset();
+  }
+});
+
+function startCleanFanLevel(frame) {
+  // CleanTask (1) > item (2) > CleanParam (2) > suction (2)
+  const task = decodeProto(frame.payload)['1'];
+  const item = Array.isArray(task['2']) ? task['2'][0] : task['2'];
+  return decodeProto(Buffer.from(item['2'].slice(2), 'hex'))['2'];
+}
+
+async function sentFramesFor(client, sent, action) {
+  const pending = action();
+  pending.catch(() => {});
+  await new Promise((resolve) => setImmediate(resolve));
+  client.stop();
+  await pending.catch(() => {});
+  return sent;
+}
+
+test('binary client saves fan speed for the next clean while docked instead of sending it', async () => {
+  const { client, sent } = binaryClientWithFakeSocket();
+  client.lastStatus = { state: RobotState.DOCKED, docked: true };
+
+  await client.setFanSpeed(FanSpeed.ULTRA);
+
+  assert.ok(!sent.some((f) => f.shortTopic === 'clean/set_fan_level'), 'docked robots reject set_fan_level');
+  assert.strictEqual(client.fanSpeed, FanSpeed.ULTRA);
+});
+
+test('binary start carries the chosen suction level, including Ultra Powerful', async () => {
+  const { client, sent } = binaryClientWithFakeSocket();
+  client.lastStatus = { state: RobotState.DOCKED, docked: true };
+  client.lastMap = { meta: { mapId: 7 }, rooms: [{ id: '1' }, { id: '2' }] };
+  await client.setFanSpeed(FanSpeed.ULTRA);
+
+  await sentFramesFor(client, sent, () => client.startClean());
+
+  const frame = sent.find((f) => f.shortTopic === 'clean/start_clean');
+  assert.ok(frame, 'start_clean frame should be sent');
+  assert.strictEqual(startCleanFanLevel(frame), 5);
+});
+
+test('binary live fan change maps Ultra Powerful to the highest live level', async () => {
+  const { client, sent } = binaryClientWithFakeSocket();
+  client.lastStatus = { state: RobotState.CLEANING, docked: false };
+
+  await sentFramesFor(client, sent, () => client.setFanSpeed(FanSpeed.ULTRA));
+
+  const frame = sent.find((f) => f.shortTopic === 'clean/set_fan_level');
+  assert.deepStrictEqual(decodeProto(frame.payload), { 1: 4 });
+});
+
+test('binary client treats Ultra Powerful as Super Powerful on the Freo Z10 Pro / Turbo', async () => {
+  const client = new NarwalClient({ ip: '127.0.0.1', productKey: 'qV6BujoYLz' });
+  client.lastStatus = { state: RobotState.DOCKED, docked: true };
+
+  await client.setFanSpeed(FanSpeed.ULTRA);
+
+  assert.strictEqual(client.fanSpeed, FanSpeed.MAX);
+  client.stop();
+});
+
+test('binary status reports keep a fan speed saved while docked until the next clean', async () => {
+  const { client } = binaryClientWithFakeSocket();
+  client.lastStatus = { state: RobotState.DOCKED, docked: true };
+  await client.setFanSpeed(FanSpeed.QUIET);
+
+  const docked = client._ingestBinaryStatus({ shortTopic: 'status/robot_base_status', decoded: { 3: { 1: 10 }, 26: 2 } });
+  assert.strictEqual(docked.fanSpeed, FanSpeed.QUIET);
+
+  const cleaning = client._ingestBinaryStatus({ shortTopic: 'status/robot_base_status', decoded: { 3: { 1: 4 }, 26: 3 } });
+  assert.strictEqual(cleaning.fanSpeed, FanSpeed.STRONG, 'once cleaning, the robot reports the level in use');
+  client.stop();
 });

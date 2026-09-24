@@ -111,7 +111,7 @@ test('parseNarwalMapResponse extracts rooms and map metadata from get_map respon
 
   assert.ok(map);
   assert.strictEqual(map.rooms.length, 2);
-  assert.deepStrictEqual(map.rooms.map((room) => room.name), ['Bedroom', 'Bathroom']);
+  assert.deepStrictEqual(map.rooms.map((room) => room.name), ['Bedroom', 'Toilet']);
   assert.strictEqual(map.rooms[1].subtype, 6);
   assert.strictEqual(map.meta.mapId, 0);
   assert.strictEqual(map.meta.width, 249);
@@ -146,13 +146,31 @@ test('Narwal built-in room names are used when custom names are blank', () => {
         { 1: 1, 2: 3, 4: 2 },
         { 1: 2, 2: 4, 4: 2 },
         {
-          1: 3, 2: 6, 4: 2, 8: 2,
+          1: 3, 2: 5, 4: 2, 8: 2,
         },
       ],
     },
   });
 
   assert.deepStrictEqual(map.rooms.map((room) => room.name), ['Living Room', 'Kitchen', 'Bathroom 2']);
+});
+
+test('Narwal room types use one shared name table for every model', () => {
+  const expected = [
+    'Room', 'Master Bedroom', 'Secondary Bedroom', 'Living Room', 'Kitchen', 'Bathroom',
+    'Toilet', 'Balcony', 'Dining Room', 'Closet', 'Corridor', 'Study', "Kids' Room",
+    'Entertainment Room', 'Storage Room', 'Other',
+  ];
+  const rooms = expected.map((_, subtype) => ({ 1: subtype + 1, 2: subtype, 4: 2 }));
+
+  for (const productKey of ['', 'QoEsI5qYXO', 'QxMSPG6VSO', 'fjhpiem4ba']) {
+    const map = MapParser.parseNarwalMapResponse({
+      2: {
+        4: 100, 5: 100, 3: 60, 12: rooms,
+      },
+    }, 0, productKey);
+    assert.deepStrictEqual(map.rooms.map((room) => room.name), expected, productKey || 'no product key');
+  }
 });
 
 test('Flow 2 room type overrides match Narwal built-in names', () => {

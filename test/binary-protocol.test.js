@@ -183,3 +183,11 @@ test('binary base status keeps task-completed 19 as returning while still off th
   assert.strictEqual(status.state, RobotState.RETURNING);
   assert.strictEqual(status.docked, false);
 });
+
+test('binary base status decodes suction level 5 as Ultra Powerful', () => {
+  const protocol = new NarwalBinaryProtocol({ productKey: 'QxMSPG6VSO', deviceId: 'device' });
+
+  const status = protocol.normalizeStatus({ 3: { 1: 10 }, 26: 5 }, 'status/robot_base_status');
+
+  assert.strictEqual(status.fanSpeed, FanSpeed.ULTRA);
+});

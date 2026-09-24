@@ -5,7 +5,7 @@ Features:
 - Start, pause, resume and stop cleaning.
 - Return to dock and locate the robot.
 - Live status for battery, charging, docked, connected, cleaning area, cleaning time, firmware and last error.
-- Fan-speed control: Quiet, Normal, Strong and Max.
+- Fan-speed control: Quiet, Standard, Strong, Super Powerful and Ultra Powerful.
 - Flow cards for actions, conditions and triggers, including cleaning lifecycle, docking, battery and connection events.
 - Room cleaning support when the robot exposes room data locally.
 - Narwal Map widget for a best-effort local map snapshot and compact robot status.

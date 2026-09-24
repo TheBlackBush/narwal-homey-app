@@ -23,7 +23,7 @@
         {
           "id": "normal",
           "label": {
-            "en": "Normal"
+            "en": "Standard"
           }
         },
         {
@@ -35,7 +35,13 @@
         {
           "id": "max",
           "label": {
-            "en": "Max"
+            "en": "Super Powerful"
+          }
+        },
+        {
+          "id": "ultra",
+          "label": {
+            "en": "Ultra Powerful"
           }
         }
       ]

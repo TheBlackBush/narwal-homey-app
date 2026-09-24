@@ -20,6 +20,7 @@ test('buildSetFanSpeed encodes the correct numeric level', () => {
   assert.strictEqual(p.buildSetFanSpeed(FanSpeed.NORMAL, 1).params.level, 1);
   assert.strictEqual(p.buildSetFanSpeed(FanSpeed.STRONG, 1).params.level, 2);
   assert.strictEqual(p.buildSetFanSpeed(FanSpeed.MAX, 1).params.level, 3);
+  assert.strictEqual(p.buildSetFanSpeed(FanSpeed.ULTRA, 1).params.level, 4);
   assert.throws(() => p.buildSetFanSpeed('turbo', 1));
 });
 

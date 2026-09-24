@@ -76,6 +76,34 @@
       "desc": {
         "en": "Make the robot announce its location"
       }
+    },
+    "narwal_fan_speed": {
+      "values": [
+        {
+          "id": "quiet",
+          "title": {
+            "en": "Quiet"
+          }
+        },
+        {
+          "id": "normal",
+          "title": {
+            "en": "Standard"
+          }
+        },
+        {
+          "id": "strong",
+          "title": {
+            "en": "Strong"
+          }
+        },
+        {
+          "id": "max",
+          "title": {
+            "en": "Super Powerful"
+          }
+        }
+      ]
     }
   },
   "pair": [
