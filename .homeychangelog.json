@@ -31,5 +31,8 @@
   },
   "1.1.4": {
     "en": "Fixed robots staying on Returning after finishing on the dock (seen on the Freo Z10 Ultra), partial status updates marking a docked robot as undocked, and a robot that left the dock still showing Docked."
+  },
+  "1.1.5": {
+    "en": "First App Store release under the app ID com.narwal.global. Local control of Narwal robot vacuums with cleaning mode settings, a Clean with settings Flow card, five suction levels, and reliable status for newer firmware."
   }
 }
