@@ -5,8 +5,11 @@ All notable changes to this project are documented here. The format is based on
 
 ## [1.1.1] - 2026-09-24
 
-### Fixed
-- The Cleaning mode settings now show their selected values in the device settings on robots paired before 1.1.0, instead of "-".
+### Changed
+- The Cleaning mode settings are now stored on robots paired before 1.1.0. Cleaning behaved the same before, because missing values already fell back to the defaults.
+
+### Known issues
+- The Homey mobile app shows "-" instead of the selected value for dropdown settings on the Advanced Settings page, in every app. Open a setting to see its current value.
 
 ## [1.1.0] - 2026-09-24
 

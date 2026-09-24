@@ -21,6 +21,6 @@
     "en": "Added cleaning mode settings (mode, water level, mop strength, passes and route) used by every clean, and a Clean with settings Flow card that sets them for a single clean of the whole home, the default rooms or one room."
   },
   "1.1.1": {
-    "en": "Fixed the Cleaning mode settings showing - instead of their values on robots paired before 1.1.0."
+    "en": "The Cleaning mode settings are now stored on robots paired before 1.1.0. Note: the Homey mobile app shows - for dropdown settings on the Advanced Settings page; open a setting to see its value."
   }
 }
