@@ -17,8 +17,7 @@ Local-first Homey SDK v3 app (`com.narwal`, Homey `>=12.4.0`) that controls Narw
 ```bash
 npm run build          # regenerate app.json from compose sources (scripts/compose.js)
 npm run lint           # eslint (athom config)
-npm test               # node --test test (broken on Node 22+, see below)
-node --test            # run all tests (auto-discovers test/*.test.js)
+npm test               # node --test (auto-discovers test/*.test.js)
 node --test test/mapparser.test.js                               # single test file
 node --test --test-name-pattern="mock robot" test/client.test.js # tests matching a name
 npm run validate       # homey app validate --level=publish
@@ -26,7 +25,6 @@ npm run release-check  # lint + test + validate
 npm run deploy:local   # install to the local Homey (reads HOMEY_ADDRESS and HOMEY_LOCAL_TOKEN/HOMEY_PAT from env)
 ```
 
-- On Node 22+, `node --test test` treats `test` as a module path and fails, which also breaks `npm test` and `npm run release-check`. Use `node --test` until the script is changed to `node --test` or `node --test test/*.test.js`.
 - Run `npm run build` after touching `.homeycompose/**`, `drivers/*/driver.compose.json`, `widgets/*/widget.compose.json`, or app metadata. `app.json` is generated but committed; never hand-edit it.
 - Do not deploy with `--skip-build`: widgets need Homey preprocessing to generate `__assets__`.
 - Deploying must preserve paired Homey devices. Never clean-install, reset, remove, or recreate devices, and never change the app id, unless explicitly asked.
