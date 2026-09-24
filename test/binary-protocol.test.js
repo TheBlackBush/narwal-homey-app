@@ -181,8 +181,9 @@ test('binary base status keeps task-completed 19 as returning while still off th
 
   const status = protocol.normalizeStatus({ 3: { 1: 19 } }, 'status/robot_base_status');
 
+  // Without dock fields the dock state is unknown and the last known one is kept.
   assert.strictEqual(status.state, RobotState.RETURNING);
-  assert.strictEqual(status.docked, false);
+  assert.strictEqual(status.docked, null);
 });
 
 test('binary base status decodes suction level 5 as Ultra Powerful', () => {

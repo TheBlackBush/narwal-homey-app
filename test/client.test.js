@@ -329,3 +329,58 @@ test('binary progress message with only a room id is not evidence of cleaning', 
 
   assert.notStrictEqual(status.state, RobotState.CLEANING);
 });
+
+// Sequences from the Home Assistant integration's state tests, which cover
+// firmware that sends partial base status messages (Freo Z10 Ultra, #98).
+function ingestBase(client, packets) {
+  let status;
+  for (const decoded of packets) status = client._ingestBinaryStatus({ shortTopic: 'status/robot_base_status', decoded });
+  return status;
+}
+
+test('binary dock presence 1 or 6 counts as docked, so a finished task is not stuck on returning', () => {
+  for (const presence of [1, 6]) {
+    const client = new NarwalClient({ ip: '127.0.0.1', productKey: 'DrzDKQ0MU8' });
+    const status = ingestBase(client, [{ 3: { 1: 19, 3: presence } }]);
+    assert.strictEqual(status.docked, true, `presence ${presence}`);
+    assert.strictEqual(status.state, RobotState.DOCKED, `presence ${presence}`);
+    client.stop();
+  }
+});
+
+test('binary partial base status messages keep the known dock state', () => {
+  const f80 = (() => {
+    const b = Buffer.alloc(4); b.writeFloatLE(80); return b.readUInt32LE(0);
+  })();
+  const cases = [
+    ['battery only', [{ 3: { 1: 19, 3: 6 } }, { 2: f80 }]],
+    ['repeated task finished without dock fields', [{ 3: { 1: 19, 3: 6 } }, { 3: { 1: 19, 12: 0 } }]],
+  ];
+  for (const [name, packets] of cases) {
+    const client = new NarwalClient({ ip: '127.0.0.1', productKey: 'DrzDKQ0MU8' });
+    const status = ingestBase(client, packets);
+    assert.strictEqual(status.docked, true, name);
+    assert.strictEqual(status.state, RobotState.DOCKED, name);
+    client.stop();
+  }
+});
+
+test('binary dock-only base status moves a returning robot to docked', () => {
+  const client = new NarwalClient({ ip: '127.0.0.1', productKey: 'DrzDKQ0MU8' });
+
+  const status = ingestBase(client, [{ 3: { 1: 19, 3: 2, 10: 2 } }, { 11: 2, 47: 3 }]);
+
+  assert.strictEqual(status.docked, true);
+  assert.strictEqual(status.state, RobotState.DOCKED);
+  client.stop();
+});
+
+test('binary robot leaving the dock with a stale docked code is not shown as docked', () => {
+  const client = new NarwalClient({ ip: '127.0.0.1', productKey: 'DrzDKQ0MU8' });
+
+  const status = ingestBase(client, [{ 3: { 1: 10, 10: 1 }, 11: 2, 47: 3 }, { 3: { 1: 10 }, 11: 1 }]);
+
+  assert.strictEqual(status.docked, false);
+  assert.notStrictEqual(status.state, RobotState.DOCKED);
+  client.stop();
+});
