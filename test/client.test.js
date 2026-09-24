@@ -6,7 +6,7 @@ const { once } = require('node:events');
 
 const { NarwalClient } = require('../lib/NarwalClient');
 const C = require('../lib/constants');
-const { decodeProto, parseFrame } = require('../lib/NarwalBinaryProtocol');
+const { NarwalBinaryProtocol, decodeProto, parseFrame } = require('../lib/NarwalBinaryProtocol');
 
 const { RobotState, FanSpeed } = C;
 
@@ -295,4 +295,37 @@ test('binary clean option suction overrides the saved fan speed for that run onl
   const frame = sent.find((f) => f.shortTopic === 'clean/start_clean');
   assert.strictEqual(startCleanFanLevel(frame), 5);
   assert.strictEqual(client.fanSpeed, FanSpeed.QUIET);
+});
+
+test('binary progress messages sent while docking do not flip a docked robot back to cleaning', () => {
+  // Order recorded from a Flow 2 (v01.09.10.02) arriving at the dock.
+  const { client } = binaryClientWithFakeSocket();
+  const base = (f3, f11, f47) => client._ingestBinaryStatus({
+    shortTopic: 'status/robot_base_status', decoded: { 3: f3, 11: f11, 47: f47 },
+  });
+  const progress = (decoded) => client._ingestBinaryStatus({ shortTopic: 'status/working_status', decoded });
+
+  base({ 1: 2, 4: 6 }, 1, 2);
+  let status = progress({ 2: 5.8001, 3: 660, 6: 3 });
+  assert.strictEqual(status.state, RobotState.CLEANING, 'off the dock the robot is cleaning');
+
+  base({ 1: 2, 4: 6 }, 3, 1);
+  status = progress({ 2: 5.8001, 3: 660, 6: 3 });
+  assert.strictEqual(status.state, RobotState.DOCKED);
+  assert.strictEqual(status.docked, true);
+  assert.strictEqual(status.currentRoomId, null);
+  assert.strictEqual(status.cleanArea, 5.8, 'final metrics are still recorded');
+
+  base({ 1: 19, 2: 1, 18: 4 }, 3, 1);
+  status = progress({ 6: 3, 13: 18000 });
+  assert.strictEqual(status.state, RobotState.DOCKED);
+  client.stop();
+});
+
+test('binary progress message with only a room id is not evidence of cleaning', () => {
+  const protocol = new NarwalBinaryProtocol({ productKey: 'QxMSPG6VSO', deviceId: 'device' });
+
+  const status = protocol.normalizeStatus({ 6: 3, 13: 18000 }, 'status/working_status');
+
+  assert.notStrictEqual(status.state, RobotState.CLEANING);
 });

@@ -81,11 +81,12 @@ test('binary base status normalizes Flow 2 dock and battery fields', () => {
 
 test('binary working status preserves partial cleaning metrics', () => {
   const protocol = new NarwalBinaryProtocol({ productKey: 'QxMSPG6VSO', deviceId: 'device' });
+  // Field 13 is a dock timer, not area, so only the elapsed time is known here.
   const status = protocol.normalizeStatus({ 3: 1800, 13: 125000 }, 'status/working_status');
 
   assert.strictEqual(status.state, RobotState.CLEANING);
   assert.strictEqual(status.cleanTime, 30);
-  assert.strictEqual(status.cleanArea, 12.5);
+  assert.strictEqual(status.cleanArea, null);
 });
 
 test('binary upgrade status exposes current firmware', () => {
@@ -216,4 +217,67 @@ test('binary start clean payload encodes mop-only wet cleans', () => {
   assert.strictEqual(param['3'], 2);
   assert.strictEqual(param['4'], 3);
   assert.strictEqual(param['6'], 2, 'mop pass count');
+});
+
+// Values below were recorded from a Flow 2 on firmware v01.09.10.02.
+
+test('binary base status: working status 2 while field 47 says off-dock is cleaning, not docked', () => {
+  const protocol = new NarwalBinaryProtocol({ productKey: 'QxMSPG6VSO', deviceId: 'device' });
+
+  const status = protocol.normalizeStatus({
+    2: 1119879168, 3: { 1: 2, 4: 6 }, 11: 1, 47: 2, 26: 2,
+  }, 'status/robot_base_status');
+
+  assert.strictEqual(status.state, RobotState.CLEANING);
+  assert.strictEqual(status.docked, false);
+  assert.strictEqual(status.charging, false);
+});
+
+test('binary base status: working status 2 on the dock is still docked', () => {
+  const protocol = new NarwalBinaryProtocol({ productKey: 'QxMSPG6VSO', deviceId: 'device' });
+
+  const status = protocol.normalizeStatus({ 3: { 1: 2, 4: 6 }, 11: 3, 47: 1 }, 'status/robot_base_status');
+
+  assert.strictEqual(status.state, RobotState.DOCKED);
+  assert.strictEqual(status.docked, true);
+});
+
+test('binary base status: task completed with a paused flag on the dock is docked, not paused', () => {
+  const protocol = new NarwalBinaryProtocol({ productKey: 'QxMSPG6VSO', deviceId: 'device' });
+
+  const status = protocol.normalizeStatus({
+    3: { 1: 19, 2: 1, 18: 4 }, 11: 3, 47: 1,
+  }, 'status/robot_base_status');
+
+  assert.strictEqual(status.state, RobotState.DOCKED);
+});
+
+test('binary base status keeps the current room while off the dock and clears it when docked', () => {
+  const protocol = new NarwalBinaryProtocol({ productKey: 'QxMSPG6VSO', deviceId: 'device' });
+
+  const cleaning = protocol.normalizeStatus({ 3: { 1: 2, 4: 6 }, 11: 1, 47: 2 }, 'status/robot_base_status');
+  const docked = protocol.normalizeStatus({ 3: { 1: 14, 12: 6 }, 11: 3, 47: 1 }, 'status/robot_base_status');
+
+  assert.strictEqual(cleaning.currentRoomId, undefined);
+  assert.strictEqual(docked.currentRoomId, null);
+});
+
+test('binary working status does not treat the dock timer in field 13 as cleaning area', () => {
+  const protocol = new NarwalBinaryProtocol({ productKey: 'QxMSPG6VSO', deviceId: 'device' });
+
+  // After docking: dock task fields and field 13 = 18000, no area (2) or time (3).
+  const status = protocol.normalizeStatus({
+    10: 1, 11: 5, 12: 0, 13: 18000,
+  }, 'status/working_status');
+
+  assert.strictEqual(status.cleanArea, null);
+  assert.notStrictEqual(status.state, RobotState.CLEANING);
+});
+
+test('binary upgrade status leaves the current room alone', () => {
+  const protocol = new NarwalBinaryProtocol({ productKey: 'QxMSPG6VSO', deviceId: 'device' });
+
+  const status = protocol.normalizeStatus({ 4: 10, 7: 'v01.09.10.02', 8: 'v01.09.10.02' }, 'upgrade/upgrade_status');
+
+  assert.strictEqual(status.currentRoomId, undefined);
 });
