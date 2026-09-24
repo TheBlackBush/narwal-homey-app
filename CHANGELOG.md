@@ -3,6 +3,11 @@
 All notable changes to this project are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [1.1.1] - 2026-09-24
+
+### Fixed
+- The Cleaning mode settings now show their selected values in the device settings on robots paired before 1.1.0, instead of "-".
+
 ## [1.1.0] - 2026-09-24
 
 ### Added
