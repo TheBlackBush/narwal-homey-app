@@ -281,3 +281,50 @@ test('binary upgrade status leaves the current room alone', () => {
 
   assert.strictEqual(status.currentRoomId, undefined);
 });
+
+test('binary base status: any explicit off-dock signal means not docked', () => {
+  const protocol = new NarwalBinaryProtocol({ productKey: 'QxMSPG6VSO', deviceId: 'device' });
+  const offDock = {
+    'field 11 = 1': { 3: { 1: 2 }, 11: 1 },
+    'field 47 = 2': { 3: { 1: 2 }, 47: 2 },
+    'dock presence 3.3 = 2': { 3: { 1: 2, 3: 2 } },
+    'dock sub-state 3.10 = 2': { 3: { 1: 2, 10: 2 } },
+  };
+
+  for (const [signal, decoded] of Object.entries(offDock)) {
+    const status = protocol.normalizeStatus(decoded, 'status/robot_base_status');
+    assert.strictEqual(status.docked, false, signal);
+    assert.strictEqual(status.state, RobotState.CLEANING, `${signal}: working status 2 off the dock is a running task`);
+  }
+});
+
+test('binary base status: a docked code with an off-dock signal is not reported as docked', () => {
+  const protocol = new NarwalBinaryProtocol({ productKey: 'QxMSPG6VSO', deviceId: 'device' });
+
+  const status = protocol.normalizeStatus({ 3: { 1: 10 }, 11: 1, 47: 2 }, 'status/robot_base_status');
+
+  assert.strictEqual(status.docked, false);
+  assert.notStrictEqual(status.state, RobotState.DOCKED);
+});
+
+test('binary base status regression table across firmware versions', () => {
+  const protocol = new NarwalBinaryProtocol({ productKey: 'QxMSPG6VSO', deviceId: 'device' });
+  const cases = [
+    // [firmware, situation, base status, expected state, expected docked]
+    ['old firmware', 'docked, status 10', { 3: { 1: 10, 10: 1, 12: 1 }, 11: 2, 47: 3 }, RobotState.DOCKED, true],
+    ['old firmware', 'cleaning, status 4', { 3: { 1: 4 }, 11: 1, 47: 2 }, RobotState.CLEANING, false],
+    ['old firmware', 'returning', { 3: { 1: 4, 7: 1, 10: 2 }, 11: 1, 47: 2 }, RobotState.RETURNING, false],
+    ['v01.07.23.00', 'docked, status 2', { 3: { 1: 2 }, 11: 3, 47: 1 }, RobotState.DOCKED, true],
+    ['v01.09.04.00', 'docked, status 1', { 3: { 1: 1, 3: 6 }, 11: 2, 47: 3 }, RobotState.IDLE, true],
+    ['v01.09.10.02', 'cleaning, status 2', { 3: { 1: 2, 4: 6 }, 11: 1, 47: 2 }, RobotState.CLEANING, false],
+    ['v01.09.10.02', 'arriving at dock, status 2', { 3: { 1: 2, 4: 6 }, 11: 3, 47: 1 }, RobotState.DOCKED, true],
+    ['v01.09.10.02', 'task completed on dock', { 3: { 1: 19, 2: 1, 18: 4 }, 11: 3, 47: 1 }, RobotState.DOCKED, true],
+    ['v01.09.10.02', 'docked, dock work', { 3: { 1: 14, 12: 6 }, 11: 3, 47: 1 }, RobotState.DOCKED, true],
+  ];
+
+  for (const [firmware, situation, decoded, state, docked] of cases) {
+    const status = protocol.normalizeStatus(decoded, 'status/robot_base_status');
+    assert.strictEqual(status.state, state, `${firmware} ${situation}: state`);
+    assert.strictEqual(status.docked, docked, `${firmware} ${situation}: docked`);
+  }
+});
