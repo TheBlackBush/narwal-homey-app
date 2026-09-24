@@ -3,6 +3,11 @@
 All notable changes to this project are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [1.1.3] - 2026-09-24
+
+### Changed
+- Docked detection now recognises every off-the-dock signal used across Narwal firmware versions, so robots on older and newer firmware report Docked, Charging and Status consistently.
+
 ## [1.1.2] - 2026-09-24
 
 ### Fixed

@@ -25,5 +25,8 @@
   },
   "1.1.2": {
     "en": "Fixed Status, Docked and Charging showing docked while the robot cleans on newer Flow 2 firmware, the current room going blank during a clean, a leftover 1.8 m² cleaning area after docking, and flipping between Cleaning and Docked while docking."
+  },
+  "1.1.3": {
+    "en": "Docked detection now recognises every off-the-dock signal used across Narwal firmware versions, so older and newer firmware report Docked, Charging and Status consistently."
   }
 }
