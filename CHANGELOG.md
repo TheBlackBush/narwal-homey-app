@@ -3,7 +3,7 @@
 All notable changes to this project are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
-## [Unreleased]
+## [1.0.14] - 2026-09-24
 
 ### Fixed
 - Fan speed now sets the selected suction level. Every level was previously one step too low, and Quiet sent no level at all.

@@ -1,0 +1,17 @@
+{
+  "1.0.0": {
+    "en": "Initial release: local control of Narwal robot vacuums over WebSocket — cleaning controls, fan speed, battery/charging/dock status, room cleaning with autocomplete, resilient reconnect, and a full set of Flow cards."
+  },
+  "1.0.11": {
+    "en": "Added the Narwal Map widget, removed Last update from the device sensor list, kept status timestamps internal for app/widget use, and improved widget packaging/validation."
+  },
+  "1.0.12": {
+    "en": "Improved the Narwal Map widget: map snapshots are now persisted for widget display after app restarts, empty/error states are clearer, and widget preview images were regenerated."
+  },
+  "1.0.13": {
+    "en": "Added Freo Z10 Pro / Turbo and Narwal Freo 20 drivers, refreshed app and driver images, corrected Freo 20/JX compatibility metadata, improved selected-room cleaning with active map ids, added current-room status, expanded compatibility discovery, and updated project docs."
+  },
+  "1.0.14": {
+    "en": "Fixed fan speed setting one level too low, live status and map stopping after about 10 minutes of cleaning, custom room cleans and remapping not showing as cleaning, and a docked robot staying on returning after finishing a task."
+  }
+}
