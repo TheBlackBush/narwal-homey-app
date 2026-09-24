@@ -1,6 +1,7 @@
 'use strict';
 
 const Homey = require('homey');
+const { resultSuffix, pickIPv4, matchesDeviceId } = require('./lib/Discovery');
 
 /**
  * Narwal app entry point.
@@ -18,10 +19,39 @@ class NarwalApp extends Homey.App {
     process.on('unhandledRejection', (reason) => {
       this.error('Unhandled rejection:', reason);
     });
+
+    // Follow robots that move to a new IP. Discovery is optional: robots that
+    // never appear in mDNS keep their saved IP.
+    try {
+      this._discoveryStrategy = this.homey.discovery.getStrategy('narwal');
+      this._discoveryStrategy.on('result', (result) => this._onDiscoveryResult(result));
+    } catch (err) {
+      this.log(`mDNS discovery unavailable: ${err.message}`);
+    }
+  }
+
+  _onDiscoveryResult(result, devices = this._narwalDevices) {
+    const suffix = resultSuffix(result);
+    const ip = pickIPv4(result);
+    if (!suffix || !ip) return;
+    for (const device of devices) {
+      if (matchesDeviceId(device.getStoreValue('deviceId'), suffix)) {
+        device.onDiscoveredAddress(ip).catch((err) => this.error('IP update failed:', err.message));
+      }
+    }
+  }
+
+  // Devices start after the app, so check robots already found when each
+  // device registers, not only on new discovery results.
+  _checkDiscoveredAddress(device) {
+    if (!this._discoveryStrategy) return;
+    const results = Object.values(this._discoveryStrategy.getDiscoveryResults() || {});
+    for (const result of results) this._onDiscoveryResult(result, [device]);
   }
 
   registerNarwalDevice(device) {
     this._narwalDevices.add(device);
+    this._checkDiscoveredAddress(device);
   }
 
   unregisterNarwalDevice(device) {
