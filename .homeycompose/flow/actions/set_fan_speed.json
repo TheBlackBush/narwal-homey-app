@@ -1,0 +1,44 @@
+{
+  "title": {
+    "en": "Set fan speed"
+  },
+  "titleFormatted": {
+    "en": "[[device]]: Set fan speed to [[fan_speed]]"
+  },
+  "args": [
+    {
+      "type": "device",
+      "name": "device"
+    },
+    {
+      "name": "fan_speed",
+      "type": "dropdown",
+      "values": [
+        {
+          "id": "quiet",
+          "label": {
+            "en": "Quiet"
+          }
+        },
+        {
+          "id": "normal",
+          "label": {
+            "en": "Normal"
+          }
+        },
+        {
+          "id": "strong",
+          "label": {
+            "en": "Strong"
+          }
+        },
+        {
+          "id": "max",
+          "label": {
+            "en": "Max"
+          }
+        }
+      ]
+    }
+  ]
+}

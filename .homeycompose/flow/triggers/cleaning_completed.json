@@ -1,0 +1,32 @@
+{
+  "title": {
+    "en": "Cleaning completed"
+  },
+  "tokens": [
+    {
+      "name": "area",
+      "type": "number",
+      "title": {
+        "en": "Area (m\u00b2)"
+      },
+      "example": 42.5
+    },
+    {
+      "name": "duration",
+      "type": "number",
+      "title": {
+        "en": "Duration (min)"
+      },
+      "example": 38
+    }
+  ],
+  "args": [
+    {
+      "type": "device",
+      "name": "device"
+    }
+  ],
+  "titleFormatted": {
+    "en": "[[device]]: Cleaning completed"
+  }
+}

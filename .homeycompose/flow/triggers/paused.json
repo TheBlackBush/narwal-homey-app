@@ -1,0 +1,14 @@
+{
+  "title": {
+    "en": "Robot paused"
+  },
+  "args": [
+    {
+      "type": "device",
+      "name": "device"
+    }
+  ],
+  "titleFormatted": {
+    "en": "[[device]]: Robot paused"
+  }
+}

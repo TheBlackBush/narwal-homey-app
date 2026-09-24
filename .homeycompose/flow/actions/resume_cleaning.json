@@ -1,0 +1,14 @@
+{
+  "title": {
+    "en": "Resume cleaning"
+  },
+  "args": [
+    {
+      "type": "device",
+      "name": "device"
+    }
+  ],
+  "titleFormatted": {
+    "en": "[[device]]: Resume cleaning"
+  }
+}

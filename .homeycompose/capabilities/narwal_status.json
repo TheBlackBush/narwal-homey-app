@@ -1,0 +1,13 @@
+{
+  "type": "string",
+  "title": {
+    "en": "Status"
+  },
+  "desc": {
+    "en": "Readable robot status"
+  },
+  "getable": true,
+  "setable": false,
+  "uiComponent": "sensor",
+  "icon": "/assets/capabilities/narwal-status.svg"
+}

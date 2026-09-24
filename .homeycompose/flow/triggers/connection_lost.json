@@ -1,0 +1,14 @@
+{
+  "title": {
+    "en": "Connection lost"
+  },
+  "args": [
+    {
+      "type": "device",
+      "name": "device"
+    }
+  ],
+  "titleFormatted": {
+    "en": "[[device]]: Connection lost"
+  }
+}

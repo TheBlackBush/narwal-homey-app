@@ -1,0 +1,14 @@
+{
+  "title": {
+    "en": "Clean default rooms"
+  },
+  "titleFormatted": {
+    "en": "[[device]]: Clean default rooms"
+  },
+  "args": [
+    {
+      "type": "device",
+      "name": "device"
+    }
+  ]
+}

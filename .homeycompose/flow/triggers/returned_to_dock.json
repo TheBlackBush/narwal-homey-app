@@ -1,0 +1,14 @@
+{
+  "title": {
+    "en": "Robot returned to dock"
+  },
+  "args": [
+    {
+      "type": "device",
+      "name": "device"
+    }
+  ],
+  "titleFormatted": {
+    "en": "[[device]]: Robot returned to dock"
+  }
+}

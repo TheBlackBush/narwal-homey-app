@@ -1,0 +1,14 @@
+{
+  "title": {
+    "en": "Refresh rooms / map"
+  },
+  "args": [
+    {
+      "type": "device",
+      "name": "device"
+    }
+  ],
+  "titleFormatted": {
+    "en": "[[device]]: Refresh rooms / map"
+  }
+}

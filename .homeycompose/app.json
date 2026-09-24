@@ -1,0 +1,60 @@
+{
+  "id": "com.narwal",
+  "version": "1.0.13",
+  "compatibility": ">=12.4.0",
+  "sdk": 3,
+  "platforms": [
+    "local"
+  ],
+  "name": {
+    "en": "Narwal"
+  },
+  "description": {
+    "en": "Local Homey control for Narwal robot vacuums and mops."
+  },
+  "category": [
+    "appliances"
+  ],
+  "tags": {
+    "en": [
+      "narwal",
+      "freo",
+      "robot vacuum",
+      "vacuum",
+      "local",
+      "cleaning"
+    ]
+  },
+  "brandColor": "#683df5",
+  "images": {
+    "small": "/assets/images/small.png",
+    "large": "/assets/images/large.png",
+    "xlarge": "/assets/images/xlarge.png"
+  },
+  "author": {
+    "name": "Idan Bush"
+  },
+  "homepage": "https://github.com/TheBlackBush/narwal-homey-app",
+  "source": "https://github.com/TheBlackBush/narwal-homey-app",
+  "bugs": {
+    "url": "https://github.com/TheBlackBush/narwal-homey-app/issues"
+  },
+  "support": "https://github.com/TheBlackBush/narwal-homey-app/issues",
+  "contributing": {
+    "donate": {
+      "paypal": {
+        "username": "idanbush"
+      }
+    }
+  },
+  "api": {
+    "getDevices": {
+      "method": "GET",
+      "path": "/devices"
+    },
+    "refreshRoomsMap": {
+      "method": "POST",
+      "path": "/refresh-rooms-map"
+    }
+  }
+}

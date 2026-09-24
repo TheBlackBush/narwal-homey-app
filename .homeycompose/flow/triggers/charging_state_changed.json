@@ -1,0 +1,23 @@
+{
+  "title": {
+    "en": "Charging state changed"
+  },
+  "tokens": [
+    {
+      "name": "charging",
+      "type": "boolean",
+      "title": {
+        "en": "Charging"
+      }
+    }
+  ],
+  "args": [
+    {
+      "type": "device",
+      "name": "device"
+    }
+  ],
+  "titleFormatted": {
+    "en": "[[device]]: Charging state changed"
+  }
+}

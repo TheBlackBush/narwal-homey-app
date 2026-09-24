@@ -1,0 +1,1941 @@
+{
+  "_comment": "This file is generated. Please edit .homeycompose/app.json instead.",
+  "id": "com.narwal",
+  "version": "1.0.13",
+  "compatibility": ">=12.4.0",
+  "sdk": 3,
+  "platforms": [
+    "local"
+  ],
+  "name": {
+    "en": "Narwal"
+  },
+  "description": {
+    "en": "Local Homey control for Narwal robot vacuums and mops."
+  },
+  "category": [
+    "appliances"
+  ],
+  "tags": {
+    "en": [
+      "narwal",
+      "freo",
+      "robot vacuum",
+      "vacuum",
+      "local",
+      "cleaning"
+    ]
+  },
+  "brandColor": "#683df5",
+  "images": {
+    "small": "/assets/images/small.png",
+    "large": "/assets/images/large.png",
+    "xlarge": "/assets/images/xlarge.png"
+  },
+  "author": {
+    "name": "Idan Bush"
+  },
+  "homepage": "https://github.com/TheBlackBush/narwal-homey-app",
+  "source": "https://github.com/TheBlackBush/narwal-homey-app",
+  "bugs": {
+    "url": "https://github.com/TheBlackBush/narwal-homey-app/issues"
+  },
+  "support": "https://github.com/TheBlackBush/narwal-homey-app/issues",
+  "contributing": {
+    "donate": {
+      "paypal": {
+        "username": "idanbush"
+      }
+    }
+  },
+  "api": {
+    "getDevices": {
+      "method": "GET",
+      "path": "/devices"
+    },
+    "refreshRoomsMap": {
+      "method": "POST",
+      "path": "/refresh-rooms-map"
+    }
+  },
+  "flow": {
+    "triggers": [
+      {
+        "title": {
+          "en": "Battery level changed"
+        },
+        "tokens": [
+          {
+            "name": "battery",
+            "type": "number",
+            "title": {
+              "en": "Battery"
+            },
+            "example": 80
+          }
+        ],
+        "args": [
+          {
+            "type": "device",
+            "name": "device"
+          }
+        ],
+        "titleFormatted": {
+          "en": "[[device]]: Battery level changed"
+        },
+        "id": "battery_level_changed"
+      },
+      {
+        "title": {
+          "en": "Charging state changed"
+        },
+        "tokens": [
+          {
+            "name": "charging",
+            "type": "boolean",
+            "title": {
+              "en": "Charging"
+            }
+          }
+        ],
+        "args": [
+          {
+            "type": "device",
+            "name": "device"
+          }
+        ],
+        "titleFormatted": {
+          "en": "[[device]]: Charging state changed"
+        },
+        "id": "charging_state_changed"
+      },
+      {
+        "title": {
+          "en": "Cleaning completed"
+        },
+        "tokens": [
+          {
+            "name": "area",
+            "type": "number",
+            "title": {
+              "en": "Area (m²)"
+            },
+            "example": 42.5
+          },
+          {
+            "name": "duration",
+            "type": "number",
+            "title": {
+              "en": "Duration (min)"
+            },
+            "example": 38
+          }
+        ],
+        "args": [
+          {
+            "type": "device",
+            "name": "device"
+          }
+        ],
+        "titleFormatted": {
+          "en": "[[device]]: Cleaning completed"
+        },
+        "id": "cleaning_completed"
+      },
+      {
+        "title": {
+          "en": "Connection lost"
+        },
+        "args": [
+          {
+            "type": "device",
+            "name": "device"
+          }
+        ],
+        "titleFormatted": {
+          "en": "[[device]]: Connection lost"
+        },
+        "id": "connection_lost"
+      },
+      {
+        "title": {
+          "en": "Connection restored"
+        },
+        "args": [
+          {
+            "type": "device",
+            "name": "device"
+          }
+        ],
+        "titleFormatted": {
+          "en": "[[device]]: Connection restored"
+        },
+        "id": "connection_restored"
+      },
+      {
+        "title": {
+          "en": "Robot docked"
+        },
+        "args": [
+          {
+            "type": "device",
+            "name": "device"
+          }
+        ],
+        "titleFormatted": {
+          "en": "[[device]]: Robot docked"
+        },
+        "id": "docked"
+      },
+      {
+        "title": {
+          "en": "Robot paused"
+        },
+        "args": [
+          {
+            "type": "device",
+            "name": "device"
+          }
+        ],
+        "titleFormatted": {
+          "en": "[[device]]: Robot paused"
+        },
+        "id": "paused"
+      },
+      {
+        "title": {
+          "en": "Robot resumed"
+        },
+        "args": [
+          {
+            "type": "device",
+            "name": "device"
+          }
+        ],
+        "titleFormatted": {
+          "en": "[[device]]: Robot resumed"
+        },
+        "id": "resumed"
+      },
+      {
+        "title": {
+          "en": "Robot returned to dock"
+        },
+        "args": [
+          {
+            "type": "device",
+            "name": "device"
+          }
+        ],
+        "titleFormatted": {
+          "en": "[[device]]: Robot returned to dock"
+        },
+        "id": "returned_to_dock"
+      },
+      {
+        "title": {
+          "en": "Robot started cleaning"
+        },
+        "args": [
+          {
+            "type": "device",
+            "name": "device"
+          }
+        ],
+        "titleFormatted": {
+          "en": "[[device]]: Robot started cleaning"
+        },
+        "id": "started_cleaning"
+      },
+      {
+        "title": {
+          "en": "Robot stopped"
+        },
+        "args": [
+          {
+            "type": "device",
+            "name": "device"
+          }
+        ],
+        "titleFormatted": {
+          "en": "[[device]]: Robot stopped"
+        },
+        "id": "stopped"
+      },
+      {
+        "title": {
+          "en": "Robot undocked"
+        },
+        "args": [
+          {
+            "type": "device",
+            "name": "device"
+          }
+        ],
+        "titleFormatted": {
+          "en": "[[device]]: Robot undocked"
+        },
+        "id": "undocked"
+      }
+    ],
+    "conditions": [
+      {
+        "title": {
+          "en": "Battery !{{is|is not}} above [[percent]]%"
+        },
+        "titleFormatted": {
+          "en": "[[device]]: Battery !{{is|is not}} above [[percent]]%"
+        },
+        "args": [
+          {
+            "type": "device",
+            "name": "device"
+          },
+          {
+            "name": "percent",
+            "type": "number",
+            "min": 0,
+            "max": 100,
+            "step": 1,
+            "placeholder": {
+              "en": "50"
+            }
+          }
+        ],
+        "id": "battery_above"
+      },
+      {
+        "title": {
+          "en": "Robot !{{is|is not}} charging"
+        },
+        "args": [
+          {
+            "type": "device",
+            "name": "device"
+          }
+        ],
+        "titleFormatted": {
+          "en": "[[device]]: Robot !{{is|is not}} charging"
+        },
+        "id": "is_charging"
+      },
+      {
+        "title": {
+          "en": "Robot !{{is|is not}} cleaning"
+        },
+        "args": [
+          {
+            "type": "device",
+            "name": "device"
+          }
+        ],
+        "titleFormatted": {
+          "en": "[[device]]: Robot !{{is|is not}} cleaning"
+        },
+        "id": "is_cleaning"
+      },
+      {
+        "title": {
+          "en": "Robot !{{is|is not}} connected"
+        },
+        "args": [
+          {
+            "type": "device",
+            "name": "device"
+          }
+        ],
+        "titleFormatted": {
+          "en": "[[device]]: Robot !{{is|is not}} connected"
+        },
+        "id": "is_connected"
+      },
+      {
+        "title": {
+          "en": "Robot !{{is|is not}} docked"
+        },
+        "args": [
+          {
+            "type": "device",
+            "name": "device"
+          }
+        ],
+        "titleFormatted": {
+          "en": "[[device]]: Robot !{{is|is not}} docked"
+        },
+        "id": "is_docked"
+      }
+    ],
+    "actions": [
+      {
+        "title": {
+          "en": "Clean default rooms"
+        },
+        "titleFormatted": {
+          "en": "[[device]]: Clean default rooms"
+        },
+        "args": [
+          {
+            "type": "device",
+            "name": "device"
+          }
+        ],
+        "id": "clean_default_rooms"
+      },
+      {
+        "title": {
+          "en": "Clean selected room"
+        },
+        "titleFormatted": {
+          "en": "[[device]]: Clean room [[room]]"
+        },
+        "args": [
+          {
+            "type": "device",
+            "name": "device"
+          },
+          {
+            "name": "room",
+            "type": "autocomplete",
+            "placeholder": {
+              "en": "Select a room"
+            }
+          }
+        ],
+        "id": "clean_room"
+      },
+      {
+        "title": {
+          "en": "Locate robot"
+        },
+        "args": [
+          {
+            "type": "device",
+            "name": "device"
+          }
+        ],
+        "titleFormatted": {
+          "en": "[[device]]: Locate robot"
+        },
+        "id": "locate_robot"
+      },
+      {
+        "title": {
+          "en": "Pause cleaning"
+        },
+        "args": [
+          {
+            "type": "device",
+            "name": "device"
+          }
+        ],
+        "titleFormatted": {
+          "en": "[[device]]: Pause cleaning"
+        },
+        "id": "pause_cleaning"
+      },
+      {
+        "title": {
+          "en": "Refresh rooms / map"
+        },
+        "args": [
+          {
+            "type": "device",
+            "name": "device"
+          }
+        ],
+        "titleFormatted": {
+          "en": "[[device]]: Refresh rooms / map"
+        },
+        "id": "refresh_rooms_map"
+      },
+      {
+        "title": {
+          "en": "Refresh robot status"
+        },
+        "args": [
+          {
+            "type": "device",
+            "name": "device"
+          }
+        ],
+        "titleFormatted": {
+          "en": "[[device]]: Refresh robot status"
+        },
+        "id": "refresh_status"
+      },
+      {
+        "title": {
+          "en": "Resume cleaning"
+        },
+        "args": [
+          {
+            "type": "device",
+            "name": "device"
+          }
+        ],
+        "titleFormatted": {
+          "en": "[[device]]: Resume cleaning"
+        },
+        "id": "resume_cleaning"
+      },
+      {
+        "title": {
+          "en": "Return to dock"
+        },
+        "args": [
+          {
+            "type": "device",
+            "name": "device"
+          }
+        ],
+        "titleFormatted": {
+          "en": "[[device]]: Return to dock"
+        },
+        "id": "return_to_dock"
+      },
+      {
+        "title": {
+          "en": "Set fan speed"
+        },
+        "titleFormatted": {
+          "en": "[[device]]: Set fan speed to [[fan_speed]]"
+        },
+        "args": [
+          {
+            "type": "device",
+            "name": "device"
+          },
+          {
+            "name": "fan_speed",
+            "type": "dropdown",
+            "values": [
+              {
+                "id": "quiet",
+                "label": {
+                  "en": "Quiet"
+                }
+              },
+              {
+                "id": "normal",
+                "label": {
+                  "en": "Normal"
+                }
+              },
+              {
+                "id": "strong",
+                "label": {
+                  "en": "Strong"
+                }
+              },
+              {
+                "id": "max",
+                "label": {
+                  "en": "Max"
+                }
+              }
+            ]
+          }
+        ],
+        "id": "set_fan_speed"
+      },
+      {
+        "title": {
+          "en": "Start cleaning"
+        },
+        "args": [
+          {
+            "type": "device",
+            "name": "device"
+          }
+        ],
+        "titleFormatted": {
+          "en": "[[device]]: Start cleaning"
+        },
+        "id": "start_cleaning"
+      },
+      {
+        "title": {
+          "en": "Stop cleaning"
+        },
+        "args": [
+          {
+            "type": "device",
+            "name": "device"
+          }
+        ],
+        "titleFormatted": {
+          "en": "[[device]]: Stop cleaning"
+        },
+        "id": "stop_cleaning"
+      }
+    ]
+  },
+  "drivers": [
+    {
+      "name": {
+        "en": "Narwal Freo 20"
+      },
+      "class": "vacuumcleaner",
+      "images": {
+        "small": "/drivers/freo_20/assets/images/small.png",
+        "large": "/drivers/freo_20/assets/images/large.png",
+        "xlarge": "/drivers/freo_20/assets/images/xlarge.png"
+      },
+      "capabilities": [
+        "vacuumcleaner_state",
+        "measure_battery",
+        "narwal_status",
+        "narwal_fan_speed",
+        "button.dock",
+        "button.locate",
+        "button.start",
+        "button.pause",
+        "button.resume",
+        "button.stop",
+        "narwal_connected",
+        "narwal_docked",
+        "narwal_charging",
+        "narwal_clean_area",
+        "narwal_clean_time",
+        "narwal_current_room",
+        "narwal_last_error",
+        "narwal_firmware"
+      ],
+      "capabilitiesOptions": {
+        "button.start": {
+          "title": {
+            "en": "Start cleaning"
+          },
+          "desc": {
+            "en": "Start a full cleaning cycle"
+          }
+        },
+        "button.pause": {
+          "title": {
+            "en": "Pause"
+          },
+          "desc": {
+            "en": "Pause the current cleaning cycle"
+          }
+        },
+        "button.resume": {
+          "title": {
+            "en": "Resume"
+          },
+          "desc": {
+            "en": "Resume a paused cleaning cycle"
+          }
+        },
+        "button.stop": {
+          "title": {
+            "en": "Stop"
+          },
+          "desc": {
+            "en": "Stop cleaning"
+          }
+        },
+        "button.dock": {
+          "title": {
+            "en": "Return to dock"
+          },
+          "desc": {
+            "en": "Send the robot back to its dock"
+          }
+        },
+        "button.locate": {
+          "title": {
+            "en": "Locate"
+          },
+          "desc": {
+            "en": "Make the robot announce its location"
+          }
+        }
+      },
+      "pair": [
+        {
+          "id": "connect"
+        }
+      ],
+      "settings": [
+        {
+          "type": "group",
+          "label": {
+            "en": "Connection"
+          },
+          "children": [
+            {
+              "id": "ip",
+              "type": "text",
+              "label": {
+                "en": "Robot IP address"
+              },
+              "value": "",
+              "hint": {
+                "en": "The local IP of your robot. Use a DHCP reservation so the address does not change."
+              }
+            },
+            {
+              "id": "port",
+              "type": "number",
+              "label": {
+                "en": "Local port"
+              },
+              "value": 9002,
+              "min": 1,
+              "max": 65535,
+              "hint": {
+                "en": "Local WebSocket port. Default is 9002."
+              }
+            }
+          ]
+        },
+        {
+          "type": "group",
+          "label": {
+            "en": "Default cleaning"
+          },
+          "children": [
+            {
+              "id": "use_default_rooms_for_start",
+              "type": "checkbox",
+              "label": {
+                "en": "Use default rooms for Start cleaning"
+              },
+              "value": true,
+              "hint": {
+                "en": "When enabled, Start cleaning uses the Default room IDs. Turn off only when you want Start cleaning to clean the whole home."
+              }
+            },
+            {
+              "id": "default_room_ids",
+              "type": "text",
+              "label": {
+                "en": "Default room IDs"
+              },
+              "value": "",
+              "hint": {
+                "en": "Comma-separated room IDs, for example 3,4,5. Use the map widget or discovered room list to choose rooms."
+              }
+            },
+            {
+              "id": "cached_rooms_summary",
+              "type": "textarea",
+              "label": {
+                "en": "Discovered rooms"
+              },
+              "value": "No rooms cached yet. Open App Settings and press Refresh rooms / map.",
+              "hint": {
+                "en": "Read this list to find room IDs for Default room IDs. Refresh rooms/map from App Settings to update it."
+              }
+            }
+          ]
+        },
+        {
+          "type": "group",
+          "label": {
+            "en": "Advanced"
+          },
+          "children": [
+            {
+              "id": "poll_interval",
+              "type": "number",
+              "label": {
+                "en": "Refresh interval"
+              },
+              "value": 60,
+              "min": 30,
+              "max": 600,
+              "hint": {
+                "en": "How often Homey asks the robot for status when live updates are not received."
+              }
+            }
+          ]
+        }
+      ],
+      "energy": {
+        "batteries": [
+          "INTERNAL"
+        ]
+      },
+      "id": "freo_20"
+    },
+    {
+      "name": {
+        "en": "Freo X10 Pro"
+      },
+      "class": "vacuumcleaner",
+      "images": {
+        "small": "/drivers/freo_x10_pro/assets/images/small.png",
+        "large": "/drivers/freo_x10_pro/assets/images/large.png",
+        "xlarge": "/drivers/freo_x10_pro/assets/images/xlarge.png"
+      },
+      "capabilities": [
+        "vacuumcleaner_state",
+        "measure_battery",
+        "narwal_status",
+        "narwal_fan_speed",
+        "button.dock",
+        "button.locate",
+        "button.start",
+        "button.pause",
+        "button.resume",
+        "button.stop",
+        "narwal_connected",
+        "narwal_docked",
+        "narwal_charging",
+        "narwal_clean_area",
+        "narwal_clean_time",
+        "narwal_current_room",
+        "narwal_last_error",
+        "narwal_firmware"
+      ],
+      "capabilitiesOptions": {
+        "button.start": {
+          "title": {
+            "en": "Start cleaning"
+          },
+          "desc": {
+            "en": "Start a full cleaning cycle"
+          }
+        },
+        "button.pause": {
+          "title": {
+            "en": "Pause"
+          },
+          "desc": {
+            "en": "Pause the current cleaning cycle"
+          }
+        },
+        "button.resume": {
+          "title": {
+            "en": "Resume"
+          },
+          "desc": {
+            "en": "Resume a paused cleaning cycle"
+          }
+        },
+        "button.stop": {
+          "title": {
+            "en": "Stop"
+          },
+          "desc": {
+            "en": "Stop cleaning"
+          }
+        },
+        "button.dock": {
+          "title": {
+            "en": "Return to dock"
+          },
+          "desc": {
+            "en": "Send the robot back to its dock"
+          }
+        },
+        "button.locate": {
+          "title": {
+            "en": "Locate"
+          },
+          "desc": {
+            "en": "Make the robot announce its location"
+          }
+        }
+      },
+      "pair": [
+        {
+          "id": "connect"
+        }
+      ],
+      "settings": [
+        {
+          "type": "group",
+          "label": {
+            "en": "Connection"
+          },
+          "children": [
+            {
+              "id": "ip",
+              "type": "text",
+              "label": {
+                "en": "Robot IP address"
+              },
+              "value": "",
+              "hint": {
+                "en": "The local IP of your robot. Use a DHCP reservation so the address does not change."
+              }
+            },
+            {
+              "id": "port",
+              "type": "number",
+              "label": {
+                "en": "Local port"
+              },
+              "value": 9002,
+              "min": 1,
+              "max": 65535,
+              "hint": {
+                "en": "Local WebSocket port. Default is 9002."
+              }
+            }
+          ]
+        },
+        {
+          "type": "group",
+          "label": {
+            "en": "Default cleaning"
+          },
+          "children": [
+            {
+              "id": "use_default_rooms_for_start",
+              "type": "checkbox",
+              "label": {
+                "en": "Use default rooms for Start cleaning"
+              },
+              "value": true,
+              "hint": {
+                "en": "When enabled, Start cleaning uses the Default room IDs. Turn off only when you want Start cleaning to clean the whole home."
+              }
+            },
+            {
+              "id": "default_room_ids",
+              "type": "text",
+              "label": {
+                "en": "Default room IDs"
+              },
+              "value": "",
+              "hint": {
+                "en": "Comma-separated room IDs, for example 3,4,5. Use the map widget or discovered room list to choose rooms."
+              }
+            },
+            {
+              "id": "cached_rooms_summary",
+              "type": "textarea",
+              "label": {
+                "en": "Discovered rooms"
+              },
+              "value": "No rooms cached yet. Open App Settings and press Refresh rooms / map.",
+              "hint": {
+                "en": "Read this list to find room IDs for Default room IDs. Refresh rooms/map from App Settings to update it."
+              }
+            }
+          ]
+        },
+        {
+          "type": "group",
+          "label": {
+            "en": "Advanced"
+          },
+          "children": [
+            {
+              "id": "poll_interval",
+              "type": "number",
+              "label": {
+                "en": "Refresh interval"
+              },
+              "value": 60,
+              "min": 30,
+              "max": 600,
+              "hint": {
+                "en": "How often Homey asks the robot for status when live updates are not received."
+              }
+            }
+          ]
+        }
+      ],
+      "energy": {
+        "batteries": [
+          "INTERNAL"
+        ]
+      },
+      "id": "freo_x10_pro"
+    },
+    {
+      "name": {
+        "en": "Freo Z10 Pro / Turbo"
+      },
+      "class": "vacuumcleaner",
+      "images": {
+        "small": "/drivers/freo_z10_pro_turbo/assets/images/small.png",
+        "large": "/drivers/freo_z10_pro_turbo/assets/images/large.png",
+        "xlarge": "/drivers/freo_z10_pro_turbo/assets/images/xlarge.png"
+      },
+      "capabilities": [
+        "vacuumcleaner_state",
+        "measure_battery",
+        "narwal_status",
+        "narwal_fan_speed",
+        "button.dock",
+        "button.locate",
+        "button.start",
+        "button.pause",
+        "button.resume",
+        "button.stop",
+        "narwal_connected",
+        "narwal_docked",
+        "narwal_charging",
+        "narwal_clean_area",
+        "narwal_clean_time",
+        "narwal_current_room",
+        "narwal_last_error",
+        "narwal_firmware"
+      ],
+      "capabilitiesOptions": {
+        "button.start": {
+          "title": {
+            "en": "Start cleaning"
+          },
+          "desc": {
+            "en": "Start a full cleaning cycle"
+          }
+        },
+        "button.pause": {
+          "title": {
+            "en": "Pause"
+          },
+          "desc": {
+            "en": "Pause the current cleaning cycle"
+          }
+        },
+        "button.resume": {
+          "title": {
+            "en": "Resume"
+          },
+          "desc": {
+            "en": "Resume a paused cleaning cycle"
+          }
+        },
+        "button.stop": {
+          "title": {
+            "en": "Stop"
+          },
+          "desc": {
+            "en": "Stop cleaning"
+          }
+        },
+        "button.dock": {
+          "title": {
+            "en": "Return to dock"
+          },
+          "desc": {
+            "en": "Send the robot back to its dock"
+          }
+        },
+        "button.locate": {
+          "title": {
+            "en": "Locate"
+          },
+          "desc": {
+            "en": "Make the robot announce its location"
+          }
+        }
+      },
+      "pair": [
+        {
+          "id": "connect"
+        }
+      ],
+      "settings": [
+        {
+          "type": "group",
+          "label": {
+            "en": "Connection"
+          },
+          "children": [
+            {
+              "id": "ip",
+              "type": "text",
+              "label": {
+                "en": "Robot IP address"
+              },
+              "value": "",
+              "hint": {
+                "en": "The local IP of your robot. Use a DHCP reservation so the address does not change."
+              }
+            },
+            {
+              "id": "port",
+              "type": "number",
+              "label": {
+                "en": "Local port"
+              },
+              "value": 9002,
+              "min": 1,
+              "max": 65535,
+              "hint": {
+                "en": "Local WebSocket port. Default is 9002."
+              }
+            }
+          ]
+        },
+        {
+          "type": "group",
+          "label": {
+            "en": "Default cleaning"
+          },
+          "children": [
+            {
+              "id": "use_default_rooms_for_start",
+              "type": "checkbox",
+              "label": {
+                "en": "Use default rooms for Start cleaning"
+              },
+              "value": true,
+              "hint": {
+                "en": "When enabled, Start cleaning uses the Default room IDs. Turn off only when you want Start cleaning to clean the whole home."
+              }
+            },
+            {
+              "id": "default_room_ids",
+              "type": "text",
+              "label": {
+                "en": "Default room IDs"
+              },
+              "value": "",
+              "hint": {
+                "en": "Comma-separated room IDs, for example 3,4,5. Use the map widget or discovered room list to choose rooms."
+              }
+            },
+            {
+              "id": "cached_rooms_summary",
+              "type": "textarea",
+              "label": {
+                "en": "Discovered rooms"
+              },
+              "value": "No rooms cached yet. Open App Settings and press Refresh rooms / map.",
+              "hint": {
+                "en": "Read this list to find room IDs for Default room IDs. Refresh rooms/map from App Settings to update it."
+              }
+            }
+          ]
+        },
+        {
+          "type": "group",
+          "label": {
+            "en": "Advanced"
+          },
+          "children": [
+            {
+              "id": "poll_interval",
+              "type": "number",
+              "label": {
+                "en": "Refresh interval"
+              },
+              "value": 60,
+              "min": 30,
+              "max": 600,
+              "hint": {
+                "en": "How often Homey asks the robot for status when live updates are not received."
+              }
+            }
+          ]
+        }
+      ],
+      "energy": {
+        "batteries": [
+          "INTERNAL"
+        ]
+      },
+      "id": "freo_z10_pro_turbo"
+    },
+    {
+      "name": {
+        "en": "Freo Z10 Ultra"
+      },
+      "class": "vacuumcleaner",
+      "images": {
+        "small": "/drivers/freo_z10_ultra/assets/images/small.png",
+        "large": "/drivers/freo_z10_ultra/assets/images/large.png",
+        "xlarge": "/drivers/freo_z10_ultra/assets/images/xlarge.png"
+      },
+      "capabilities": [
+        "vacuumcleaner_state",
+        "measure_battery",
+        "narwal_status",
+        "narwal_fan_speed",
+        "button.dock",
+        "button.locate",
+        "button.start",
+        "button.pause",
+        "button.resume",
+        "button.stop",
+        "narwal_connected",
+        "narwal_docked",
+        "narwal_charging",
+        "narwal_clean_area",
+        "narwal_clean_time",
+        "narwal_current_room",
+        "narwal_last_error",
+        "narwal_firmware"
+      ],
+      "capabilitiesOptions": {
+        "button.start": {
+          "title": {
+            "en": "Start cleaning"
+          },
+          "desc": {
+            "en": "Start a full cleaning cycle"
+          }
+        },
+        "button.pause": {
+          "title": {
+            "en": "Pause"
+          },
+          "desc": {
+            "en": "Pause the current cleaning cycle"
+          }
+        },
+        "button.resume": {
+          "title": {
+            "en": "Resume"
+          },
+          "desc": {
+            "en": "Resume a paused cleaning cycle"
+          }
+        },
+        "button.stop": {
+          "title": {
+            "en": "Stop"
+          },
+          "desc": {
+            "en": "Stop cleaning"
+          }
+        },
+        "button.dock": {
+          "title": {
+            "en": "Return to dock"
+          },
+          "desc": {
+            "en": "Send the robot back to its dock"
+          }
+        },
+        "button.locate": {
+          "title": {
+            "en": "Locate"
+          },
+          "desc": {
+            "en": "Make the robot announce its location"
+          }
+        }
+      },
+      "pair": [
+        {
+          "id": "connect"
+        }
+      ],
+      "settings": [
+        {
+          "type": "group",
+          "label": {
+            "en": "Connection"
+          },
+          "children": [
+            {
+              "id": "ip",
+              "type": "text",
+              "label": {
+                "en": "Robot IP address"
+              },
+              "value": "",
+              "hint": {
+                "en": "The local IP of your robot. Use a DHCP reservation so the address does not change."
+              }
+            },
+            {
+              "id": "port",
+              "type": "number",
+              "label": {
+                "en": "Local port"
+              },
+              "value": 9002,
+              "min": 1,
+              "max": 65535,
+              "hint": {
+                "en": "Local WebSocket port. Default is 9002."
+              }
+            }
+          ]
+        },
+        {
+          "type": "group",
+          "label": {
+            "en": "Default cleaning"
+          },
+          "children": [
+            {
+              "id": "use_default_rooms_for_start",
+              "type": "checkbox",
+              "label": {
+                "en": "Use default rooms for Start cleaning"
+              },
+              "value": true,
+              "hint": {
+                "en": "When enabled, Start cleaning uses the Default room IDs. Turn off only when you want Start cleaning to clean the whole home."
+              }
+            },
+            {
+              "id": "default_room_ids",
+              "type": "text",
+              "label": {
+                "en": "Default room IDs"
+              },
+              "value": "",
+              "hint": {
+                "en": "Comma-separated room IDs, for example 3,4,5. Use the map widget or discovered room list to choose rooms."
+              }
+            },
+            {
+              "id": "cached_rooms_summary",
+              "type": "textarea",
+              "label": {
+                "en": "Discovered rooms"
+              },
+              "value": "No rooms cached yet. Open App Settings and press Refresh rooms / map.",
+              "hint": {
+                "en": "Read this list to find room IDs for Default room IDs. Refresh rooms/map from App Settings to update it."
+              }
+            }
+          ]
+        },
+        {
+          "type": "group",
+          "label": {
+            "en": "Advanced"
+          },
+          "children": [
+            {
+              "id": "poll_interval",
+              "type": "number",
+              "label": {
+                "en": "Refresh interval"
+              },
+              "value": 60,
+              "min": 30,
+              "max": 600,
+              "hint": {
+                "en": "How often Homey asks the robot for status when live updates are not received."
+              }
+            }
+          ]
+        }
+      ],
+      "energy": {
+        "batteries": [
+          "INTERNAL"
+        ]
+      },
+      "id": "freo_z10_ultra"
+    },
+    {
+      "name": {
+        "en": "Narwal Flow"
+      },
+      "class": "vacuumcleaner",
+      "images": {
+        "small": "/drivers/narwal_flow/assets/images/small.png",
+        "large": "/drivers/narwal_flow/assets/images/large.png",
+        "xlarge": "/drivers/narwal_flow/assets/images/xlarge.png"
+      },
+      "capabilities": [
+        "vacuumcleaner_state",
+        "measure_battery",
+        "narwal_status",
+        "narwal_fan_speed",
+        "button.dock",
+        "button.locate",
+        "button.start",
+        "button.pause",
+        "button.resume",
+        "button.stop",
+        "narwal_connected",
+        "narwal_docked",
+        "narwal_charging",
+        "narwal_clean_area",
+        "narwal_clean_time",
+        "narwal_current_room",
+        "narwal_last_error",
+        "narwal_firmware"
+      ],
+      "capabilitiesOptions": {
+        "button.start": {
+          "title": {
+            "en": "Start cleaning"
+          },
+          "desc": {
+            "en": "Start a full cleaning cycle"
+          }
+        },
+        "button.pause": {
+          "title": {
+            "en": "Pause"
+          },
+          "desc": {
+            "en": "Pause the current cleaning cycle"
+          }
+        },
+        "button.resume": {
+          "title": {
+            "en": "Resume"
+          },
+          "desc": {
+            "en": "Resume a paused cleaning cycle"
+          }
+        },
+        "button.stop": {
+          "title": {
+            "en": "Stop"
+          },
+          "desc": {
+            "en": "Stop cleaning"
+          }
+        },
+        "button.dock": {
+          "title": {
+            "en": "Return to dock"
+          },
+          "desc": {
+            "en": "Send the robot back to its dock"
+          }
+        },
+        "button.locate": {
+          "title": {
+            "en": "Locate"
+          },
+          "desc": {
+            "en": "Make the robot announce its location"
+          }
+        }
+      },
+      "pair": [
+        {
+          "id": "connect"
+        }
+      ],
+      "settings": [
+        {
+          "type": "group",
+          "label": {
+            "en": "Connection"
+          },
+          "children": [
+            {
+              "id": "ip",
+              "type": "text",
+              "label": {
+                "en": "Robot IP address"
+              },
+              "value": "",
+              "hint": {
+                "en": "The local IP of your robot. Use a DHCP reservation so the address does not change."
+              }
+            },
+            {
+              "id": "port",
+              "type": "number",
+              "label": {
+                "en": "Local port"
+              },
+              "value": 9002,
+              "min": 1,
+              "max": 65535,
+              "hint": {
+                "en": "Local WebSocket port. Default is 9002."
+              }
+            }
+          ]
+        },
+        {
+          "type": "group",
+          "label": {
+            "en": "Default cleaning"
+          },
+          "children": [
+            {
+              "id": "use_default_rooms_for_start",
+              "type": "checkbox",
+              "label": {
+                "en": "Use default rooms for Start cleaning"
+              },
+              "value": true,
+              "hint": {
+                "en": "When enabled, Start cleaning uses the Default room IDs. Turn off only when you want Start cleaning to clean the whole home."
+              }
+            },
+            {
+              "id": "default_room_ids",
+              "type": "text",
+              "label": {
+                "en": "Default room IDs"
+              },
+              "value": "",
+              "hint": {
+                "en": "Comma-separated room IDs, for example 3,4,5. Use the map widget or discovered room list to choose rooms."
+              }
+            },
+            {
+              "id": "cached_rooms_summary",
+              "type": "textarea",
+              "label": {
+                "en": "Discovered rooms"
+              },
+              "value": "No rooms cached yet. Open App Settings and press Refresh rooms / map.",
+              "hint": {
+                "en": "Read this list to find room IDs for Default room IDs. Refresh rooms/map from App Settings to update it."
+              }
+            }
+          ]
+        },
+        {
+          "type": "group",
+          "label": {
+            "en": "Advanced"
+          },
+          "children": [
+            {
+              "id": "poll_interval",
+              "type": "number",
+              "label": {
+                "en": "Refresh interval"
+              },
+              "value": 60,
+              "min": 30,
+              "max": 600,
+              "hint": {
+                "en": "How often Homey asks the robot for status when live updates are not received."
+              }
+            }
+          ]
+        }
+      ],
+      "energy": {
+        "batteries": [
+          "INTERNAL"
+        ]
+      },
+      "id": "narwal_flow"
+    },
+    {
+      "name": {
+        "en": "Narwal Flow 2"
+      },
+      "class": "vacuumcleaner",
+      "images": {
+        "small": "/drivers/narwal_flow_2/assets/images/small.png",
+        "large": "/drivers/narwal_flow_2/assets/images/large.png",
+        "xlarge": "/drivers/narwal_flow_2/assets/images/xlarge.png"
+      },
+      "capabilities": [
+        "vacuumcleaner_state",
+        "measure_battery",
+        "narwal_status",
+        "narwal_fan_speed",
+        "button.dock",
+        "button.locate",
+        "button.start",
+        "button.pause",
+        "button.resume",
+        "button.stop",
+        "narwal_connected",
+        "narwal_docked",
+        "narwal_charging",
+        "narwal_clean_area",
+        "narwal_clean_time",
+        "narwal_current_room",
+        "narwal_last_error",
+        "narwal_firmware"
+      ],
+      "capabilitiesOptions": {
+        "button.start": {
+          "title": {
+            "en": "Start cleaning"
+          },
+          "desc": {
+            "en": "Start a full cleaning cycle"
+          }
+        },
+        "button.pause": {
+          "title": {
+            "en": "Pause"
+          },
+          "desc": {
+            "en": "Pause the current cleaning cycle"
+          }
+        },
+        "button.resume": {
+          "title": {
+            "en": "Resume"
+          },
+          "desc": {
+            "en": "Resume a paused cleaning cycle"
+          }
+        },
+        "button.stop": {
+          "title": {
+            "en": "Stop"
+          },
+          "desc": {
+            "en": "Stop cleaning"
+          }
+        },
+        "button.dock": {
+          "title": {
+            "en": "Return to dock"
+          },
+          "desc": {
+            "en": "Send the robot back to its dock"
+          }
+        },
+        "button.locate": {
+          "title": {
+            "en": "Locate"
+          },
+          "desc": {
+            "en": "Make the robot announce its location"
+          }
+        }
+      },
+      "pair": [
+        {
+          "id": "connect"
+        }
+      ],
+      "settings": [
+        {
+          "type": "group",
+          "label": {
+            "en": "Connection"
+          },
+          "children": [
+            {
+              "id": "ip",
+              "type": "text",
+              "label": {
+                "en": "Robot IP address"
+              },
+              "value": "",
+              "hint": {
+                "en": "The local IP of your robot. Use a DHCP reservation so the address does not change."
+              }
+            },
+            {
+              "id": "port",
+              "type": "number",
+              "label": {
+                "en": "Local port"
+              },
+              "value": 9002,
+              "min": 1,
+              "max": 65535,
+              "hint": {
+                "en": "Local WebSocket port. Default is 9002."
+              }
+            }
+          ]
+        },
+        {
+          "type": "group",
+          "label": {
+            "en": "Default cleaning"
+          },
+          "children": [
+            {
+              "id": "use_default_rooms_for_start",
+              "type": "checkbox",
+              "label": {
+                "en": "Use default rooms for Start cleaning"
+              },
+              "value": true,
+              "hint": {
+                "en": "When enabled, Start cleaning uses the Default room IDs. Turn off only when you want Start cleaning to clean the whole home."
+              }
+            },
+            {
+              "id": "default_room_ids",
+              "type": "text",
+              "label": {
+                "en": "Default room IDs"
+              },
+              "value": "",
+              "hint": {
+                "en": "Comma-separated room IDs, for example 3,4,5. Use the map widget or discovered room list to choose rooms."
+              }
+            },
+            {
+              "id": "cached_rooms_summary",
+              "type": "textarea",
+              "label": {
+                "en": "Discovered rooms"
+              },
+              "value": "No rooms cached yet. Open App Settings and press Refresh rooms / map.",
+              "hint": {
+                "en": "Read this list to find room IDs for Default room IDs. Refresh rooms/map from App Settings to update it."
+              }
+            }
+          ]
+        },
+        {
+          "type": "group",
+          "label": {
+            "en": "Advanced"
+          },
+          "children": [
+            {
+              "id": "poll_interval",
+              "type": "number",
+              "label": {
+                "en": "Refresh interval"
+              },
+              "value": 60,
+              "min": 30,
+              "max": 600,
+              "hint": {
+                "en": "How often Homey asks the robot for status when live updates are not received."
+              }
+            }
+          ]
+        }
+      ],
+      "energy": {
+        "batteries": [
+          "INTERNAL"
+        ]
+      },
+      "id": "narwal_flow_2"
+    }
+  ],
+  "widgets": {
+    "vacuum-map": {
+      "name": {
+        "en": "Narwal Map"
+      },
+      "height": "75%",
+      "settings": [
+        {
+          "id": "showStatus",
+          "type": "checkbox",
+          "title": {
+            "en": "Show status bar"
+          },
+          "value": true
+        },
+        {
+          "id": "refreshInterval",
+          "type": "dropdown",
+          "title": {
+            "en": "Refresh interval"
+          },
+          "value": "30",
+          "values": [
+            {
+              "id": "15",
+              "title": {
+                "en": "15 seconds"
+              }
+            },
+            {
+              "id": "30",
+              "title": {
+                "en": "30 seconds"
+              }
+            },
+            {
+              "id": "60",
+              "title": {
+                "en": "1 minute"
+              }
+            }
+          ]
+        }
+      ],
+      "api": {
+        "getDeviceData": {
+          "method": "GET",
+          "path": "/data"
+        },
+        "getMap": {
+          "method": "GET",
+          "path": "/map"
+        },
+        "refreshMap": {
+          "method": "POST",
+          "path": "/refresh-map"
+        }
+      },
+      "devices": {
+        "singular": true,
+        "type": "app",
+        "filter": {
+          "class": "vacuumcleaner",
+          "capabilities": "vacuumcleaner_state"
+        }
+      },
+      "id": "vacuum-map"
+    }
+  },
+  "capabilities": {
+    "narwal_charging": {
+      "type": "boolean",
+      "title": {
+        "en": "Charging"
+      },
+      "desc": {
+        "en": "Whether the robot is currently charging"
+      },
+      "getable": true,
+      "setable": false,
+      "uiComponent": "sensor",
+      "insights": true,
+      "icon": "/assets/capabilities/narwal-charging.svg"
+    },
+    "narwal_clean_area": {
+      "type": "number",
+      "title": {
+        "en": "Cleaning area"
+      },
+      "desc": {
+        "en": "Area cleaned in the current/last session"
+      },
+      "getable": true,
+      "setable": false,
+      "uiComponent": "sensor",
+      "units": {
+        "en": "m²"
+      },
+      "decimals": 1,
+      "insights": true,
+      "icon": "/assets/capabilities/narwal-clean-area.svg"
+    },
+    "narwal_clean_time": {
+      "type": "number",
+      "title": {
+        "en": "Cleaning time"
+      },
+      "desc": {
+        "en": "Duration of the current/last session"
+      },
+      "getable": true,
+      "setable": false,
+      "uiComponent": "sensor",
+      "units": {
+        "en": "min"
+      },
+      "decimals": 0,
+      "insights": true,
+      "icon": "/assets/capabilities/narwal-clean-time.svg"
+    },
+    "narwal_connected": {
+      "type": "boolean",
+      "title": {
+        "en": "Connected"
+      },
+      "desc": {
+        "en": "Local connection to the robot is active"
+      },
+      "getable": true,
+      "setable": false,
+      "uiComponent": "sensor",
+      "icon": "/assets/capabilities/narwal-connected.svg"
+    },
+    "narwal_current_room": {
+      "type": "string",
+      "title": {
+        "en": "Current room"
+      },
+      "desc": {
+        "en": "Room currently being cleaned"
+      },
+      "getable": true,
+      "setable": false,
+      "uiComponent": "sensor",
+      "icon": "/assets/capabilities/narwal-current-room.svg"
+    },
+    "narwal_docked": {
+      "type": "boolean",
+      "title": {
+        "en": "Docked"
+      },
+      "desc": {
+        "en": "Whether the robot is on its dock"
+      },
+      "getable": true,
+      "setable": false,
+      "uiComponent": "sensor",
+      "insights": true,
+      "icon": "/assets/capabilities/narwal-docked.svg"
+    },
+    "narwal_fan_speed": {
+      "type": "enum",
+      "title": {
+        "en": "Fan speed"
+      },
+      "desc": {
+        "en": "Suction power level"
+      },
+      "getable": true,
+      "setable": true,
+      "uiComponent": "picker",
+      "values": [
+        {
+          "id": "quiet",
+          "title": {
+            "en": "Quiet"
+          }
+        },
+        {
+          "id": "normal",
+          "title": {
+            "en": "Normal"
+          }
+        },
+        {
+          "id": "strong",
+          "title": {
+            "en": "Strong"
+          }
+        },
+        {
+          "id": "max",
+          "title": {
+            "en": "Max"
+          }
+        }
+      ]
+    },
+    "narwal_firmware": {
+      "type": "string",
+      "title": {
+        "en": "Firmware"
+      },
+      "desc": {
+        "en": "Robot firmware version"
+      },
+      "getable": true,
+      "setable": false,
+      "uiComponent": "sensor",
+      "icon": "/assets/capabilities/narwal-firmware.svg"
+    },
+    "narwal_last_error": {
+      "type": "string",
+      "title": {
+        "en": "Last error"
+      },
+      "desc": {
+        "en": "Most recent connection or robot error"
+      },
+      "getable": true,
+      "setable": false,
+      "uiComponent": "sensor",
+      "icon": "/assets/capabilities/narwal-last-error.svg"
+    },
+    "narwal_status": {
+      "type": "string",
+      "title": {
+        "en": "Status"
+      },
+      "desc": {
+        "en": "Readable robot status"
+      },
+      "getable": true,
+      "setable": false,
+      "uiComponent": "sensor",
+      "icon": "/assets/capabilities/narwal-status.svg"
+    }
+  }
+}

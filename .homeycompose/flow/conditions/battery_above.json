@@ -1,0 +1,24 @@
+{
+  "title": {
+    "en": "Battery !{{is|is not}} above [[percent]]%"
+  },
+  "titleFormatted": {
+    "en": "[[device]]: Battery !{{is|is not}} above [[percent]]%"
+  },
+  "args": [
+    {
+      "type": "device",
+      "name": "device"
+    },
+    {
+      "name": "percent",
+      "type": "number",
+      "min": 0,
+      "max": 100,
+      "step": 1,
+      "placeholder": {
+        "en": "50"
+      }
+    }
+  ]
+}

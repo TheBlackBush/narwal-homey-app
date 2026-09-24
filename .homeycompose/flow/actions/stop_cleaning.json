@@ -1,0 +1,14 @@
+{
+  "title": {
+    "en": "Stop cleaning"
+  },
+  "args": [
+    {
+      "type": "device",
+      "name": "device"
+    }
+  ],
+  "titleFormatted": {
+    "en": "[[device]]: Stop cleaning"
+  }
+}

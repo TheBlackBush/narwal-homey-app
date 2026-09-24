@@ -1,0 +1,13 @@
+{
+  "type": "boolean",
+  "title": {
+    "en": "Connected"
+  },
+  "desc": {
+    "en": "Local connection to the robot is active"
+  },
+  "getable": true,
+  "setable": false,
+  "uiComponent": "sensor",
+  "icon": "/assets/capabilities/narwal-connected.svg"
+}

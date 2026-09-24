@@ -1,0 +1,18 @@
+{
+  "type": "number",
+  "title": {
+    "en": "Cleaning time"
+  },
+  "desc": {
+    "en": "Duration of the current/last session"
+  },
+  "getable": true,
+  "setable": false,
+  "uiComponent": "sensor",
+  "units": {
+    "en": "min"
+  },
+  "decimals": 0,
+  "insights": true,
+  "icon": "/assets/capabilities/narwal-clean-time.svg"
+}

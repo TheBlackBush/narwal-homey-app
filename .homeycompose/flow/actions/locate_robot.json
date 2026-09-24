@@ -1,0 +1,14 @@
+{
+  "title": {
+    "en": "Locate robot"
+  },
+  "args": [
+    {
+      "type": "device",
+      "name": "device"
+    }
+  ],
+  "titleFormatted": {
+    "en": "[[device]]: Locate robot"
+  }
+}

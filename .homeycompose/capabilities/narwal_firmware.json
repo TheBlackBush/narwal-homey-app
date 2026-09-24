@@ -1,0 +1,13 @@
+{
+  "type": "string",
+  "title": {
+    "en": "Firmware"
+  },
+  "desc": {
+    "en": "Robot firmware version"
+  },
+  "getable": true,
+  "setable": false,
+  "uiComponent": "sensor",
+  "icon": "/assets/capabilities/narwal-firmware.svg"
+}

@@ -1,0 +1,14 @@
+{
+  "title": {
+    "en": "Robot started cleaning"
+  },
+  "args": [
+    {
+      "type": "device",
+      "name": "device"
+    }
+  ],
+  "titleFormatted": {
+    "en": "[[device]]: Robot started cleaning"
+  }
+}

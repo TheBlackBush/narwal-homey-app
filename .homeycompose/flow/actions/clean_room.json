@@ -1,0 +1,21 @@
+{
+  "title": {
+    "en": "Clean selected room"
+  },
+  "titleFormatted": {
+    "en": "[[device]]: Clean room [[room]]"
+  },
+  "args": [
+    {
+      "type": "device",
+      "name": "device"
+    },
+    {
+      "name": "room",
+      "type": "autocomplete",
+      "placeholder": {
+        "en": "Select a room"
+      }
+    }
+  ]
+}

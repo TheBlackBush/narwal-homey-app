@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="/homey-widget.css">
+  <style>
+    :root { color-scheme: light dark; --narwal: #683df5; }
+    * { box-sizing: border-box; }
+    html, body { width: 100%; height: 100%; margin: 0; overflow: hidden; }
+    .wrap {
+      width: 100%;
+      height: 100%;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      overflow: hidden;
+      border-radius: 22px;
+      background:
+        radial-gradient(circle at 18% 10%, rgba(104, 61, 245, 0.20), transparent 36%),
+        linear-gradient(145deg, rgba(248, 247, 255, 0.96), rgba(236, 232, 255, 0.82));
+    }
+    .map {
+      position: relative;
+      flex: 1 1 auto;
+      min-height: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 10px 18px 24px;
+    }
+    .map::before {
+      content: '';
+      position: absolute;
+      inset: 4px 12px 16px;
+      border-radius: 24px;
+      background: rgba(255, 255, 255, 0.62);
+      box-shadow: inset 0 0 0 1px rgba(104, 61, 245, 0.10), 0 16px 42px rgba(20, 24, 45, 0.12);
+    }
+    .map canvas, .map svg {
+      position: relative;
+      z-index: 1;
+      display: block;
+      flex: 0 0 auto;
+      max-width: 100%;
+      max-height: 100%;
+      border-radius: 18px;
+      filter: saturate(1.06) contrast(1.03);
+    }
+    .map canvas {
+      background: #f8fafc;
+      box-shadow: 0 10px 26px rgba(16, 20, 40, 0.14);
+    }
+    .topbar {
+      position: relative;
+      z-index: 3;
+      flex: 0 0 auto;
+      margin: 10px 10px 0;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 8px;
+      align-items: center;
+      padding: 8px 9px 8px 11px;
+      border-radius: 18px;
+      background: rgba(255, 255, 255, 0.84);
+      box-shadow: 0 10px 28px rgba(16, 20, 40, 0.12);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border: 1px solid rgba(255, 255, 255, 0.54);
+    }
+    .name { min-width: 0; }
+    .title {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font: 800 13px -apple-system, BlinkMacSystemFont, sans-serif;
+      color: var(--homey-text-color, #111827);
+    }
+    .subtitle {
+      margin-top: 2px;
+      display: flex;
+      gap: 6px;
+      align-items: center;
+      font: 650 11px -apple-system, BlinkMacSystemFont, sans-serif;
+      color: var(--homey-text-color-light, #6b7280);
+    }
+    .dot { width: 7px; height: 7px; border-radius: 999px; background: #9ca3af; flex: 0 0 auto; }
+    .dot.connected { background: #34c759; box-shadow: 0 0 0 3px rgba(52, 199, 89, 0.15); }
+    .dot.cleaning { background: var(--narwal); box-shadow: 0 0 0 3px rgba(104, 61, 245, 0.14); }
+    .dot.error { background: #ff3b30; box-shadow: 0 0 0 3px rgba(255, 59, 48, 0.14); }
+    .metrics { display: flex; gap: 6px; align-items: center; }
+    .pill {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      white-space: nowrap;
+      border-radius: 999px;
+      padding: 6px 8px;
+      min-width: 40px;
+      font: 800 11px -apple-system, BlinkMacSystemFont, sans-serif;
+      color: var(--narwal);
+      background: rgba(104, 61, 245, 0.12);
+    }
+    .pill.muted { color: #6b7280; background: rgba(107, 114, 128, 0.11); }
+    .refresh {
+      position: absolute;
+      z-index: 3;
+      right: 13px;
+      bottom: 13px;
+      width: 42px;
+      height: 42px;
+      border: 0;
+      border-radius: 999px;
+      cursor: pointer;
+      color: #fff;
+      background: var(--narwal);
+      box-shadow: 0 12px 24px rgba(104, 61, 245, 0.32);
+      font: 900 18px -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+    .refresh:disabled { opacity: 0.62; cursor: wait; }
+    .refresh.loading { animation: pulse 0.9s ease-in-out infinite alternate; }
+    @keyframes pulse { from { transform: scale(1); } to { transform: scale(0.94); } }
+    .message {
+      position: absolute;
+      z-index: 3;
+      left: 14px;
+      right: 64px;
+      bottom: 18px;
+      min-height: 16px;
+      font: 700 11px -apple-system, BlinkMacSystemFont, sans-serif;
+      color: rgba(17, 24, 39, 0.62);
+      text-shadow: 0 1px 0 rgba(255, 255, 255, 0.7);
+      pointer-events: none;
+    }
+    .message.error { color: #ff3b30; }
+    .map-frame {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      height: 100%;
+      min-width: 0;
+      min-height: 0;
+      overflow: visible;
+    }
+    .empty {
+      position: relative;
+      z-index: 1;
+      color: var(--homey-text-color-light, #7a7f8c);
+      text-align: center;
+      font: 700 14px -apple-system, BlinkMacSystemFont, sans-serif;
+      padding: 16px;
+      line-height: 1.35;
+    }
+    .empty small { display: block; margin-top: 5px; font-weight: 600; opacity: 0.72; }
+    .spinner {
+      width: 24px;
+      height: 24px;
+      margin: 0 auto 10px;
+      border-radius: 50%;
+      border: 3px solid rgba(104, 61, 245, 0.16);
+      border-top-color: var(--narwal);
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .error-text { color: #ff3b30; }
+    @media (prefers-color-scheme: dark) {
+      .wrap { background: radial-gradient(circle at 18% 10%, rgba(104, 61, 245, 0.24), transparent 34%), linear-gradient(145deg, #151826, #090b12); }
+      .map::before { background: rgba(15, 18, 30, 0.76); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08), 0 16px 42px rgba(0, 0, 0, 0.35); }
+      .topbar { background: rgba(21, 24, 38, 0.82); border-color: rgba(255, 255, 255, 0.08); }
+      .title { color: #f9fafb; }
+      .subtitle { color: #a1a7b3; }
+      .message { color: rgba(249, 250, 251, 0.68); text-shadow: none; }
+      .pill.muted { color: #cbd5e1; background: rgba(255, 255, 255, 0.10); }
+      .map canvas { background: #f7f8fc; box-shadow: 0 12px 30px rgba(0, 0, 0, 0.32); }
+    }
+  </style>
+</head>
+<body class="homey-widget">
+  <div class="wrap">
+    <div class="map" id="map"><div class="empty" id="empty"><div class="spinner"></div>Loading map…</div></div>
+    <div class="topbar" id="status">
+      <div class="name">
+        <div class="title" id="name">Narwal</div>
+        <div class="subtitle"><span class="dot" id="dot"></span><span id="state">Loading…</span></div>
+      </div>
+      <div class="metrics">
+        <div class="pill" id="battery">--%</div>
+        <div class="pill muted" id="roomsCount">0 rooms</div>
+      </div>
+    </div>
+    <button class="refresh" id="refreshBtn" type="button" title="Refresh map" aria-label="Refresh map">↻</button>
+    <div class="message" id="message"></div>
+  </div>
+
+  <script>
+    var HomeyRef = null;
+    var timer = null;
+    var currentDevice = null;
+
+    function selectedDeviceQuery(Homey) {
+      try {
+        var ids = Homey.getDeviceIds ? Homey.getDeviceIds() : [];
+        if (ids && ids.length > 0) return '?did=' + encodeURIComponent(ids[0]);
+      } catch (err) {}
+      return '';
+    }
+
+    function api(method, path, body) {
+      var query = selectedDeviceQuery(HomeyRef);
+      return HomeyRef.api(method, path + query, body);
+    }
+
+    function setText(id, value) {
+      document.getElementById(id).textContent = value;
+    }
+
+    function setMessage(message, isError) {
+      var el = document.getElementById('message');
+      el.textContent = message || '';
+      el.className = isError ? 'message error' : 'message';
+    }
+
+    function updateStatus(device) {
+      currentDevice = device;
+      if (!device) {
+        setText('state', 'No vacuum selected');
+        return;
+      }
+
+      var dot = document.getElementById('dot');
+      dot.className = 'dot';
+      if (device.connected) dot.classList.add('connected');
+      if (String(device.state || '').toLowerCase().indexOf('clean') >= 0) dot.classList.add('cleaning');
+      if (device.lastError && device.lastError !== 'None') dot.classList.add('error');
+
+      setText('name', device.name || 'Narwal');
+      setText('state', device.lastError && device.lastError !== 'None' ? device.lastError : (device.state || 'Unknown'));
+      document.getElementById('state').className = device.lastError && device.lastError !== 'None' ? 'error-text' : '';
+      setText('battery', typeof device.battery === 'number' ? device.battery + '%' : '--%');
+      setText('roomsCount', (device.rooms ? device.rooms.length : 0) + ' rooms');
+    }
+
+    function escapeHtml(value) {
+      return String(value || '').replace(/[<>&'"]/g, function(c) {
+        return { '<': '&lt;', '>': '&gt;', '&': '&amp;', "'": '&apos;', '"': '&quot;' }[c];
+      });
+    }
+
+    function setEmpty(message, detail) {
+      var map = document.getElementById('map');
+      map.innerHTML = '<div class="empty" id="empty">' + escapeHtml(message) + (detail ? '<small>' + escapeHtml(detail) + '</small>' : '') + '</div>';
+    }
+
+    function drawCircle(ctx, point, radius, fill, stroke) {
+      if (!point || typeof point.x !== 'number' || typeof point.y !== 'number') return;
+      ctx.beginPath();
+      ctx.arc(point.x, point.y, radius, 0, Math.PI * 2);
+      ctx.fillStyle = fill;
+      ctx.fill();
+      if (stroke) {
+        ctx.strokeStyle = stroke;
+        ctx.lineWidth = Math.max(1, radius / 3);
+        ctx.stroke();
+      }
+    }
+
+    function drawRoomLabels(ctx, labels, scale, width, height) {
+      if (!labels || !labels.length) return;
+      var fontSize = Math.max(9, Math.min(12, Math.round(Math.min(width * scale, height * scale) / 30)));
+      ctx.font = '850 ' + fontSize + 'px -apple-system, BlinkMacSystemFont, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      labels.forEach(function(label) {
+        if (!label || typeof label.x !== 'number' || typeof label.y !== 'number') return;
+        var text = String(label.name || ('Room ' + label.id));
+        var x = label.x * scale;
+        var y = label.y * scale;
+        ctx.lineWidth = 3;
+        ctx.strokeStyle = 'rgba(17, 24, 39, 0.68)';
+        ctx.strokeText(text, x, y);
+        ctx.fillStyle = '#fff';
+        ctx.fillText(text, x, y);
+      });
+    }
+
+    function getCanvasFit(mapWidth, mapHeight, frame) {
+      var box = frame.getBoundingClientRect();
+      var availableWidth = Math.max(1, box.width - 8);
+      var availableHeight = Math.max(1, box.height - 8);
+      var scale = Math.min(availableWidth / mapWidth, availableHeight / mapHeight) * 0.94;
+      scale = Math.max(0.1, Math.min(scale, 4));
+      return {
+        scale: scale,
+        width: Math.max(1, Math.floor(mapWidth * scale)),
+        height: Math.max(1, Math.floor(mapHeight * scale)),
+      };
+    }
+
+    function redrawScaledMap(canvas, sourceCanvas, data, frame) {
+      var width = Number(data.width) || 0;
+      var height = Number(data.height) || 0;
+      var fit = getCanvasFit(width, height, frame);
+      var dpr = Math.max(1, Math.min(window.devicePixelRatio || 1, 3));
+      canvas.style.width = fit.width + 'px';
+      canvas.style.height = fit.height + 'px';
+      canvas.width = Math.round(fit.width * dpr);
+      canvas.height = Math.round(fit.height * dpr);
+
+      var ctx = canvas.getContext('2d');
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.imageSmoothingEnabled = true;
+      ctx.setTransform(dpr * fit.scale, 0, 0, dpr * fit.scale, 0, 0);
+      ctx.drawImage(sourceCanvas, 0, 0);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+      drawRoomLabels(ctx, data.roomLabels || [], fit.scale, width, height);
+      drawCircle(ctx, data.chargerPos ? { x: data.chargerPos.x * fit.scale, y: data.chargerPos.y * fit.scale } : null, 6, '#ffcc00', '#fff');
+      drawCircle(ctx, data.robotPos ? { x: data.robotPos.x * fit.scale, y: data.robotPos.y * fit.scale } : null, 7, '#34c759', '#fff');
+    }
+
+    function renderPixelMap(data) {
+      var map = document.getElementById('map');
+      var width = Number(data.width) || 0;
+      var height = Number(data.height) || 0;
+      if (!width || !height || !data.pixels) {
+        setEmpty('No map available yet', 'Use Refresh map once the robot has a map.');
+        return;
+      }
+
+      var sourceCanvas = document.createElement('canvas');
+      sourceCanvas.width = width;
+      sourceCanvas.height = height;
+      var sourceCtx = sourceCanvas.getContext('2d');
+      var image = sourceCtx.createImageData(width, height);
+      var raw = atob(data.pixels);
+      var max = Math.min(raw.length, image.data.length);
+      for (var i = 0; i < max; i += 1) image.data[i] = raw.charCodeAt(i);
+      sourceCtx.putImageData(image, 0, 0);
+
+      var canvas = document.createElement('canvas');
+      canvas.setAttribute('aria-label', 'Narwal map');
+      var frame = document.createElement('div');
+      frame.className = 'map-frame';
+      frame.appendChild(canvas);
+      map.innerHTML = '';
+      map.appendChild(frame);
+      redrawScaledMap(canvas, sourceCanvas, data, frame);
+      window.requestAnimationFrame(function() { redrawScaledMap(canvas, sourceCanvas, data, frame); });
+    }
+
+    function renderMap(data) {
+      if (data && typeof data === 'object' && data.type === 'narwal-map') {
+        renderPixelMap(data);
+        return;
+      }
+
+      var svg = typeof data === 'string' ? data : data && data.svg;
+      var map = document.getElementById('map');
+      if (!svg || typeof svg !== 'string') {
+        setEmpty('No map available yet', 'Use Refresh map once the robot has a map.');
+        return;
+      }
+      map.innerHTML = '<div class="map-frame">' + svg + '</div>';
+    }
+
+    function load() {
+      api('GET', '/data')
+        .then(updateStatus)
+        .catch(function(err) { setText('state', err && err.message ? err.message : 'Could not load status'); });
+
+      api('GET', '/map')
+        .then(renderMap)
+        .catch(function() { setEmpty('Could not load map', 'Open the widget again or refresh the robot map.'); });
+    }
+
+    function refreshMap() {
+      var btn = document.getElementById('refreshBtn');
+      btn.disabled = true;
+      btn.classList.add('loading');
+      setMessage('Refreshing map…', false);
+      return api('POST', '/refresh-map', {}).then(function() {
+        setMessage('Map refreshed.', false);
+        return load();
+      }).catch(function(err) {
+        setMessage(err && err.message ? err.message : 'Refresh failed', true);
+      }).then(function() {
+        btn.disabled = false;
+        btn.classList.remove('loading');
+      });
+    }
+
+    function onHomeyReady(Homey) {
+      HomeyRef = Homey;
+      var settings = Homey.getSettings ? Homey.getSettings() : {};
+      if (settings.showStatus === false) document.getElementById('status').style.display = 'none';
+      load();
+      var seconds = Number(settings.refreshInterval || 30);
+      timer = setInterval(load, Math.max(15, seconds) * 1000);
+      Homey.ready();
+    }
+
+    document.getElementById('refreshBtn').addEventListener('click', refreshMap);
+    window.addEventListener('resize', load);
+    window.addEventListener('unload', function() { if (timer) clearInterval(timer); });
+  </script>
+</body>
+</html>

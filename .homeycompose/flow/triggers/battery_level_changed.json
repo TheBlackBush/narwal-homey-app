@@ -1,0 +1,24 @@
+{
+  "title": {
+    "en": "Battery level changed"
+  },
+  "tokens": [
+    {
+      "name": "battery",
+      "type": "number",
+      "title": {
+        "en": "Battery"
+      },
+      "example": 80
+    }
+  ],
+  "args": [
+    {
+      "type": "device",
+      "name": "device"
+    }
+  ],
+  "titleFormatted": {
+    "en": "[[device]]: Battery level changed"
+  }
+}

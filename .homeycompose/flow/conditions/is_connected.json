@@ -1,0 +1,14 @@
+{
+  "title": {
+    "en": "Robot !{{is|is not}} connected"
+  },
+  "args": [
+    {
+      "type": "device",
+      "name": "device"
+    }
+  ],
+  "titleFormatted": {
+    "en": "[[device]]: Robot !{{is|is not}} connected"
+  }
+}

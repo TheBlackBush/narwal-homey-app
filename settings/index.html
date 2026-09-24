@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <script type="text/javascript" src="/homey.js" data-origin="settings"></script>
+  <style>
+    body { padding: var(--homey-su-4, 16px); }
+    .topbar { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+    .topbar select { flex: 1 1 180px; }
+    .topbar button { white-space: nowrap; }
+    .status-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; }
+    .card {
+      padding: 10px 12px;
+      background: var(--homey-background-color, #f8f8f8);
+      border: var(--homey-line-light, 1px solid #e8e8e8);
+      border-radius: var(--homey-border-radius-small, 8px);
+      min-height: 48px;
+    }
+    .card-label {
+      color: var(--homey-text-color-light, #777);
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: .35px;
+      margin-bottom: 3px;
+    }
+    .card-value {
+      color: var(--homey-text-color, #222);
+      font-size: 14px;
+      font-weight: var(--homey-font-weight-medium, 600);
+      overflow-wrap: anywhere;
+    }
+    .good { color: var(--homey-text-color-green, #34c759); }
+    .warn { color: var(--homey-text-color-orange, #ff9500); }
+    .bad { color: var(--homey-text-color-red, #ff3b30); }
+    .muted { color: var(--homey-text-color-light, #777); }
+    .room-list { list-style: none; padding: 0; margin: 8px 0 0; }
+    .room-list li {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 10px;
+      margin-bottom: 4px;
+      background: var(--homey-background-color, #f8f8f8);
+      border: var(--homey-line-light, 1px solid #e8e8e8);
+      border-radius: var(--homey-border-radius-small, 8px);
+      font-size: 13px;
+    }
+    .room-id { color: var(--homey-text-color-light, #999); font-size: 11px; }
+    .empty { padding: 16px 0; text-align: center; color: var(--homey-text-color-light, #777); font-size: 13px; }
+    .section { margin-top: 18px; }
+  </style>
+</head>
+<body>
+  <form class="homey-form">
+    <fieldset class="homey-form-fieldset">
+      <legend class="homey-form-legend">Device</legend>
+      <div class="topbar">
+        <select class="homey-form-select" id="deviceSelect"></select>
+        <button type="button" class="homey-button-secondary-shadow" id="refreshButton">Refresh status</button>
+        <button type="button" class="homey-button-primary-shadow" id="refreshRoomsButton">Refresh rooms / map</button>
+      </div>
+    </fieldset>
+  </form>
+
+  <div id="empty" class="empty">Loading Narwal devices…</div>
+
+  <div id="content" style="display:none;">
+    <fieldset class="homey-form-fieldset section">
+      <legend class="homey-form-legend">Status</legend>
+      <div class="status-grid" id="statusGrid"></div>
+    </fieldset>
+
+    <fieldset class="homey-form-fieldset section">
+      <legend class="homey-form-legend">Rooms</legend>
+      <ul class="room-list" id="roomList"></ul>
+      <div class="empty" id="roomsEmpty" style="display:none;">No rooms cached yet. Press Refresh rooms / map after mapping the robot.</div>
+    </fieldset>
+  </div>
+
+<script>
+var HomeyRef = null;
+var devices = [];
+var selectedId = null;
+
+function onHomeyReady(Homey) {
+  HomeyRef = Homey;
+  document.getElementById('refreshButton').addEventListener('click', loadDevices);
+  document.getElementById('refreshRoomsButton').addEventListener('click', refreshRoomsMap);
+  document.getElementById('deviceSelect').addEventListener('change', function(event) {
+    selectedId = event.target.value;
+    renderSelected();
+  });
+  loadDevices();
+  Homey.ready();
+}
+
+function apiGet(path) {
+  return new Promise(function(resolve, reject) {
+    HomeyRef.api('GET', path, null, function(err, result) {
+      if (err) reject(err);
+      else resolve(result);
+    });
+  });
+}
+
+function apiPost(path, body) {
+  return new Promise(function(resolve, reject) {
+    HomeyRef.api('POST', path, body || {}, function(err, result) {
+      if (err) reject(err);
+      else resolve(result);
+    });
+  });
+}
+
+function setButtonLoading(button, loading) {
+  if (!button) return;
+  if (loading) button.classList.add('is-loading');
+  else button.classList.remove('is-loading');
+  button.disabled = !!loading;
+}
+
+function loadDevices() {
+  var button = document.getElementById('refreshButton');
+  setButtonLoading(button, true);
+  return apiGet('/devices')
+    .then(function(result) {
+      devices = Array.isArray(result) ? result : [];
+      if (!selectedId && devices[0]) selectedId = devices[0].id;
+      renderDeviceSelect();
+      renderSelected();
+    })
+    .catch(function(err) {
+      document.getElementById('empty').textContent = err && err.message ? err.message : 'Could not load devices.';
+      document.getElementById('empty').style.display = 'block';
+      document.getElementById('content').style.display = 'none';
+    })
+    .then(function() { setButtonLoading(button, false); });
+}
+
+function refreshRoomsMap() {
+  var device = devices.find(function(item) { return item.id === selectedId; });
+  var button = document.getElementById('refreshRoomsButton');
+  if (!device) return;
+  setButtonLoading(button, true);
+  document.getElementById('roomsEmpty').textContent = 'Refreshing rooms and map…';
+  document.getElementById('roomsEmpty').style.display = 'block';
+  return apiPost('/refresh-rooms-map', { deviceId: device.id })
+    .then(function() { return loadDevices(); })
+    .catch(function(err) {
+      document.getElementById('roomsEmpty').textContent = err && err.message ? err.message : 'Could not refresh rooms/map.';
+      document.getElementById('roomsEmpty').style.display = 'block';
+    })
+    .then(function() { setButtonLoading(button, false); });
+}
+
+function renderDeviceSelect() {
+  var select = document.getElementById('deviceSelect');
+  select.innerHTML = '';
+  if (!devices.length) {
+    var option = document.createElement('option');
+    option.value = '';
+    option.textContent = 'No Narwal devices paired';
+    select.appendChild(option);
+    return;
+  }
+  devices.forEach(function(device) {
+    var option = document.createElement('option');
+    option.value = device.id;
+    option.textContent = device.name;
+    if (device.id === selectedId) option.selected = true;
+    select.appendChild(option);
+  });
+}
+
+function renderSelected() {
+  var device = devices.find(function(item) { return item.id === selectedId; });
+  var empty = document.getElementById('empty');
+  var content = document.getElementById('content');
+  if (!device) {
+    empty.textContent = 'No Narwal devices paired yet.';
+    empty.style.display = 'block';
+    content.style.display = 'none';
+    return;
+  }
+  empty.style.display = 'none';
+  content.style.display = 'block';
+  renderStatus(device);
+  renderRooms(device.rooms || []);
+}
+
+function valueOrDash(value, suffix) {
+  if (value === null || value === undefined || value === '') return '—';
+  return suffix ? value + suffix : String(value);
+}
+
+function card(label, value, className) {
+  return '<div class="card"><div class="card-label">' + escapeHtml(label) + '</div><div class="card-value ' + (className || '') + '">' + escapeHtml(value) + '</div></div>';
+}
+
+function renderStatus(device) {
+  var grid = document.getElementById('statusGrid');
+  var connectedClass = device.connected ? 'good' : 'bad';
+  var errorClass = device.lastError && device.lastError !== 'None' ? 'bad' : 'good';
+  grid.innerHTML = [
+    card('Status', valueOrDash(device.state), device.available ? '' : 'bad'),
+    card('Connection', device.connected ? 'Connected' : 'Disconnected', connectedClass),
+    card('Battery', valueOrDash(device.battery, '%')),
+    card('Dock', device.docked ? 'Docked' : 'Away'),
+    card('Charging', device.charging ? 'Charging' : 'Not charging'),
+    card('Cleaned area', valueOrDash(device.area, ' m²')),
+    card('Cleaning time', valueOrDash(device.time, ' min')),
+    card('Firmware', valueOrDash(device.firmware)),
+    card('Last update', valueOrDash(device.lastUpdate), 'muted'),
+    card('Last error', valueOrDash(device.lastError), errorClass),
+    card('IP address', valueOrDash(device.ip), 'muted'),
+    card('Port', valueOrDash(device.port), 'muted')
+  ].join('');
+}
+
+function renderRooms(rooms) {
+  var list = document.getElementById('roomList');
+  var empty = document.getElementById('roomsEmpty');
+  list.innerHTML = '';
+  if (!rooms.length) {
+    empty.style.display = 'block';
+    return;
+  }
+  empty.style.display = 'none';
+  rooms.forEach(function(room) {
+    var li = document.createElement('li');
+    li.innerHTML = '<span>' + escapeHtml(room.name || ('Room ' + room.id)) + '</span><span class="room-id">' + escapeHtml(room.id) + '</span>';
+    list.appendChild(li);
+  });
+}
+
+function escapeHtml(value) {
+  return String(value === null || value === undefined ? '' : value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+</script>
+</body>
+</html>

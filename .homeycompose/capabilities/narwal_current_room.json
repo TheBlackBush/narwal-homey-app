@@ -1,0 +1,13 @@
+{
+  "type": "string",
+  "title": {
+    "en": "Current room"
+  },
+  "desc": {
+    "en": "Room currently being cleaned"
+  },
+  "getable": true,
+  "setable": false,
+  "uiComponent": "sensor",
+  "icon": "/assets/capabilities/narwal-current-room.svg"
+}

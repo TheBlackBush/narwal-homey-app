@@ -1,0 +1,25 @@
+{
+  "name": "com.narwal",
+  "version": "1.0.13",
+  "description": "Control Narwal robot vacuums locally from Homey (no cloud).",
+  "main": "app.js",
+  "scripts": {
+    "build": "node scripts/compose.js",
+    "gen:assets": "node scripts/gen-assets.js",
+    "lint": "eslint --ext .js --ignore-path .gitignore .",
+    "test": "node --test test",
+    "validate": "homey app validate --level=publish",
+    "release-check": "npm run lint && npm test && npm run validate",
+    "deploy:local": "node scripts/deploy-local-homey.js"
+  },
+  "dependencies": {
+    "ws": "^8.18.3"
+  },
+  "devDependencies": {
+    "@types/homey": "npm:homey-apps-sdk-v3-types@^0.3.12",
+    "@types/node": "^20.14.1",
+    "eslint": "^7.32.0",
+    "eslint-config-athom": "^3.1.1",
+    "homey": "^3.0.0"
+  }
+}

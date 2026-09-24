@@ -1,0 +1,12 @@
+{
+  "app": {
+    "name": "Narwal"
+  },
+  "errors": {
+    "disconnected": "Lost connection to the robot",
+    "not_connected": "Robot is not connected. Check power, network and that the official app is closed."
+  },
+  "warnings": {
+    "robot_error": "The robot reported an error"
+  }
+}

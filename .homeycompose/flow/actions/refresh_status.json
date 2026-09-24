@@ -1,0 +1,14 @@
+{
+  "title": {
+    "en": "Refresh robot status"
+  },
+  "args": [
+    {
+      "type": "device",
+      "name": "device"
+    }
+  ],
+  "titleFormatted": {
+    "en": "[[device]]: Refresh robot status"
+  }
+}

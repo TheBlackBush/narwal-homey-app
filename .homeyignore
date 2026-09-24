@@ -1,0 +1,18 @@
+# Local/private development artifacts
+.env
+.env.*
+diagnostics/
+diagnostics/**
+*.chlsj
+*.pem
+*.key
+
+# Repository/development-only metadata
+.git/
+.git/**
+.github/
+.github/**
+node_modules/
+node_modules/**
+coverage/
+.nyc_output/

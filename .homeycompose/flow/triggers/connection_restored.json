@@ -1,0 +1,14 @@
+{
+  "title": {
+    "en": "Connection restored"
+  },
+  "args": [
+    {
+      "type": "device",
+      "name": "device"
+    }
+  ],
+  "titleFormatted": {
+    "en": "[[device]]: Connection restored"
+  }
+}

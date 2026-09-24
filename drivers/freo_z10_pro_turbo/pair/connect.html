@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f5f7fb;
+      --card: rgba(255, 255, 255, 0.96);
+      --text: #111827;
+      --muted: #667085;
+      --subtle: #eef2f7;
+      --border: #d9e0ec;
+      --primary: #683df5;
+      --primary-2: #9b7cff;
+      --primary-dark: #4f25d9;
+      --danger: #b42318;
+      --success: #067647;
+      --shadow: 0 18px 48px rgba(17, 24, 39, 0.12);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      padding: 18px;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at top left, rgba(104, 61, 245, 0.18), transparent 34%),
+        linear-gradient(180deg, #fbfcff 0%, var(--bg) 100%);
+    }
+    .shell { max-width: 520px; min-height: calc(100vh - 36px); margin: 0 auto; display: flex; flex-direction: column; }
+    .hero {
+      position: relative;
+      overflow: hidden;
+      padding: 20px;
+      border-radius: 24px;
+      color: #fff;
+      background: linear-gradient(135deg, #4f25d9 0%, #683df5 58%, #9b7cff 100%);
+      box-shadow: 0 18px 42px rgba(104, 61, 245, 0.26);
+      margin-bottom: 16px;
+    }
+    .hero:after {
+      content: "";
+      position: absolute;
+      width: 160px;
+      height: 160px;
+      right: -60px;
+      top: -60px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.20);
+    }
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.18);
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0.02em;
+      margin-bottom: 14px;
+    }
+    .hero h1 { position: relative; margin: 0 0 8px; font-size: 24px; line-height: 1.12; letter-spacing: -0.03em; }
+    .hero p { position: relative; margin: 0; max-width: 360px; color: rgba(255, 255, 255, 0.86); font-size: 13px; line-height: 1.45; }
+    .card {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      background: var(--card);
+      border: 1px solid rgba(217, 224, 236, 0.9);
+      border-radius: 22px;
+      padding: 18px;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(10px);
+    }
+    .section-title { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
+    .robot-dot {
+      width: 38px;
+      height: 38px;
+      border-radius: 13px;
+      background: linear-gradient(135deg, #f1edff, #fff);
+      border: 1px solid #ddd2ff;
+      display: grid;
+      place-items: center;
+      color: var(--primary);
+      font-weight: 900;
+      box-shadow: inset 0 -8px 20px rgba(104, 61, 245, 0.06);
+    }
+    .section-title strong { display: block; font-size: 15px; }
+    .section-title span { display: block; color: var(--muted); font-size: 12px; margin-top: 2px; }
+    .field { margin-bottom: 14px; }
+    label { display: block; font-weight: 760; margin-bottom: 7px; font-size: 13px; }
+    input {
+      width: 100%;
+      padding: 13px 13px;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      font-size: 15px;
+      background: #fff;
+      color: var(--text);
+      outline: none;
+      transition: border-color 0.16s ease, box-shadow 0.16s ease, background 0.16s ease;
+    }
+    input:focus { border-color: var(--primary); box-shadow: 0 0 0 4px rgba(104, 61, 245, 0.14); }
+    input:disabled { background: #f4f6fa; color: #667085; }
+    .hint { font-size: 12px; color: var(--muted); margin-top: 6px; line-height: 1.35; }
+    .row { display: grid; grid-template-columns: 1fr 112px; gap: 12px; }
+    .status {
+      display: none;
+      margin-top: 15px;
+      padding: 13px 14px;
+      border-radius: 15px;
+      font-size: 13px;
+      line-height: 1.42;
+      white-space: pre-wrap;
+    }
+    .status.error { display: block; color: var(--danger); background: #fff1f0; border: 1px solid #fecdca; }
+    .status.ok { display: block; color: var(--success); background: #ecfdf3; border: 1px solid #abefc6; }
+    .status.busy { display: block; color: #344054; background: #f5f2ff; border: 1px solid #d9ceff; }
+    .actions { margin-top: auto; padding-top: 18px; position: sticky; bottom: 0; background: linear-gradient(180deg, rgba(255,255,255,0), var(--card) 28%); }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .tips {
+      margin: 15px 0 0;
+      padding: 13px 14px;
+      border-radius: 16px;
+      background: var(--subtle);
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.45;
+    }
+    .tips ul { margin: 0; padding-left: 18px; }
+    .tips li + li { margin-top: 4px; }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <section class="hero">
+      <div class="eyebrow">Local connection</div>
+      <h1>Connect Freo Z10 Pro / Turbo</h1>
+      <p>Homey will verify the robot over your local network and add it in one step.</p>
+    </section>
+
+    <section class="card">
+      <div class="section-title">
+        <div class="robot-dot">N</div>
+        <div><strong>Freo Z10 Pro / Turbo</strong><span>Use a reserved/static IP for best reliability.</span></div>
+      </div>
+
+      <div class="field">
+        <label for="ip">Robot IP address</label>
+        <input type="text" id="ip" value="" placeholder="192.168.1.50" inputmode="decimal" autocomplete="off" />
+        <div class="hint">Use the robot's local IP address.</div>
+      </div>
+
+      <div class="row">
+        <div class="field">
+          <label>Model</label>
+          <input type="text" value="Freo Z10 Pro / Turbo" disabled />
+        </div>
+        <div class="field">
+          <label for="port">Port</label>
+          <input type="number" id="port" value="9002" min="1" max="65535" />
+          <div class="hint">Default.</div>
+        </div>
+      </div>
+
+      <div id="status" class="status" role="status" aria-live="polite"></div>
+
+      <div class="tips"><ul><li>Close the official Narwal app during pairing to avoid competing local connections.</li><li>If the robot is sleeping, wake it once, close the Narwal app, then try again.</li></ul></div>
+
+      <div class="actions">
+        <button id="connectButton" class="homey-button-primary-full" type="button" onclick="connectNarwal(); return false;">
+          <span id="buttonLabel">Continue</span>
+        </button>
+      </div>
+    </section>
+  </main>
+<script type="application/javascript">
+var NARWAL_PAIRING = {
+  driverId: 'freo_z10_pro_turbo',
+  display: 'Freo Z10 Pro / Turbo',
+  modelId: 'freo_z10_pro_turbo',
+  productKey: 'qV6BujoYLz',
+  defaultDeviceId: ''
+};
+var narwalPairingBusy = false;
+var narwalPairingInitialized = false;
+var narwalHomey = null;
+
+function getHomey() {
+  return narwalHomey || window.Homey || (typeof Homey !== 'undefined' ? Homey : null);
+}
+
+function byId(id) { return document.getElementById(id); }
+
+function setStatus(type, text) {
+  var el = byId('status');
+  if (!el) return;
+  el.className = 'status ' + (type || '');
+  el.textContent = text || '';
+}
+
+function setBusy(isBusy) {
+  narwalPairingBusy = isBusy;
+  var btn = byId('connectButton');
+  var label = byId('buttonLabel');
+  if (btn) {
+    btn.disabled = isBusy;
+    if (isBusy) {
+      btn.classList.add('is-disabled');
+      btn.classList.add('is-loading');
+    } else {
+      btn.classList.remove('is-disabled');
+      btn.classList.remove('is-loading');
+    }
+  }
+  if (label) label.textContent = 'Continue';
+}
+
+function makeDevice(payload, status) {
+  return {
+    name: NARWAL_PAIRING.display,
+    data: { id: NARWAL_PAIRING.modelId + '-' + payload.ip + '-' + payload.port },
+    store: {
+      model: NARWAL_PAIRING.modelId,
+      protocol: 'v1',
+      productKey: NARWAL_PAIRING.productKey,
+      deviceId: status && status.deviceId ? status.deviceId : (NARWAL_PAIRING.defaultDeviceId || null)
+    },
+    settings: {
+      ip: payload.ip,
+      port: payload.port,
+      poll_interval: 60,
+      dev_mock: false
+    }
+  };
+}
+
+function emitValidate(payload) {
+  var HomeyRef = getHomey();
+  if (!HomeyRef || typeof HomeyRef.emit !== 'function') return Promise.reject(new Error('Homey.emit is unavailable.'));
+  return Promise.race([
+    HomeyRef.emit('validate', payload),
+    new Promise(function(resolve) {
+      setTimeout(function() { resolve({ timeout: true, device: makeDevice(payload, null), name: NARWAL_PAIRING.display }); }, 12000);
+    })
+  ]);
+}
+
+function createDevice(device) {
+  var HomeyRef = getHomey();
+  if (!HomeyRef || typeof HomeyRef.createDevice !== 'function') return Promise.reject(new Error('Homey.createDevice is unavailable.'));
+  return HomeyRef.createDevice(device).then(function(result) {
+    if (HomeyRef && typeof HomeyRef.done === 'function') return HomeyRef.done();
+    return result;
+  });
+}
+
+function connectNarwal() {
+  if (narwalPairingBusy) return false;
+  var ip = (byId('ip').value || '').trim();
+  var port = parseInt(byId('port').value, 10) || 9002;
+  var payload = { ip: ip, port: port, model: NARWAL_PAIRING.modelId, dev_mock: false };
+
+  setBusy(true);
+  setStatus('busy', 'Connecting to ' + NARWAL_PAIRING.display + '…');
+
+  emitValidate(payload)
+    .then(function(result) {
+      var device = result && result.device ? result.device : makeDevice(payload, result || null);
+      var details = [];
+      if (result && result.timeout) details.push('Validation timed out; adding with saved local settings.');
+      if (result && typeof result.battery === 'number') details.push('Battery ' + result.battery + '%');
+      if (result && result.firmware) details.push('Firmware ' + result.firmware);
+      setStatus('ok', 'Adding ' + NARWAL_PAIRING.display + ' to Homey…' + (details.length ? '\n' + details.join(' · ') : ''));
+      return createDevice(device);
+    })
+    .catch(function(err) {
+      var message = err && err.message ? err.message : String(err || 'Pairing failed');
+      setStatus('error', message);
+      var HomeyRef = null;
+      try { HomeyRef = getHomey(); } catch (e) {}
+      if (HomeyRef && typeof HomeyRef.alert === 'function') HomeyRef.alert(message, 'error');
+    })
+    .then(function() { setBusy(false); }, function() { setBusy(false); });
+  return false;
+}
+
+function initNarwalPairing(HomeyInstance) {
+  if (HomeyInstance) narwalHomey = HomeyInstance;
+  if (narwalPairingInitialized) return;
+  if (document.readyState === 'loading') return;
+  narwalPairingInitialized = true;
+  var HomeyRef = getHomey();
+  if (HomeyRef) {
+    if (typeof HomeyRef.setTitle === 'function') HomeyRef.setTitle('Connect ' + NARWAL_PAIRING.display);
+    if (typeof HomeyRef.showNextButton === 'function') HomeyRef.showNextButton(false);
+    if (typeof HomeyRef.ready === 'function') HomeyRef.ready();
+  } else {
+    setStatus('error', 'Homey pairing API is not available yet. Close this pairing window and try again.');
+  }
+  var btn = byId('connectButton');
+  if (btn) btn.addEventListener('click', function(event) { event.preventDefault(); connectNarwal(); return false; });
+}
+
+document.addEventListener('DOMContentLoaded', initNarwalPairing);
+window.connectNarwal = connectNarwal;
+window.onHomeyReady = function(HomeyInstance) { initNarwalPairing(HomeyInstance); };
+</script>
+</body>
+</html>

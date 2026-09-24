@@ -1,0 +1,187 @@
+{
+  "name": {
+    "en": "Freo Z10 Ultra"
+  },
+  "class": "vacuumcleaner",
+  "images": {
+    "small": "/drivers/freo_z10_ultra/assets/images/small.png",
+    "large": "/drivers/freo_z10_ultra/assets/images/large.png",
+    "xlarge": "/drivers/freo_z10_ultra/assets/images/xlarge.png"
+  },
+  "capabilities": [
+    "vacuumcleaner_state",
+    "measure_battery",
+    "narwal_status",
+    "narwal_fan_speed",
+    "button.dock",
+    "button.locate",
+    "button.start",
+    "button.pause",
+    "button.resume",
+    "button.stop",
+    "narwal_connected",
+    "narwal_docked",
+    "narwal_charging",
+    "narwal_clean_area",
+    "narwal_clean_time",
+    "narwal_current_room",
+    "narwal_last_error",
+    "narwal_firmware"
+  ],
+  "capabilitiesOptions": {
+    "button.start": {
+      "title": {
+        "en": "Start cleaning"
+      },
+      "desc": {
+        "en": "Start a full cleaning cycle"
+      }
+    },
+    "button.pause": {
+      "title": {
+        "en": "Pause"
+      },
+      "desc": {
+        "en": "Pause the current cleaning cycle"
+      }
+    },
+    "button.resume": {
+      "title": {
+        "en": "Resume"
+      },
+      "desc": {
+        "en": "Resume a paused cleaning cycle"
+      }
+    },
+    "button.stop": {
+      "title": {
+        "en": "Stop"
+      },
+      "desc": {
+        "en": "Stop cleaning"
+      }
+    },
+    "button.dock": {
+      "title": {
+        "en": "Return to dock"
+      },
+      "desc": {
+        "en": "Send the robot back to its dock"
+      }
+    },
+    "button.locate": {
+      "title": {
+        "en": "Locate"
+      },
+      "desc": {
+        "en": "Make the robot announce its location"
+      }
+    }
+  },
+  "pair": [
+    {
+      "id": "connect"
+    }
+  ],
+  "settings": [
+    {
+      "type": "group",
+      "label": {
+        "en": "Connection"
+      },
+      "children": [
+        {
+          "id": "ip",
+          "type": "text",
+          "label": {
+            "en": "Robot IP address"
+          },
+          "value": "",
+          "hint": {
+            "en": "The local IP of your robot. Use a DHCP reservation so the address does not change."
+          }
+        },
+        {
+          "id": "port",
+          "type": "number",
+          "label": {
+            "en": "Local port"
+          },
+          "value": 9002,
+          "min": 1,
+          "max": 65535,
+          "hint": {
+            "en": "Local WebSocket port. Default is 9002."
+          }
+        }
+      ]
+    },
+    {
+      "type": "group",
+      "label": {
+        "en": "Default cleaning"
+      },
+      "children": [
+        {
+          "id": "use_default_rooms_for_start",
+          "type": "checkbox",
+          "label": {
+            "en": "Use default rooms for Start cleaning"
+          },
+          "value": true,
+          "hint": {
+            "en": "When enabled, Start cleaning uses the Default room IDs. Turn off only when you want Start cleaning to clean the whole home."
+          }
+        },
+        {
+          "id": "default_room_ids",
+          "type": "text",
+          "label": {
+            "en": "Default room IDs"
+          },
+          "value": "",
+          "hint": {
+            "en": "Comma-separated room IDs, for example 3,4,5. Use the map widget or discovered room list to choose rooms."
+          }
+        },
+        {
+          "id": "cached_rooms_summary",
+          "type": "textarea",
+          "label": {
+            "en": "Discovered rooms"
+          },
+          "value": "No rooms cached yet. Open App Settings and press Refresh rooms / map.",
+          "hint": {
+            "en": "Read this list to find room IDs for Default room IDs. Refresh rooms/map from App Settings to update it."
+          }
+        }
+      ]
+    },
+    {
+      "type": "group",
+      "label": {
+        "en": "Advanced"
+      },
+      "children": [
+        {
+          "id": "poll_interval",
+          "type": "number",
+          "label": {
+            "en": "Refresh interval"
+          },
+          "value": 60,
+          "min": 30,
+          "max": 600,
+          "hint": {
+            "en": "How often Homey asks the robot for status when live updates are not received."
+          }
+        }
+      ]
+    }
+  ],
+  "energy": {
+    "batteries": [
+      "INTERNAL"
+    ]
+  }
+}

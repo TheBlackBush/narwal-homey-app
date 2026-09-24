@@ -1,0 +1,21 @@
+{
+  "_comment": "Device-facing reference for Narwal Flow. driver.compose.json is authoritative.",
+  "class": "vacuumcleaner",
+  "capabilities": [
+    "vacuumcleaner_state",
+    "measure_battery",
+    "narwal_fan_speed",
+    "button.start",
+    "button.pause",
+    "button.resume",
+    "button.stop",
+    "button.dock",
+    "button.locate",
+    "narwal_charging",
+    "narwal_docked",
+    "narwal_connected",
+    "narwal_clean_area",
+    "narwal_clean_time",
+    "narwal_firmware"
+  ]
+}

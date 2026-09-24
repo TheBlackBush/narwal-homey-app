@@ -1,0 +1,14 @@
+{
+  "type": "boolean",
+  "title": {
+    "en": "Charging"
+  },
+  "desc": {
+    "en": "Whether the robot is currently charging"
+  },
+  "getable": true,
+  "setable": false,
+  "uiComponent": "sensor",
+  "insights": true,
+  "icon": "/assets/capabilities/narwal-charging.svg"
+}

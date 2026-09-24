@@ -1,0 +1,14 @@
+{
+  "type": "boolean",
+  "title": {
+    "en": "Docked"
+  },
+  "desc": {
+    "en": "Whether the robot is on its dock"
+  },
+  "getable": true,
+  "setable": false,
+  "uiComponent": "sensor",
+  "insights": true,
+  "icon": "/assets/capabilities/narwal-docked.svg"
+}

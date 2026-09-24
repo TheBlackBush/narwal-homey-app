@@ -1,0 +1,38 @@
+{
+  "type": "enum",
+  "title": {
+    "en": "Fan speed"
+  },
+  "desc": {
+    "en": "Suction power level"
+  },
+  "getable": true,
+  "setable": true,
+  "uiComponent": "picker",
+  "values": [
+    {
+      "id": "quiet",
+      "title": {
+        "en": "Quiet"
+      }
+    },
+    {
+      "id": "normal",
+      "title": {
+        "en": "Normal"
+      }
+    },
+    {
+      "id": "strong",
+      "title": {
+        "en": "Strong"
+      }
+    },
+    {
+      "id": "max",
+      "title": {
+        "en": "Max"
+      }
+    }
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "type": "string",
+  "title": {
+    "en": "Last error"
+  },
+  "desc": {
+    "en": "Most recent connection or robot error"
+  },
+  "getable": true,
+  "setable": false,
+  "uiComponent": "sensor",
+  "icon": "/assets/capabilities/narwal-last-error.svg"
+}

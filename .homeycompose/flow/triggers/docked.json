@@ -1,0 +1,14 @@
+{
+  "title": {
+    "en": "Robot docked"
+  },
+  "args": [
+    {
+      "type": "device",
+      "name": "device"
+    }
+  ],
+  "titleFormatted": {
+    "en": "[[device]]: Robot docked"
+  }
+}

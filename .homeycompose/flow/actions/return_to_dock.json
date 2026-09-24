@@ -1,0 +1,14 @@
+{
+  "title": {
+    "en": "Return to dock"
+  },
+  "args": [
+    {
+      "type": "device",
+      "name": "device"
+    }
+  ],
+  "titleFormatted": {
+    "en": "[[device]]: Return to dock"
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "title": {
+    "en": "Robot !{{is|is not}} docked"
+  },
+  "args": [
+    {
+      "type": "device",
+      "name": "device"
+    }
+  ],
+  "titleFormatted": {
+    "en": "[[device]]: Robot !{{is|is not}} docked"
+  }
+}

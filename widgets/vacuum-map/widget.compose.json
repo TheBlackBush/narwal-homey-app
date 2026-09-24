@@ -1,0 +1,66 @@
+{
+  "name": {
+    "en": "Narwal Map"
+  },
+  "height": "75%",
+  "settings": [
+    {
+      "id": "showStatus",
+      "type": "checkbox",
+      "title": {
+        "en": "Show status bar"
+      },
+      "value": true
+    },
+    {
+      "id": "refreshInterval",
+      "type": "dropdown",
+      "title": {
+        "en": "Refresh interval"
+      },
+      "value": "30",
+      "values": [
+        {
+          "id": "15",
+          "title": {
+            "en": "15 seconds"
+          }
+        },
+        {
+          "id": "30",
+          "title": {
+            "en": "30 seconds"
+          }
+        },
+        {
+          "id": "60",
+          "title": {
+            "en": "1 minute"
+          }
+        }
+      ]
+    }
+  ],
+  "api": {
+    "getDeviceData": {
+      "method": "GET",
+      "path": "/data"
+    },
+    "getMap": {
+      "method": "GET",
+      "path": "/map"
+    },
+    "refreshMap": {
+      "method": "POST",
+      "path": "/refresh-map"
+    }
+  },
+  "devices": {
+    "singular": true,
+    "type": "app",
+    "filter": {
+      "class": "vacuumcleaner",
+      "capabilities": "vacuumcleaner_state"
+    }
+  }
+}
