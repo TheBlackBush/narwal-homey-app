@@ -191,3 +191,29 @@ test('binary base status decodes suction level 5 as Ultra Powerful', () => {
 
   assert.strictEqual(status.fanSpeed, FanSpeed.ULTRA);
 });
+
+function firstCleanParam(payload) {
+  const task = decodeProto(payload)['1'];
+  const item = Array.isArray(task['2']) ? task['2'][0] : task['2'];
+  return { task, param: decodeProto(Buffer.from(item['2'].slice(2), 'hex')) };
+}
+
+test('binary start clean payload carries route only when one is chosen', () => {
+  const withRoute = firstCleanParam(buildStartCleanPayload([3], 9, { route: 2 }));
+  assert.strictEqual(withRoute.param['8'], 2);
+
+  const without = firstCleanParam(buildStartCleanPayload([3], 9, {}));
+  assert.strictEqual(without.param['8'], undefined);
+});
+
+test('binary start clean payload encodes mop-only wet cleans', () => {
+  const { task, param } = firstCleanParam(buildStartCleanPayload([3], 9, {
+    workMode: 2, water: 3, mopStrength: 2, passes: 2,
+  }));
+
+  assert.strictEqual(task['5'], 2, 'task type is the work mode');
+  assert.strictEqual(param['1'], 3, 'CleanParam mode for mop only');
+  assert.strictEqual(param['3'], 2);
+  assert.strictEqual(param['4'], 3);
+  assert.strictEqual(param['6'], 2, 'mop pass count');
+});

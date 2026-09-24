@@ -262,3 +262,37 @@ test('binary status reports keep a fan speed saved while docked until the next c
   assert.strictEqual(cleaning.fanSpeed, FanSpeed.STRONG, 'once cleaning, the robot reports the level in use');
   client.stop();
 });
+
+test('binary start and room cleans send the clean options they are given', async () => {
+  for (const run of [
+    (client) => client.startClean({ workMode: 2, water: 3, route: 2 }),
+    (client) => client.cleanRoom(['1'], { workMode: 2, water: 3, route: 2 }),
+  ]) {
+    const { client, sent } = binaryClientWithFakeSocket();
+    client.lastStatus = { state: RobotState.DOCKED, docked: true };
+    client.lastMap = { meta: { mapId: 7 }, rooms: [{ id: '1' }] };
+
+    await sentFramesFor(client, sent, () => run(client));
+
+    const frame = sent.find((f) => f.shortTopic === 'clean/start_clean');
+    const task = decodeProto(frame.payload)['1'];
+    const item = Array.isArray(task['2']) ? task['2'][0] : task['2'];
+    const param = decodeProto(Buffer.from(item['2'].slice(2), 'hex'));
+    assert.strictEqual(task['5'], 2);
+    assert.strictEqual(param['4'], 3);
+    assert.strictEqual(param['8'], 2);
+  }
+});
+
+test('binary clean option suction overrides the saved fan speed for that run only', async () => {
+  const { client, sent } = binaryClientWithFakeSocket();
+  client.lastStatus = { state: RobotState.DOCKED, docked: true };
+  client.lastMap = { meta: { mapId: 7 }, rooms: [{ id: '1' }] };
+  await client.setFanSpeed(FanSpeed.QUIET);
+
+  await sentFramesFor(client, sent, () => client.cleanRoom(['1'], { fanSpeed: FanSpeed.ULTRA }));
+
+  const frame = sent.find((f) => f.shortTopic === 'clean/start_clean');
+  assert.strictEqual(startCleanFanLevel(frame), 5);
+  assert.strictEqual(client.fanSpeed, FanSpeed.QUIET);
+});

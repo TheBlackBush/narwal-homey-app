@@ -160,6 +160,169 @@
     {
       "type": "group",
       "label": {
+        "en": "Cleaning mode"
+      },
+      "children": [
+        {
+          "id": "clean_work_mode",
+          "type": "dropdown",
+          "label": {
+            "en": "Mode"
+          },
+          "value": "vacuum_and_mop",
+          "values": [
+            {
+              "id": "vacuum_and_mop",
+              "label": {
+                "en": "Vacuum and mop"
+              }
+            },
+            {
+              "id": "vacuum",
+              "label": {
+                "en": "Vacuum only"
+              }
+            },
+            {
+              "id": "mop",
+              "label": {
+                "en": "Mop only"
+              }
+            },
+            {
+              "id": "vacuum_then_mop",
+              "label": {
+                "en": "Vacuum then mop"
+              }
+            }
+          ],
+          "hint": {
+            "en": "Used by Start cleaning, Clean default rooms and Clean selected room. Suction comes from the Fan speed control."
+          }
+        },
+        {
+          "id": "clean_water",
+          "type": "dropdown",
+          "label": {
+            "en": "Water level"
+          },
+          "value": "normal",
+          "values": [
+            {
+              "id": "dry",
+              "label": {
+                "en": "Dry"
+              }
+            },
+            {
+              "id": "normal",
+              "label": {
+                "en": "Normal"
+              }
+            },
+            {
+              "id": "wet",
+              "label": {
+                "en": "Wet"
+              }
+            }
+          ],
+          "hint": {
+            "en": "Mop water level. Ignored when the mode is Vacuum only."
+          }
+        },
+        {
+          "id": "clean_mop_strength",
+          "type": "dropdown",
+          "label": {
+            "en": "Mop strength"
+          },
+          "value": "normal",
+          "values": [
+            {
+              "id": "normal",
+              "label": {
+                "en": "Normal"
+              }
+            },
+            {
+              "id": "high",
+              "label": {
+                "en": "High"
+              }
+            }
+          ],
+          "hint": {
+            "en": "Mop scrubbing strength. Ignored when the mode is Vacuum only."
+          }
+        },
+        {
+          "id": "clean_passes",
+          "type": "dropdown",
+          "label": {
+            "en": "Passes"
+          },
+          "value": "1",
+          "values": [
+            {
+              "id": "1",
+              "label": {
+                "en": "1"
+              }
+            },
+            {
+              "id": "2",
+              "label": {
+                "en": "2"
+              }
+            },
+            {
+              "id": "3",
+              "label": {
+                "en": "3"
+              }
+            }
+          ],
+          "hint": {
+            "en": "How many times each room is cleaned."
+          }
+        },
+        {
+          "id": "clean_route",
+          "type": "dropdown",
+          "label": {
+            "en": "Route"
+          },
+          "value": "robot",
+          "values": [
+            {
+              "id": "robot",
+              "label": {
+                "en": "Robot default"
+              }
+            },
+            {
+              "id": "standard",
+              "label": {
+                "en": "Standard"
+              }
+            },
+            {
+              "id": "meticulous",
+              "label": {
+                "en": "Meticulous"
+              }
+            }
+          ],
+          "hint": {
+            "en": "Meticulous overlaps paths more closely. Robot default keeps the robot's own choice."
+          }
+        }
+      ]
+    },
+    {
+      "type": "group",
+      "label": {
         "en": "Advanced"
       },
       "children": [
