@@ -74,10 +74,10 @@ You need the Homey CLI installed and authenticated for your Homey account.
 1. Make sure the robot is powered on and awake.
 2. In Homey, go to **Devices → Add device → Narwal**.
 3. Choose the exact model: **Narwal Flow**, **Narwal Flow 2**, **Freo Z10 Ultra**, **Freo Z10 Pro / Turbo**, **Freo X10 Pro** or **Narwal Freo 20**.
-4. Enter the robot IP address and port. The default port is `9002`.
-5. Press **Continue**. The app validates the local connection and reads robot status.
+4. Pick your robot under **Robots found on your network**, or enter its IP address and port (default `9002`) if it is not listed.
+5. When entering an IP, press **Continue**. The app validates the local connection and reads robot status.
 
-Strongly recommended: assign the robot a static IP address or DHCP reservation.
+Robots found on the network follow IP changes automatically; a DHCP reservation is still recommended.
 
 ## Flow cards
 

@@ -3,6 +3,18 @@
 All notable changes to this project are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [1.1.6] - 2026-09-25
+
+### Added
+- Pairing lists Narwal robots found on your network. Robots of the chosen model can be added with one tap; robots of another model point to the right driver. Manual IP entry is still available.
+- Paired robots follow IP address changes automatically when they are visible on the network.
+
+### Changed
+- New devices use the robot's own device ID as their Homey identity instead of the IP address.
+
+### Fixed
+- A pairing probe that times out no longer risks an uncaught error in the app.
+
 ## [1.1.5] - 2026-09-24
 
 ### Changed

@@ -43,6 +43,7 @@ Layers, from Homey down to the wire:
 - `lib/NarwalBinaryProtocol.js`: frame build/parse for the real robots' binary protobuf-like protocol (topics such as `clean/start_clean`, `task/pause`, `map/display_map`). Pure, no Homey.
 - `lib/NarwalProtocol.js`: JSON request/reply/event protocol and status normalization. Pure, no Homey.
 - `lib/MapParser.js`: room parsing and SVG map rendering.
+- `lib/Discovery.js`: pure mDNS helpers (robot suffix, IPv4 choice, pairing groups). The `narwal` strategy is read via `homey.discovery.getStrategy()` and deliberately not linked to drivers, so Homey does not manage availability from mDNS.
 - `lib/MockSocket.js`: in-process fake robot.
 
 Two protocol paths matter: `NarwalClient` sets `binaryMode = !mock`. Real robots always go through `NarwalBinaryProtocol`; mock mode (`NARWAL_MOCK=1` or the `dev_mock` device setting) goes through the JSON `NarwalProtocol` + `MockSocket`. So `test/client.test.js` exercises the JSON path; binary protocol changes need coverage in `test/binary-protocol.test.js` and, when available, a real-robot check.
