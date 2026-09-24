@@ -3,6 +3,13 @@
 All notable changes to this project are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [1.1.4] - 2026-09-24
+
+### Fixed
+- Robots that finish a task on the dock no longer stay on Returning (seen on the Freo Z10 Ultra). The dock presence signal now counts as docked.
+- Partial status messages, such as battery-only updates sent by some firmware, no longer mark a docked robot as undocked.
+- A robot that reports it has left the dock is no longer shown as Docked.
+
 ## [1.1.3] - 2026-09-24
 
 ### Changed
