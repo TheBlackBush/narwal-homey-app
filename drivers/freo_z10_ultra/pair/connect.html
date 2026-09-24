@@ -4,7 +4,141 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
-    .narwal-robots { list-style: none; margin: 0 0 8px; padding: 0; display: grid; gap: 8px; }
+    :root {
+      color-scheme: light;
+      --bg: #f5f7fb;
+      --card: rgba(255, 255, 255, 0.96);
+      --text: #111827;
+      --muted: #667085;
+      --subtle: #eef2f7;
+      --border: #d9e0ec;
+      --primary: #683df5;
+      --primary-2: #9b7cff;
+      --primary-dark: #4f25d9;
+      --danger: #b42318;
+      --success: #067647;
+      --shadow: 0 18px 48px rgba(17, 24, 39, 0.12);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      padding: 18px;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at top left, rgba(104, 61, 245, 0.18), transparent 34%),
+        linear-gradient(180deg, #fbfcff 0%, var(--bg) 100%);
+    }
+    .shell { max-width: 520px; min-height: calc(100vh - 36px); margin: 0 auto; display: flex; flex-direction: column; }
+    .hero {
+      position: relative;
+      overflow: hidden;
+      padding: 20px;
+      border-radius: 24px;
+      color: #fff;
+      background: linear-gradient(135deg, #4f25d9 0%, #683df5 58%, #9b7cff 100%);
+      box-shadow: 0 18px 42px rgba(104, 61, 245, 0.26);
+      margin-bottom: 16px;
+    }
+    .hero:after {
+      content: "";
+      position: absolute;
+      width: 160px;
+      height: 160px;
+      right: -60px;
+      top: -60px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.20);
+    }
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.18);
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0.02em;
+      margin-bottom: 14px;
+    }
+    .hero h1 { position: relative; margin: 0 0 8px; font-size: 24px; line-height: 1.12; letter-spacing: -0.03em; }
+    .hero p { position: relative; margin: 0; max-width: 360px; color: rgba(255, 255, 255, 0.86); font-size: 13px; line-height: 1.45; }
+    .card {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      background: var(--card);
+      border: 1px solid rgba(217, 224, 236, 0.9);
+      border-radius: 22px;
+      padding: 18px;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(10px);
+    }
+    .section-title { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
+    .robot-dot {
+      width: 38px;
+      height: 38px;
+      border-radius: 13px;
+      background: linear-gradient(135deg, #f1edff, #fff);
+      border: 1px solid #ddd2ff;
+      display: grid;
+      place-items: center;
+      color: var(--primary);
+      font-weight: 900;
+      box-shadow: inset 0 -8px 20px rgba(104, 61, 245, 0.06);
+    }
+    .section-title strong { display: block; font-size: 15px; }
+    .section-title span { display: block; color: var(--muted); font-size: 12px; margin-top: 2px; }
+    .field { margin-bottom: 14px; }
+    label { display: block; font-weight: 760; margin-bottom: 7px; font-size: 13px; }
+    input {
+      width: 100%;
+      padding: 13px 13px;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      font-size: 15px;
+      background: #fff;
+      color: var(--text);
+      outline: none;
+      transition: border-color 0.16s ease, box-shadow 0.16s ease, background 0.16s ease;
+    }
+    input:focus { border-color: var(--primary); box-shadow: 0 0 0 4px rgba(104, 61, 245, 0.14); }
+    input:disabled { background: #f4f6fa; color: #667085; }
+    .hint { font-size: 12px; color: var(--muted); margin-top: 6px; line-height: 1.35; }
+    .row { display: grid; grid-template-columns: 1fr 112px; gap: 12px; }
+    .status {
+      display: none;
+      margin-top: 15px;
+      padding: 13px 14px;
+      border-radius: 15px;
+      font-size: 13px;
+      line-height: 1.42;
+      white-space: pre-wrap;
+    }
+    .status.error { display: block; color: var(--danger); background: #fff1f0; border: 1px solid #fecdca; }
+    .status.ok { display: block; color: var(--success); background: #ecfdf3; border: 1px solid #abefc6; }
+    .status.busy { display: block; color: #344054; background: #f5f2ff; border: 1px solid #d9ceff; }
+    .actions { margin-top: 18px; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .tips {
+      margin: 15px 0 0;
+      padding: 13px 14px;
+      border-radius: 16px;
+      background: var(--subtle);
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.45;
+    }
+    .tips ul { margin: 0; padding-left: 18px; }
+    .tips li + li { margin-top: 4px; }
+    .found { margin-bottom: 16px; }
+    .found-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 8px; }
+    .found-title { font-weight: 760; font-size: 13px; }
+    .found-again { flex: none; white-space: nowrap; padding: 0; border: 0; background: none; color: var(--primary); font: inherit; font-size: 12px; font-weight: 700; }
+    .found-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+    .found-note { margin: 0; }
     .narwal-robot {
       display: flex;
       align-items: center;
@@ -12,64 +146,70 @@
       gap: 12px;
       width: 100%;
       padding: 12px 14px;
-      border-radius: 12px;
-      border: 1px solid rgba(104, 61, 245, 0.35);
-      background: rgba(104, 61, 245, 0.06);
-      color: inherit;
+      border-radius: 14px;
+      border: 1px solid #ddd2ff;
+      background: #f7f4ff;
+      color: var(--text);
       font: inherit;
       text-align: left;
     }
-    .narwal-robot:disabled { opacity: 0.65; }
-    .narwal-robot-name { display: block; font-weight: 600; }
-    .narwal-robot-detail { display: block; font-size: 13px; opacity: 0.75; margin-top: 2px; }
-    .narwal-robot-action { flex: none; font-size: 14px; font-weight: 600; color: #683df5; }
-    .narwal-muted { margin: 0 0 8px; font-size: 13px; opacity: 0.75; }
-    .narwal-link { padding: 0; border: 0; background: none; color: #683df5; font: inherit; font-size: 14px; font-weight: 600; }
-    .narwal-row { display: grid; grid-template-columns: 1fr 96px; gap: 12px; }
-    .narwal-status { margin: 12px 0 0; font-size: 14px; line-height: 1.4; white-space: pre-wrap; }
-    .narwal-status:empty { display: none; }
-    .narwal-status.error { color: #b42318; }
-    .narwal-status.ok { color: #067647; }
-    .narwal-tips { margin: 20px 0 0; padding-left: 18px; font-size: 13px; line-height: 1.45; opacity: 0.75; }
+    .narwal-robot:disabled { opacity: 0.6; }
+    .narwal-robot-name { display: block; font-weight: 700; font-size: 14px; }
+    .narwal-robot-detail { display: block; font-size: 12px; color: var(--muted); margin-top: 2px; line-height: 1.35; }
+    .narwal-robot-action { flex: none; font-size: 13px; font-weight: 800; color: var(--primary); }
   </style>
 </head>
 <body>
-  <header class="homey-header">
-    <h1 class="homey-title">Connect Freo Z10 Ultra</h1>
-    <p class="homey-subtitle">Pick your robot, or enter its IP address.</p>
-  </header>
+  <main class="shell">
+    <section class="hero">
+      <div class="eyebrow">Local connection</div>
+      <h1>Connect Freo Z10 Ultra</h1>
+      <p>Homey will verify the robot over your local network and add it in one step.</p>
+    </section>
 
-  <form class="homey-form" id="connectForm">
-    <fieldset class="homey-form-fieldset">
-      <legend class="homey-form-legend">Robots on your network</legend>
-      <ul id="foundList" class="narwal-robots"></ul>
-      <p id="foundNote" class="narwal-muted">Searching…</p>
-      <button type="button" id="searchAgain" class="narwal-link" hidden>Search again</button>
-    </fieldset>
+    <section class="card">
+      <div class="section-title">
+        <div class="robot-dot">N</div>
+        <div><strong>Freo Z10 Ultra</strong><span>Use a reserved/static IP for best reliability.</span></div>
+      </div>
 
-    <fieldset class="homey-form-fieldset">
-      <legend class="homey-form-legend">Or enter the IP address</legend>
-      <div class="narwal-row">
-        <div class="homey-form-group">
-          <label class="homey-form-label" for="ip">IP address</label>
-          <input class="homey-form-input" id="ip" type="text" inputmode="decimal" autocomplete="off" placeholder="192.168.1.50" />
+      <div class="found">
+        <div class="found-head">
+          <div class="found-title">Robots found on your network</div>
+          <button type="button" id="searchAgain" class="found-again" hidden>Search again</button>
         </div>
-        <div class="homey-form-group">
-          <label class="homey-form-label" for="port">Port</label>
-          <input class="homey-form-input" id="port" type="number" value="9002" min="1" max="65535" />
+        <ul id="foundList" class="found-list"></ul>
+        <div id="foundNote" class="hint found-note">Searching…</div>
+      </div>
+      <div class="field">
+        <label for="ip">Robot IP address</label>
+        <input type="text" id="ip" value="" placeholder="192.168.1.50" inputmode="decimal" autocomplete="off" />
+        <div class="hint">Enter the local IP address from your router or the Narwal app.</div>
+      </div>
+
+      <div class="row">
+        <div class="field">
+          <label>Model</label>
+          <input type="text" value="Freo Z10 Ultra" disabled />
+        </div>
+        <div class="field">
+          <label for="port">Port</label>
+          <input type="number" id="port" value="9002" min="1" max="65535" />
+          <div class="hint">Default.</div>
         </div>
       </div>
-      <button id="connectButton" class="homey-button-primary-full" type="submit">Connect</button>
-      <p id="status" class="narwal-status" role="status" aria-live="polite"></p>
-    </fieldset>
-  </form>
 
-  <ul class="narwal-tips">
-    <li>Close the Narwal app while pairing; the robot accepts one local connection at a time.</li>
-    <li>If the robot does not answer, wake it once, close the Narwal app, then try again.</li>
-    <li>A DHCP reservation for the robot is recommended.</li>
-  </ul>
+      <div id="status" class="status" role="status" aria-live="polite"></div>
 
+      <div class="actions">
+        <button id="connectButton" class="homey-button-primary-full" type="button">
+          <span id="buttonLabel">Continue</span>
+        </button>
+      </div>
+
+      <div class="tips"><ul><li>Close the official Narwal app during pairing to avoid competing local connections.</li><li>If the robot is sleeping, wake it once, close the Narwal app, then try again.</li></ul></div>
+    </section>
+  </main>
 <script type="application/javascript">
 var NARWAL_PAIRING = {
   display: 'Freo Z10 Ultra'
@@ -99,7 +239,7 @@ function emit(event, data, ms, message) {
 
 function setStatus(type, text) {
   var el = byId('status');
-  el.className = 'narwal-status ' + (type || '');
+  el.className = 'status ' + (type || '');
   el.textContent = text || '';
 }
 
@@ -225,7 +365,7 @@ function connectNarwal() {
   var ip = (byId('ip').value || '').trim();
   var port = parseInt(byId('port').value, 10) || 9002;
   setBusy(true);
-  setStatus('', 'Connecting to ' + NARWAL_PAIRING.display + '…');
+  setStatus('busy', 'Connecting to ' + NARWAL_PAIRING.display + '…');
   emit('validate', { ip: ip, port: port, dev_mock: false }, VALIDATE_TIMEOUT_MS, 'The robot did not answer. Wake it, close the Narwal app, and try again.')
     .then(function(result) {
       if (!result || !result.device) throw new Error('The robot did not answer. Wake it, close the Narwal app, and try again.');
@@ -237,7 +377,7 @@ function connectNarwal() {
     });
 }
 
-byId('connectForm').addEventListener('submit', function(event) {
+byId('connectButton').addEventListener('click', function(event) {
   event.preventDefault();
   connectNarwal();
 });
