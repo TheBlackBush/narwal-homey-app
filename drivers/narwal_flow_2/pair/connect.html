@@ -133,6 +133,12 @@
     }
     .tips ul { margin: 0; padding-left: 18px; }
     .tips li + li { margin-top: 4px; }
+      .found { margin-bottom: 16px; }
+    .found-title { font-weight: 600; margin-bottom: 8px; }
+    .found-list { display: grid; gap: 8px; }
+    .found-item { display: block; width: 100%; text-align: left; padding: 10px 12px; border-radius: 10px; border: 1px solid rgba(104, 61, 245, 0.35); background: rgba(104, 61, 245, 0.08); color: inherit; font: inherit; }
+    .found-item[disabled] { opacity: 0.55; }
+    .found-item small { display: block; color: var(--muted); margin-top: 2px; }
   </style>
 </head>
 <body>
@@ -149,6 +155,10 @@
         <div><strong>Narwal Flow 2</strong><span>Use a reserved/static IP for best reliability.</span></div>
       </div>
 
+      <div class="found">
+        <div class="found-title">Robots found on your network</div>
+        <div id="foundList" class="found-list"><div class="hint">Searching…</div></div>
+      </div>
       <div class="field">
         <label for="ip">Robot IP address</label>
         <input type="text" id="ip" value="" placeholder="192.168.1.50" inputmode="decimal" autocomplete="off" />
@@ -289,11 +299,70 @@ function connectNarwal() {
   return false;
 }
 
+function foundButton(title, subtitle, disabled, onClick) {
+  var btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = 'found-item';
+  btn.disabled = Boolean(disabled);
+  var strong = document.createElement('strong');
+  strong.textContent = title;
+  var small = document.createElement('small');
+  small.textContent = subtitle;
+  btn.appendChild(strong);
+  btn.appendChild(small);
+  if (onClick && !disabled) btn.onclick = onClick;
+  return btn;
+}
+
+function renderFound(robots) {
+  var list = byId('foundList');
+  if (!list) return;
+  list.innerHTML = '';
+  if (!robots || !robots.length) {
+    var none = document.createElement('div');
+    none.className = 'hint';
+    none.textContent = 'No robots found. Enter the IP address below.';
+    list.appendChild(none);
+    return;
+  }
+  robots.forEach(function(robot) {
+    var label = robot.ip;
+    if (robot.added) {
+      list.appendChild(foundButton(NARWAL_PAIRING.display, label + ' · Already added', true));
+    } else if (robot.group === 'match' && robot.device) {
+      list.appendChild(foundButton(NARWAL_PAIRING.display, label + ' · Tap to add', false, function() {
+        if (narwalPairingBusy) return;
+        setBusy(true);
+        setStatus('busy', 'Adding ' + NARWAL_PAIRING.display + ' to Homey…');
+        createDevice(robot.device)
+          .catch(function(err) { setStatus('error', err && err.message ? err.message : String(err)); })
+          .then(function() { setBusy(false); });
+      }));
+    } else if (robot.group === 'other') {
+      list.appendChild(foundButton(robot.modelName, label + ' · This is a ' + robot.modelName + '. Add it under that model instead.', true));
+    } else {
+      list.appendChild(foundButton('Narwal robot', label + ' · Not responding. Tap to fill in its IP.', false, function() {
+        byId('ip').value = robot.ip;
+      }));
+    }
+  });
+}
+
+function discoverRobots() {
+  var HomeyRef = getHomey();
+  if (!HomeyRef || typeof HomeyRef.emit !== 'function') { renderFound([]); return; }
+  Promise.race([
+    HomeyRef.emit('discover', {}),
+    new Promise(function(resolve) { setTimeout(function() { resolve({ robots: [] }); }, 15000); })
+  ]).then(function(result) { renderFound(result && result.robots); }, function() { renderFound([]); });
+}
+
 function initNarwalPairing(HomeyInstance) {
   if (HomeyInstance) narwalHomey = HomeyInstance;
   if (narwalPairingInitialized) return;
   if (document.readyState === 'loading') return;
   narwalPairingInitialized = true;
+  discoverRobots();
   var HomeyRef = getHomey();
   if (HomeyRef) {
     if (typeof HomeyRef.setTitle === 'function') HomeyRef.setTitle('Connect ' + NARWAL_PAIRING.display);
