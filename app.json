@@ -3172,5 +3172,15 @@
       "uiComponent": "sensor",
       "icon": "/assets/capabilities/narwal-status.svg"
     }
+  },
+  "discovery": {
+    "narwal": {
+      "type": "mdns-sd",
+      "mdns-sd": {
+        "name": "narwal_sweeper",
+        "protocol": "tcp"
+      },
+      "id": "{{name}}"
+    }
   }
 }
