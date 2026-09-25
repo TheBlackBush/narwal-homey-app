@@ -2,7 +2,7 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-Local-first Homey SDK v3 app (`com.narwal.global`, Homey `>=12.4.0`) that controls Narwal robot vacuums over the LAN (WebSocket, default port `9002`). No cloud, telemetry, or external services may be added.
+Local-first Homey SDK v3 app (`com.narwal.global`, Homey `>=12.4.0`) that controls Narwal robot vacuums over the LAN (WebSocket, default port `9002`). Local control is the default. A Narwal cloud connection is allowed only as an opt-in the user switches to by signing in with their Narwal account; never store the account password, and add no telemetry, analytics, or other external services.
 
 `AGENTS.md` (local, gitignored) holds the full project rules, agent ownership boundaries, current priorities, and testing policy. Read it before non-trivial work. Other local, gitignored references:
 

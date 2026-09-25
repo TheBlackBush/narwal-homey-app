@@ -69,6 +69,7 @@ diagnostics/*.ndjson
 *.pcapng
 *.chls
 *.chlsj
+*.chlz
 *.mitm
 *.trace
 *.dump
