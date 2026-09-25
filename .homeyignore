@@ -20,3 +20,7 @@ node_modules/
 node_modules/**
 coverage/
 .nyc_output/
+
+# Local reference notes
+docs/
+docs/**
