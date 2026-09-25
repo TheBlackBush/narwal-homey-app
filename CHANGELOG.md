@@ -3,7 +3,13 @@
 All notable changes to this project are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
-## [1.2.3] - 2026-09-26
+## [1.2.4] - 2026-09-26
+
+### Changed
+- Narwal account sign-in asks you to confirm you are 14 or older before anything is sent, since Narwal's sign-in states this on your behalf.
+- The email-code option warns that signing in with a code for an address without a Narwal account makes Narwal create one.
+
+ - 2026-09-26
 
 ### Fixed
 - Flow triggers such as "Started cleaning" no longer fire twice when status updates arrive together.

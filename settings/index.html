@@ -115,6 +115,10 @@
           <label class="homey-form-label" for="accountEmail">Email</label>
           <input class="homey-form-input" id="accountEmail" type="email" autocomplete="username" placeholder="you@example.com" />
         </div>
+        <div class="homey-form-group">
+          <label class="homey-form-checkbox"><input class="homey-form-checkbox-input" id="accountAdult" type="checkbox" /><span class="homey-form-checkbox-checkmark"></span><span class="homey-form-checkbox-text">I am 14 or older</span></label>
+          <p class="account-note">Narwal's sign-in confirms this on your behalf, as the Narwal app does.</p>
+        </div>
         <div class="method-row">
           <label class="homey-form-radio"><input class="homey-form-radio-input" type="radio" name="signInMethod" value="code" checked /><span class="homey-form-radio-checkmark"></span><span class="homey-form-radio-text">Email code</span></label>
           <label class="homey-form-radio"><input class="homey-form-radio-input" type="radio" name="signInMethod" value="password" /><span class="homey-form-radio-checkmark"></span><span class="homey-form-radio-text">Password</span></label>
@@ -127,6 +131,7 @@
           <button type="button" class="homey-button-primary-shadow-full" id="passwordSignInButton">Sign in</button>
         </div>
         <div id="codeFields">
+          <p class="account-note">Check the email address first: if no Narwal account uses it, signing in with the code makes Narwal create a new account. This app then refuses to sign in, but Narwal keeps that account.</p>
           <button type="button" class="homey-button-secondary-shadow-full" id="sendCodeButton">Email me a code</button>
           <div id="codeEntry" hidden>
             <div class="homey-form-group section">
@@ -212,7 +217,11 @@ function renderAccount(status) {
 }
 
 function accountInput() {
-  return { email: byId('accountEmail').value.trim(), country: byId('accountCountry').value };
+  return {
+    email: byId('accountEmail').value.trim(),
+    country: byId('accountCountry').value,
+    adult: byId('accountAdult').checked
+  };
 }
 
 function withButton(button, work) {
@@ -381,7 +390,7 @@ function renderSelected() {
 }
 
 function valueOrDash(value, suffix) {
-  if (value === null || value === undefined || value === '') return '—';
+  if (value === null || value === undefined || value === '') return '-';
   return suffix ? value + suffix : String(value);
 }
 

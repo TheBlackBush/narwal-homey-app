@@ -54,7 +54,9 @@ test('password sign-in stores tokens only and reports the account', async () => 
     changes += 1;
   });
 
-  await manager.loginWithPassword({ email: ' me@example.com ', password: 'secret', country: 'il' });
+  await manager.loginWithPassword({
+    email: ' me@example.com ', password: 'secret', country: 'il', adult: true,
+  });
 
   assert.strictEqual(calls[0].host, 'il-app.narwaltech.com');
   assert.deepStrictEqual(manager.status(), {
@@ -91,8 +93,10 @@ test('email code sign-in requests the code and then signs in', async () => {
   });
   const manager = new CloudAccountManager({ settings: fakeSettings(), fetch });
 
-  await manager.requestEmailCode({ email: 'me@example.com', country: 'IL' });
-  await manager.loginWithEmailCode({ email: 'me@example.com', code: '123456', country: 'IL' });
+  await manager.requestEmailCode({ email: 'me@example.com', country: 'IL', adult: true });
+  await manager.loginWithEmailCode({
+    email: 'me@example.com', code: '123456', country: 'IL', adult: true,
+  });
 
   assert.deepStrictEqual(calls.map((c) => c.path.split('/').pop()), ['generateEmailCode', 'loginByEmailVerificationCode']);
   assert.strictEqual(manager.status().signedIn, true);
@@ -107,7 +111,9 @@ test('a failed sign-in keeps the previous account', async () => {
   const { fetch } = fakeFetch({ '/user-authentication-server/v2/login/loginByEmail': () => ({ json: { code: -1, msg: 'Account or password is incorrect' } }) });
   const manager = new CloudAccountManager({ settings, fetch });
 
-  await assert.rejects(manager.loginWithPassword({ email: 'other@example.com', password: 'x', country: 'IL' }), /incorrect/);
+  await assert.rejects(manager.loginWithPassword({
+    email: 'other@example.com', password: 'x', country: 'IL', adult: true,
+  }), /incorrect/);
   assert.strictEqual(manager.status().email, 'me@example.com');
 });
 
@@ -115,9 +121,13 @@ test('input is validated before anything is sent', async () => {
   const { fetch, calls } = fakeFetch({});
   const manager = new CloudAccountManager({ settings: fakeSettings(), fetch });
 
-  await assert.rejects(manager.loginWithPassword({ email: 'not-an-email', password: 'x', country: 'IL' }), /email/i);
-  await assert.rejects(manager.loginWithPassword({ email: 'me@example.com', password: '', country: 'IL' }), /password/i);
-  await assert.rejects(manager.requestEmailCode({ email: 'me@example.com', country: 'Israel' }), /country/i);
+  await assert.rejects(manager.loginWithPassword({
+    email: 'not-an-email', password: 'x', country: 'IL', adult: true,
+  }), /email/i);
+  await assert.rejects(manager.loginWithPassword({
+    email: 'me@example.com', password: '', country: 'IL', adult: true,
+  }), /password/i);
+  await assert.rejects(manager.requestEmailCode({ email: 'me@example.com', country: 'Israel', adult: true }), /country/i);
   assert.strictEqual(calls.length, 0);
 });
 
@@ -165,7 +175,9 @@ test('status reports the mode and account changes say whether robots must reconn
   manager.on('changed', (e) => events.push(e));
 
   assert.strictEqual(manager.status().mode, 'cloud');
-  await manager.loginWithPassword({ email: 'me@example.com', password: 'secret', country: 'IL' });
+  await manager.loginWithPassword({
+    email: 'me@example.com', password: 'secret', country: 'IL', adult: true,
+  });
 
   assert.strictEqual(events.at(-1).modeChanged, false);
   assert.strictEqual(events.at(-1).mode, 'cloud');
@@ -204,4 +216,15 @@ test('sign-out also ends the session on the Narwal server, without waiting for i
   await new Promise((resolve) => setImmediate(resolve));
 
   assert.deepStrictEqual(calls, [{ path: '/user-authentication-server/v2/logout/getUserLogout', auth: 'a' }]);
+});
+
+test('every sign-in step needs the 14-or-older confirmation before anything is sent', async () => {
+  const { fetch, calls } = fakeFetch({});
+  const manager = new CloudAccountManager({ settings: fakeSettings(), fetch });
+  const input = { email: 'me@example.com', country: 'IL' };
+
+  await assert.rejects(manager.loginWithPassword({ ...input, password: 'x' }), /14 or older/);
+  await assert.rejects(manager.requestEmailCode({ ...input, adult: false }), /14 or older/);
+  await assert.rejects(manager.loginWithEmailCode({ ...input, code: '123456', adult: 'yes' }), /14 or older/);
+  assert.strictEqual(calls.length, 0);
 });

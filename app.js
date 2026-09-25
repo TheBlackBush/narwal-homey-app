@@ -62,18 +62,26 @@ class NarwalApp extends Homey.App {
     return this.cloud.status();
   }
 
-  async cloudLoginWithPassword({ email, password, country } = {}) {
-    await this.cloud.loginWithPassword({ email, password, country });
+  async cloudLoginWithPassword({
+    email, password, country, adult,
+  } = {}) {
+    await this.cloud.loginWithPassword({
+      email, password, country, adult,
+    });
     return this.cloud.status();
   }
 
-  async cloudRequestEmailCode({ email, country } = {}) {
-    await this.cloud.requestEmailCode({ email, country });
+  async cloudRequestEmailCode({ email, country, adult } = {}) {
+    await this.cloud.requestEmailCode({ email, country, adult });
     return { sent: true };
   }
 
-  async cloudLoginWithEmailCode({ email, code, country } = {}) {
-    await this.cloud.loginWithEmailCode({ email, code, country });
+  async cloudLoginWithEmailCode({
+    email, code, country, adult,
+  } = {}) {
+    await this.cloud.loginWithEmailCode({
+      email, code, country, adult,
+    });
     return this.cloud.status();
   }
 
