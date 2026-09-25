@@ -224,3 +224,16 @@ test('NarwalClient in cloud mode sends its wake sequence and reports status from
   assert.strictEqual(statuses.at(-1).state, 'docked');
   client.stop();
 });
+
+test('frames keep flowing when the broker never acknowledges a publish', async () => {
+  const { socket, client } = await openSocket();
+  client.publish = (topic, payload, opts) => {
+    client.published.push({ topic, payload, opts });
+  }; // no callback, ever
+
+  socket.send(buildFrame(`${BASE}/common/get_device_info`, Buffer.alloc(0)));
+  socket.send(buildFrame(`${BASE}/common/notify_app_event`, Buffer.alloc(0)));
+  for (let i = 0; i < 6; i += 1) await tick();
+
+  assert.deepStrictEqual(client.published.map((p) => p.topic.split('/').slice(3).join('/')), ['common/get_device_info', 'common/notify_app_event']);
+});
