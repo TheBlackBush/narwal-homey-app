@@ -2,6 +2,7 @@
 
 const Homey = require('homey');
 const { DiscoveryWatcher } = require('./lib/DiscoveryWatcher');
+const { CloudAccountManager } = require('./lib/cloud/CloudAccountManager');
 
 /**
  * Narwal app entry point.
@@ -35,6 +36,39 @@ class NarwalApp extends Homey.App {
       error: (...args) => this.error(...args),
     });
     this._discoveryWatcher.start();
+
+    // Optional Narwal account (cloud connection). Devices set to use the
+    // cloud reconnect when the user signs in or out.
+    this.cloud = new CloudAccountManager({ settings: this.homey.settings });
+    this.cloud.on('changed', () => {
+      for (const device of this._narwalDevices) {
+        if (typeof device.onCloudAccountChanged === 'function') device.onCloudAccountChanged();
+      }
+    });
+  }
+
+  getCloudStatus() {
+    return this.cloud.status();
+  }
+
+  async cloudLoginWithPassword({ email, password, country } = {}) {
+    await this.cloud.loginWithPassword({ email, password, country });
+    return this.cloud.status();
+  }
+
+  async cloudRequestEmailCode({ email, country } = {}) {
+    await this.cloud.requestEmailCode({ email, country });
+    return { sent: true };
+  }
+
+  async cloudLoginWithEmailCode({ email, code, country } = {}) {
+    await this.cloud.loginWithEmailCode({ email, code, country });
+    return this.cloud.status();
+  }
+
+  cloudLogout() {
+    this.cloud.logout();
+    return this.cloud.status();
   }
 
   registerNarwalDevice(device) {
@@ -70,6 +104,7 @@ class NarwalApp extends Homey.App {
         driverId: device.driver && device.driver.id ? device.driver.id : null,
         available: this._getDeviceAvailable(device),
         ip: settings.ip || '',
+        connectionMode: settings.connection_mode || 'local',
         port: settings.port || 9002,
         state: device.getCapabilityValue('narwal_status') || device.getCapabilityValue('vacuumcleaner_state') || 'Unknown',
         battery: device.getCapabilityValue('measure_battery'),

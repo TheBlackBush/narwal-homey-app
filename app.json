@@ -1,7 +1,7 @@
 {
   "_comment": "This file is generated. Please edit .homeycompose/app.json instead.",
   "id": "com.narwal.global",
-  "version": "1.1.10",
+  "version": "1.2.0",
   "compatibility": ">=12.4.0",
   "sdk": 3,
   "platforms": [
@@ -56,6 +56,26 @@
     "refreshRoomsMap": {
       "method": "POST",
       "path": "/refresh-rooms-map"
+    },
+    "getCloud": {
+      "method": "GET",
+      "path": "/cloud"
+    },
+    "cloudLoginPassword": {
+      "method": "POST",
+      "path": "/cloud/login-password"
+    },
+    "cloudRequestCode": {
+      "method": "POST",
+      "path": "/cloud/request-code"
+    },
+    "cloudLoginCode": {
+      "method": "POST",
+      "path": "/cloud/login-code"
+    },
+    "cloudLogout": {
+      "method": "POST",
+      "path": "/cloud/logout"
     }
   },
   "flow": {
@@ -887,6 +907,31 @@
           },
           "children": [
             {
+              "id": "connection_mode",
+              "type": "dropdown",
+              "label": {
+                "en": "Connection"
+              },
+              "value": "local",
+              "values": [
+                {
+                  "id": "local",
+                  "label": {
+                    "en": "Local network"
+                  }
+                },
+                {
+                  "id": "cloud",
+                  "label": {
+                    "en": "Narwal cloud (account)"
+                  }
+                }
+              ],
+              "hint": {
+                "en": "Local network talks to the robot directly (recommended). Narwal cloud uses the Narwal account signed in on the app settings page, and works when the robot is not reachable on the local network."
+              }
+            },
+            {
               "id": "ip",
               "type": "text",
               "label": {
@@ -1237,6 +1282,31 @@
             "en": "Connection"
           },
           "children": [
+            {
+              "id": "connection_mode",
+              "type": "dropdown",
+              "label": {
+                "en": "Connection"
+              },
+              "value": "local",
+              "values": [
+                {
+                  "id": "local",
+                  "label": {
+                    "en": "Local network"
+                  }
+                },
+                {
+                  "id": "cloud",
+                  "label": {
+                    "en": "Narwal cloud (account)"
+                  }
+                }
+              ],
+              "hint": {
+                "en": "Local network talks to the robot directly (recommended). Narwal cloud uses the Narwal account signed in on the app settings page, and works when the robot is not reachable on the local network."
+              }
+            },
             {
               "id": "ip",
               "type": "text",
@@ -1617,6 +1687,31 @@
           },
           "children": [
             {
+              "id": "connection_mode",
+              "type": "dropdown",
+              "label": {
+                "en": "Connection"
+              },
+              "value": "local",
+              "values": [
+                {
+                  "id": "local",
+                  "label": {
+                    "en": "Local network"
+                  }
+                },
+                {
+                  "id": "cloud",
+                  "label": {
+                    "en": "Narwal cloud (account)"
+                  }
+                }
+              ],
+              "hint": {
+                "en": "Local network talks to the robot directly (recommended). Narwal cloud uses the Narwal account signed in on the app settings page, and works when the robot is not reachable on the local network."
+              }
+            },
+            {
               "id": "ip",
               "type": "text",
               "label": {
@@ -1967,6 +2062,31 @@
             "en": "Connection"
           },
           "children": [
+            {
+              "id": "connection_mode",
+              "type": "dropdown",
+              "label": {
+                "en": "Connection"
+              },
+              "value": "local",
+              "values": [
+                {
+                  "id": "local",
+                  "label": {
+                    "en": "Local network"
+                  }
+                },
+                {
+                  "id": "cloud",
+                  "label": {
+                    "en": "Narwal cloud (account)"
+                  }
+                }
+              ],
+              "hint": {
+                "en": "Local network talks to the robot directly (recommended). Narwal cloud uses the Narwal account signed in on the app settings page, and works when the robot is not reachable on the local network."
+              }
+            },
             {
               "id": "ip",
               "type": "text",
@@ -2319,6 +2439,31 @@
           },
           "children": [
             {
+              "id": "connection_mode",
+              "type": "dropdown",
+              "label": {
+                "en": "Connection"
+              },
+              "value": "local",
+              "values": [
+                {
+                  "id": "local",
+                  "label": {
+                    "en": "Local network"
+                  }
+                },
+                {
+                  "id": "cloud",
+                  "label": {
+                    "en": "Narwal cloud (account)"
+                  }
+                }
+              ],
+              "hint": {
+                "en": "Local network talks to the robot directly (recommended). Narwal cloud uses the Narwal account signed in on the app settings page, and works when the robot is not reachable on the local network."
+              }
+            },
+            {
               "id": "ip",
               "type": "text",
               "label": {
@@ -2669,6 +2814,31 @@
             "en": "Connection"
           },
           "children": [
+            {
+              "id": "connection_mode",
+              "type": "dropdown",
+              "label": {
+                "en": "Connection"
+              },
+              "value": "local",
+              "values": [
+                {
+                  "id": "local",
+                  "label": {
+                    "en": "Local network"
+                  }
+                },
+                {
+                  "id": "cloud",
+                  "label": {
+                    "en": "Narwal cloud (account)"
+                  }
+                }
+              ],
+              "hint": {
+                "en": "Local network talks to the robot directly (recommended). Narwal cloud uses the Narwal account signed in on the app settings page, and works when the robot is not reachable on the local network."
+              }
+            },
             {
               "id": "ip",
               "type": "text",
