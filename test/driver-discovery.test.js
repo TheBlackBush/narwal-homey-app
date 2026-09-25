@@ -192,3 +192,58 @@ test('pairing cannot switch on mock mode; only NARWAL_MOCK=1 can', async () => {
     else process.env.NARWAL_MOCK = saved;
   }
 });
+
+function flowDriver() {
+  const cards = {};
+  const card = (kind) => (id) => {
+    const key = `${kind}:${id}`;
+    cards[key] = cards[key] || {
+      registerRunListener: (fn) => {
+        cards[key].run = fn;
+        cards[key].registrations = (cards[key].registrations || 0) + 1;
+      },
+      registerArgumentAutocompleteListener: () => {},
+    };
+    return cards[key];
+  };
+  const homey = { flow: { getActionCard: card('actions'), getConditionCard: card('conditions') } };
+  const make = () => {
+    const driver = fakeDriver();
+    driver.homey = homey;
+    return driver;
+  };
+  return { make, cards };
+}
+
+test('Flow listeners are registered once for all drivers and match the Flow cards', () => {
+  const fs = require('node:fs'); // eslint-disable-line global-require
+  const path = require('node:path'); // eslint-disable-line global-require
+  const { make, cards } = flowDriver();
+
+  make()._registerFlowOnce();
+  make()._registerFlowOnce(); // a second driver
+
+  assert.ok(Object.values(cards).every((c) => c.registrations === 1));
+  const compose = (kind) => fs.readdirSync(path.join(__dirname, '..', '.homeycompose', 'flow', kind))
+    .filter((f) => f.endsWith('.json')).map((f) => `${kind}:${f.replace(/\.json$/, '')}`);
+  assert.deepStrictEqual(Object.keys(cards).sort(), [...compose('actions'), ...compose('conditions')].sort());
+});
+
+test('Flow cards pass their arguments to the device', async () => {
+  const { make, cards } = flowDriver();
+  make()._registerFlowOnce();
+  const seen = [];
+  const device = {
+    setFanSpeed: async (speed) => seen.push(['fan', speed]),
+    cleanRoom: async (room) => seen.push(['room', room]),
+    getCapabilityValue: () => 50,
+  };
+
+  await cards['actions:set_fan_speed'].run({ device, fan_speed: 'quiet' });
+  await cards['actions:clean_room'].run({ device, room: { id: '3' } });
+
+  assert.deepStrictEqual(seen, [['fan', 'quiet'], ['room', { id: '3' }]]);
+  assert.strictEqual(await cards['conditions:battery_above'].run({ device, percent: 49 }), true);
+  assert.strictEqual(await cards['conditions:battery_above'].run({ device, percent: 50 }), false, 'above, not equal');
+  assert.strictEqual(await cards['conditions:battery_above'].run({ device: { getCapabilityValue: () => null }, percent: 0 }), false);
+});

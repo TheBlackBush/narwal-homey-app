@@ -3,7 +3,21 @@
 All notable changes to this project are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
-## [1.2.4] - 2026-09-26
+## [1.2.5] - 2026-09-26
+
+### Fixed
+- "Refresh status" and the fallback poll wait for the robot's answer instead of returning the last known status.
+- Replies the app does not wait for no longer pile up in memory, stopping the connection ends pending map requests at once, and truncated robot frames are rejected instead of being read short.
+- The cloud connection only uses an encrypted broker address.
+- The map widget scales the map to its size instead of clipping it, redraws on resize without asking the robot again, and clears "Map refreshed." after a few seconds.
+- App settings: the rooms message no longer stays on "Refreshing…", the Local/Cloud switch waits for each change to save, and a removed robot is no longer shown as selected.
+- Pairing: if the app cannot tell whether Local or Cloud is chosen, the screen says so and offers Try again instead of assuming Local.
+- Room colours in the map are limited to plain colour values.
+
+### Changed
+- Sign-in fields submit with Enter, and form fields have proper labels.
+
+ - 2026-09-26
 
 ### Changed
 - Narwal account sign-in asks you to confirm you are 14 or older before anything is sent, since Narwal's sign-in states this on your behalf.
@@ -193,7 +207,7 @@ All notable changes to this project are documented here. The format is based on
 ## [1.0.0] - 2026-06-16
 
 ### Added
-- Local control of Narwal robot vacuums over the LAN WebSocket API (default port `9002`) — no cloud dependency.
+- Local control of Narwal robot vacuums over the LAN WebSocket API (default port `9002`), with no cloud dependency.
 - Custom pairing flow: robot IP, model selection and optional port, with live connectivity validation.
 - Capabilities: vacuum state, battery, charging, docked, fan speed (Quiet/Normal/Strong/Max), cleaning area, cleaning time, firmware version, connection status, and control buttons.
 - Room discovery from the robot map and a "Clean selected room" Flow card with room autocomplete.

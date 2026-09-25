@@ -60,7 +60,7 @@
     <fieldset class="homey-form-fieldset">
       <legend class="homey-form-legend">Device</legend>
       <div class="topbar">
-        <select class="homey-form-select" id="deviceSelect"></select>
+        <select class="homey-form-select" id="deviceSelect" aria-label="Narwal device"></select>
         <button type="button" class="homey-button-secondary-shadow" id="refreshButton">Refresh status</button>
         <button type="button" class="homey-button-primary-shadow" id="refreshRoomsButton">Refresh rooms / map</button>
       </div>
@@ -232,6 +232,19 @@ function withButton(button, work) {
     .then(function() { setButtonLoading(button, false); });
 }
 
+function pressOnEnter(fieldId, buttonId) {
+  byId(fieldId).addEventListener('keydown', function(event) {
+    if (event.key !== 'Enter') return;
+    event.preventDefault();
+    byId(buttonId).click();
+  });
+}
+
+function setModesDisabled(disabled) {
+  var modes = document.querySelectorAll('input[name="connectionMode"]');
+  for (var i = 0; i < modes.length; i++) modes[i].disabled = disabled;
+}
+
 function initAccount() {
   var modes = document.querySelectorAll('input[name="connectionMode"]');
   for (var m = 0; m < modes.length; m++) {
@@ -239,12 +252,15 @@ function initAccount() {
       var mode = event.target.value;
       renderMode(mode);
       setAccountMessage('', '');
+      // One change at a time, so a late reply cannot show the wrong mode.
+      setModesDisabled(true);
       apiPost('/connection-mode', { mode: mode })
         .then(renderAccount)
         .catch(function(err) {
           setAccountMessage(errorText(err), 'bad');
-          apiGet('/cloud').then(renderAccount);
-        });
+          return apiGet('/cloud').then(renderAccount).catch(function() {});
+        })
+        .then(function() { setModesDisabled(false); });
     });
   }
   var methods = document.querySelectorAll('input[name="signInMethod"]');
@@ -292,6 +308,9 @@ function initAccount() {
       });
     });
   });
+  // Enter in a field presses its button (a disabled button ignores it).
+  pressOnEnter('accountPassword', 'passwordSignInButton');
+  pressOnEnter('accountCode', 'codeSignInButton');
   apiGet('/cloud').then(renderAccount).catch(function(err) { setAccountMessage(errorText(err), 'bad'); });
 }
 
@@ -326,7 +345,9 @@ function loadDevices() {
   return apiGet('/devices')
     .then(function(result) {
       devices = Array.isArray(result) ? result : [];
-      if (!selectedId && devices[0]) selectedId = devices[0].id;
+      // A removed device must not stay selected.
+      var stillThere = devices.some(function(item) { return item.id === selectedId; });
+      if (!stillThere) selectedId = devices[0] ? devices[0].id : null;
       renderDeviceSelect();
       renderSelected();
     })
@@ -418,11 +439,15 @@ function renderStatus(device) {
   ].join('');
 }
 
+var ROOMS_EMPTY_TEXT = 'No rooms cached yet. Press Refresh rooms / map after mapping the robot.';
+
 function renderRooms(rooms) {
   var list = document.getElementById('roomList');
   var empty = document.getElementById('roomsEmpty');
   list.innerHTML = '';
   if (!rooms.length) {
+    // Replaces a "Refreshing…" or error text left by an earlier refresh.
+    empty.textContent = ROOMS_EMPTY_TEXT;
     empty.style.display = 'block';
     return;
   }

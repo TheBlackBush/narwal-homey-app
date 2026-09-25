@@ -9,7 +9,7 @@ const { CloudAccountManager } = require('./lib/cloud/CloudAccountManager');
  *
  * The app itself is intentionally thin: all robot communication lives in the
  * device/driver layer and the reusable client in lib/. This keeps the app
- * resilient — a failure talking to one robot can never crash the app process.
+ * resilient: a failure talking to one robot can never crash the app process.
  */
 class NarwalApp extends Homey.App {
   async onInit() {

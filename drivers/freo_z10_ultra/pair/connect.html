@@ -139,7 +139,7 @@
     .found { margin-bottom: 16px; }
     .found-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 8px; }
     .found-title { font-weight: 760; font-size: 13px; }
-    .found-again { flex: none; white-space: nowrap; padding: 0; border: 0; background: none; color: var(--primary); font: inherit; font-size: 12px; font-weight: 700; }
+    .found-again { flex: none; white-space: nowrap; min-height: 44px; padding: 0 4px; border: 0; background: none; color: var(--primary); font: inherit; font-size: 12px; font-weight: 700; }
     .found-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
     .found[hidden], .found-searching[hidden] { display: none; }
     .found-searching { display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-radius: 14px; background: #f7f4ff; color: var(--muted); font-size: 13px; }
@@ -197,8 +197,8 @@
 
       <div class="row">
         <div class="field">
-          <label>Model</label>
-          <input type="text" value="Freo Z10 Ultra" disabled />
+          <label for="model">Model</label>
+          <input type="text" id="model" value="Freo Z10 Ultra" disabled />
         </div>
         <div class="field">
           <label for="port">Port</label>
@@ -349,9 +349,12 @@ function addFoundRobot(robot) {
 // Cloud mode: the device comes from the account list, no local probe.
 function addCloudRobot(robot) {
   setBusy(true);
-  setStatus('busy', 'Adding ' + robot.name + '…');
+  setStatus('busy', 'Adding ' + (robot.name || NARWAL_PAIRING.display) + '…');
   emit('cloud_add', { deviceId: robot.deviceId }, CLOUD_LIST_TIMEOUT_MS, 'The Narwal cloud did not answer. Try again.')
-    .then(function(result) { return addDevice(result.device); })
+    .then(function(result) {
+      if (!result || !result.device) throw new Error('The Narwal cloud did not return this robot. Try again.');
+      return addDevice(result.device);
+    })
     .catch(function(err) {
       setStatus('error', err && err.message ? err.message : String(err));
       setBusy(false);
@@ -389,6 +392,11 @@ function listCloudRobots() {
     });
 }
 
+function setLocalOnlyHidden(hidden) {
+  var locals = document.querySelectorAll('.local-only');
+  for (var i = 0; i < locals.length; i++) locals[i].hidden = hidden;
+}
+
 function showCloudMode(signedIn) {
   narwalCloud = true;
   byId('eyebrow').textContent = 'Cloud connection';
@@ -397,8 +405,7 @@ function showCloudMode(signedIn) {
   byId('foundTitle').textContent = 'Robots on your Narwal account';
   byId('foundNoteText').textContent = 'Loading your robots…';
   byId('searchAgain').textContent = 'Refresh';
-  var locals = document.querySelectorAll('.local-only');
-  for (var i = 0; i < locals.length; i++) locals[i].hidden = true;
+  setLocalOnlyHidden(true);
   if (!signedIn) {
     byId('foundSection').hidden = true;
     setStatus('error', 'Sign in to your Narwal account first: open Apps, Narwal, Configure, then come back to add the robot.');
@@ -474,7 +481,8 @@ byId('connectButton').addEventListener('click', function(event) {
   connectNarwal();
 });
 byId('searchAgain').addEventListener('click', function() {
-  if (narwalCloud) listCloudRobots();
+  if (narwalModeUnknown) loadPairingMode();
+  else if (narwalCloud) listCloudRobots();
   else discover();
 });
 
@@ -489,12 +497,35 @@ function startPairing(HomeyInstance) {
   if (typeof narwalHomey.setTitle === 'function') narwalHomey.setTitle('Connect ' + NARWAL_PAIRING.display);
   if (typeof narwalHomey.showNextButton === 'function') narwalHomey.showNextButton(false);
   if (typeof narwalHomey.ready === 'function') narwalHomey.ready();
-  // The app settings choose Local or Cloud for every robot.
+  loadPairingMode();
+}
+
+// The app settings choose Local or Cloud for every robot. When the mode
+// cannot be read, say so instead of guessing Local.
+var narwalModeUnknown = false;
+function loadPairingMode() {
+  narwalModeUnknown = false;
+  byId('searchAgain').hidden = true;
+  setStatus('', '');
   emit('pairing_mode', {}, MODE_TIMEOUT_MS, 'No mode')
-    .then(function(result) { return result || {}; }, function() { return {}; })
     .then(function(result) {
-      if (result.mode === 'cloud') showCloudMode(result.signedIn);
-      else discover();
+      if (!result || (result.mode !== 'cloud' && result.mode !== 'local')) throw new Error('No mode');
+      if (result.mode === 'cloud') {
+        showCloudMode(result.signedIn);
+        return;
+      }
+      byId('eyebrow').textContent = 'Local connection';
+      setLocalOnlyHidden(false);
+      discover();
+    })
+    .catch(function() {
+      narwalModeUnknown = true;
+      byId('eyebrow').textContent = 'Connection';
+      setLocalOnlyHidden(true);
+      byId('foundNote').hidden = true;
+      byId('searchAgain').textContent = 'Try again';
+      byId('searchAgain').hidden = false;
+      setStatus('error', 'Homey did not answer. Press Try again, or close this window and start again.');
     });
 }
 window.onHomeyReady = startPairing;

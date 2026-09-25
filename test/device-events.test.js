@@ -110,3 +110,16 @@ test('two map renders at once create one camera image', async () => {
 
   assert.strictEqual(device.images, 1);
 });
+
+test('every Flow trigger the device fires is a defined trigger card', () => {
+  const fs = require('node:fs'); // eslint-disable-line global-require
+  const path = require('node:path'); // eslint-disable-line global-require
+  const source = fs.readFileSync(path.join(__dirname, '..', 'lib', 'NarwalHomeyDevice.js'), 'utf8');
+  const fired = new Set([...source.matchAll(/_trigger\('([a-z_]+)'/g)].map((m) => m[1]));
+  const defined = new Set(fs.readdirSync(path.join(__dirname, '..', '.homeycompose', 'flow', 'triggers'))
+    .map((f) => f.replace(/\.json$/, '')));
+
+  assert.ok(fired.size >= 10, 'found the trigger calls');
+  assert.deepStrictEqual([...fired].filter((id) => !defined.has(id)), []);
+  assert.deepStrictEqual([...defined].filter((id) => !fired.has(id)), [], 'no trigger card is left unused');
+});

@@ -1,6 +1,6 @@
 {
   "1.0.0": {
-    "en": "Initial release: local control of Narwal robot vacuums over WebSocket — cleaning controls, fan speed, battery/charging/dock status, room cleaning with autocomplete, resilient reconnect, and a full set of Flow cards."
+    "en": "Initial release: local control of Narwal robot vacuums over WebSocket: cleaning controls, fan speed, battery/charging/dock status, room cleaning with autocomplete, resilient reconnect, and a full set of Flow cards."
   },
   "1.0.11": {
     "en": "Added the Narwal Map widget, removed Last update from the device sensor list, kept status timestamps internal for app/widget use, and improved widget packaging/validation."
@@ -64,5 +64,8 @@
   },
   "1.2.4": {
     "en": "Signing in to a Narwal account now asks you to confirm you are 14 or older, and warns that an email code for an address without a Narwal account makes Narwal create one."
+  },
+  "1.2.5": {
+    "en": "Refresh status now waits for the robot, the map widget scales its map and no longer reloads on every resize, and the settings and pairing screens handle errors more clearly."
   }
 }

@@ -286,12 +286,20 @@ test('NarwalClient in cloud mode sends its wake sequence and reports status from
   client.on('status', (s) => statuses.push(s));
   client.start();
   await tick();
-  mqtt.state.client.emit('connect', { reasonCode: 0 });
-  await new Promise((resolve) => setTimeout(resolve, 700));
+  test.mock.timers.enable({ apis: ['setTimeout', 'setInterval'] });
+  try {
+    mqtt.state.client.emit('connect', { reasonCode: 0 });
+    for (let i = 0; i < 4; i += 1) await tick(); // subscription confirmed, socket open
+    test.mock.timers.tick(500); // the wake burst follows discovery
+    for (let i = 0; i < 20; i += 1) await tick(); // frames are published one by one
+  } finally {
+    test.mock.timers.reset();
+  }
 
   const topics = mqtt.state.client.published.map((p) => p.topic.split('/').slice(3).join('/'));
-  assert.ok(topics.includes('common/notify_app_event'), 'wake sequence published');
-  assert.ok(topics.includes('status/get_device_base_status'));
+  const wake = topics.indexOf('common/notify_app_event');
+  assert.ok(wake >= 0, 'wake sequence published');
+  assert.ok(topics.indexOf('status/get_device_base_status', wake) > wake, 'base status is asked for after the wake event');
   assert.ok(mqtt.state.client.published.every((p) => p.topic.startsWith(`${BASE}/`)), 'only this robot');
 
   mqtt.state.client.emit('message', `${BASE}/status/robot_base_status`, buildCloudPayload(UUID, Buffer.from([0x1a, 0x02, 0x08, 0x0a])));

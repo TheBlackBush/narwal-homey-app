@@ -164,7 +164,9 @@ test('a failed refresh marks the account as needing a new sign-in', async () => 
 test('concurrent requests share a single refresh', async () => {
   let refreshes = 0;
   const { fetch } = fakeFetch({
-    '/user-device-platform-server/device-info/getDeviceInfoList': ({ headers }) => (headers['auth-token'] === 'new' ? { json: { code: 0, result: { deviceInfoList: [] } } } : { status: 401, json: {} }),
+    '/user-device-platform-server/device-info/getDeviceInfoList': ({ headers }) => (headers['auth-token'] === 'new'
+      ? { json: { code: 0, result: { deviceInfoList: [] } } }
+      : { status: 401, json: {} }),
     '/user-authentication-server/v1/token/refresh': () => {
       refreshes += 1;
       return { json: { code: 0, result: { token: 'new', refreshToken: 'r2' } } };
@@ -176,4 +178,17 @@ test('concurrent requests share a single refresh', async () => {
 
   await Promise.all([account.listRobots(), account.listRobots(), account.listRobots()]);
   assert.strictEqual(refreshes, 1);
+});
+
+test('only an encrypted broker address is accepted, since the token is sent to it', async () => {
+  for (const [url, ok] of [['mqtts://b.example:8883', true], ['wss://b.example/mqtt', true], ['mqtt://b.example:1883', false], ['ws://b.example/mqtt', false]]) {
+    const { fetch } = fakeFetch({
+      '/user-authentication-server/v2/login/loginByEmail': () => ({ json: { code: 0, result: tokens() } }),
+      '/iot-broker-discover/app/v1/broker/discover': () => ({ json: { code: 0, result: url } }),
+    });
+    const account = new NarwalCloudAccount({ country: 'IL', fetch });
+    await account.loginWithPassword('me@example.com', 'secret');
+    if (ok) assert.strictEqual(await account.brokerUrl(), url);
+    else await assert.rejects(account.brokerUrl(), /broker/, url);
+  }
 });

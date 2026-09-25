@@ -2,7 +2,7 @@
 
 ![Homey](https://img.shields.io/badge/Homey-SDK%20v3-00AEEF?style=for-the-badge)
 ![App ID](https://img.shields.io/badge/App%20ID-com.narwal.global-683df5?style=for-the-badge)
-![Version](https://img.shields.io/badge/Version-1.2.4-683df5?style=for-the-badge)
+![Version](https://img.shields.io/badge/Version-1.2.5-683df5?style=for-the-badge)
 ![Local First](https://img.shields.io/badge/Local--First-Cloud%20optional-2ea44f?style=for-the-badge)
 ![License](https://img.shields.io/badge/License-MIT-111827?style=for-the-badge)
 
@@ -203,8 +203,8 @@ test/                          Unit tests
 
 ## Documentation
 
-- [CONTRIBUTING.md](CONTRIBUTING.md) — contribution guidelines.
-- [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) — community standards.
+- [CONTRIBUTING.md](CONTRIBUTING.md): contribution guidelines.
+- [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md): community standards.
 
 ## Disclaimer
 
@@ -212,4 +212,4 @@ This software is provided “as is”, without warranty of any kind. Use at your
 
 ## License
 
-MIT — see [LICENSE](LICENSE).
+MIT, see [LICENSE](LICENSE).

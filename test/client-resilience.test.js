@@ -187,3 +187,88 @@ test('a command reply for the same topic with a failure code still rejects', asy
   await assert.rejects(pending);
   client.stop();
 });
+
+test('replies nobody waits for are capped instead of piling up', () => {
+  const client = binaryClient();
+  for (let i = 0; i < 500; i += 1) client._enqueueBinaryResponse(reply('', { 1: 1 }));
+
+  assert.ok(client._binaryResponses.length <= C.MAX_QUEUED_RESPONSES);
+  client.stop();
+});
+
+test('refreshing status waits for the robot instead of returning the cached status', async () => {
+  const client = binaryClient();
+  client.lastStatus = { state: 'docked' };
+
+  const pending = client.refreshStatus();
+  assert.strictEqual(await settled(pending), 'pending');
+
+  client._resolveStatusWaiters(null, { state: 'cleaning' });
+  assert.deepStrictEqual(await pending, { state: 'cleaning' });
+  client.stop();
+});
+
+test('stopping the client rejects a map request at once', async () => {
+  const client = binaryClient();
+  const pending = client._waitForNextMap(60000);
+  pending.catch(() => {});
+
+  client.stop();
+
+  assert.strictEqual(await settled(pending), 'rejected');
+});
+
+function recordingClient() {
+  const client = binaryClient();
+  const { parseFrame } = require('../lib/NarwalBinaryProtocol'); // eslint-disable-line global-require
+  client.sentTopics = [];
+  client._ws.send = (frame) => client.sentTopics.push(parseFrame(frame).shortTopic);
+  return client;
+}
+
+test('each robot command sends its own topic', async () => {
+  const client = recordingClient();
+  const commands = [
+    ['pauseClean', 'task/pause'], ['resumeClean', 'task/resume'], ['stopClean', 'task/force_end'],
+    ['returnToDock', 'supply/recall'], ['locate', 'common/yell'],
+  ];
+  for (const [method, topic] of commands) {
+    const pending = client[method]();
+    await tick();
+    assert.strictEqual(client.sentTopics.at(-1), topic, method);
+    client._enqueueBinaryResponse(reply('', { 1: 1 }));
+    await pending;
+  }
+  client.stop();
+});
+
+test('a rejected command does not block the next one', async () => {
+  const client = recordingClient();
+
+  const first = client.pauseClean();
+  await tick();
+  client._enqueueBinaryResponse(reply('', { 1: 2 })); // rejected
+  await assert.rejects(first);
+
+  const second = client.resumeClean();
+  await tick();
+  assert.strictEqual(client.sentTopics.at(-1), 'task/resume');
+  client._enqueueBinaryResponse(reply('', { 1: 1 }));
+  assert.strictEqual((await second).ok, true);
+  client.stop();
+});
+
+test('a connection with no traffic for too long is closed and retried', () => {
+  test.mock.timers.enable({ apis: ['setInterval', 'setTimeout', 'Date'] });
+  const { client, events } = offlineClient();
+  client._ws = fakeOpenSocket();
+  try {
+    client._onOpen();
+    test.mock.timers.tick(C.HEARTBEAT_TIMEOUT_MS + C.HEARTBEAT_INTERVAL_MS);
+
+    assert.deepStrictEqual(events, ['connected', 'disconnected']);
+  } finally {
+    client.stop();
+    test.mock.timers.reset();
+  }
+});

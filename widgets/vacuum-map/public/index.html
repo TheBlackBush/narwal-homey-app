@@ -199,6 +199,9 @@
   <script>
     var HomeyRef = null;
     var timer = null;
+    var resizeTimer = null;
+    var messageTimer = null;
+    var lastMapData = null;
     var currentDevice = null;
 
     function selectedDeviceQuery(Homey) {
@@ -353,6 +356,7 @@
     }
 
     function renderMap(data) {
+      lastMapData = data;
       if (data && typeof data === 'object' && data.type === 'narwal-map') {
         renderPixelMap(data);
         return;
@@ -381,9 +385,12 @@
       var btn = document.getElementById('refreshBtn');
       btn.disabled = true;
       btn.classList.add('loading');
+      clearTimeout(messageTimer);
       setMessage('Refreshing map…', false);
       return api('POST', '/refresh-map', {}).then(function() {
         setMessage('Map refreshed.', false);
+        clearTimeout(messageTimer);
+        messageTimer = setTimeout(function() { setMessage('', false); }, 4000);
         return load();
       }).catch(function(err) {
         setMessage(err && err.message ? err.message : 'Refresh failed', true);
@@ -404,7 +411,14 @@
     }
 
     document.getElementById('refreshBtn').addEventListener('click', refreshMap);
-    window.addEventListener('resize', load);
+    // Resizing only redraws the map already loaded, once resizing settles;
+    // it does not ask the robot again.
+    window.addEventListener('resize', function() {
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(function() {
+        if (lastMapData) renderMap(lastMapData);
+      }, 200);
+    });
     window.addEventListener('unload', function() { if (timer) clearInterval(timer); });
   </script>
 </body>

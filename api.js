@@ -31,7 +31,8 @@ module.exports = {
 
   async refreshRoomsMap({ homey, query, body }) {
     const payload = body || {};
-    const deviceId = payload.deviceId || query.deviceId || query.did || '';
+    const params = query || {};
+    const deviceId = payload.deviceId || params.deviceId || params.did || '';
     return homey.app.refreshSettingsRoomsMap(deviceId);
   },
 };

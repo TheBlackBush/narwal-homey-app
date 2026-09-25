@@ -234,3 +234,29 @@ test('toRenderData decodes Narwal compressed pixels into canvas payload', () => 
   assert.deepStrictEqual(renderData.roomLabels.map((label) => label.name).sort(), ['Kitchen', 'Living Room']);
   assert.strictEqual(renderData.meta.renderedAt, 999);
 });
+
+test('the SVG map scales to its box instead of being clipped', () => {
+  for (const svg of [MapParser.toSVG(null), MapParser.toSVG({
+    bounds: {
+      minX: 0, minY: 0, maxX: 10, maxY: 10,
+    },
+    rooms: [],
+  })]) {
+    assert.match(svg, /^<svg [^>]*viewBox="0 0 640 640"/);
+  }
+});
+
+test('a room colour that is not a hex colour falls back to the palette', () => {
+  const outline = [{ x: 0, y: 0 }, { x: 1, y: 0 }, { x: 1, y: 1 }];
+  const svg = MapParser.toSVG({
+    bounds: {
+      minX: 0, minY: 0, maxX: 1, maxY: 1,
+    },
+    rooms: [
+      { name: 'A', outline, color: '#12ab34' },
+      { name: 'B', outline, color: '"/><script>alert(1)</script>' },
+    ],
+  });
+  assert.ok(svg.includes('fill="#12ab34"'));
+  assert.ok(!svg.includes('<script>'));
+});
