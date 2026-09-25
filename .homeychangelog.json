@@ -49,5 +49,8 @@
   },
   "1.1.10": {
     "en": "Adding a robot from the found-robots list now follows the same steps as entering its IP address, including choosing a room afterwards."
+  },
+  "1.2.0": {
+    "en": "Optional Narwal account sign-in (emailed code or password) and a per-robot Connection setting: Local network (default) or Narwal cloud."
   }
 }

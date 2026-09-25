@@ -3,6 +3,12 @@
 All notable changes to this project are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [1.2.0] - 2026-09-26
+
+### Added
+- Optional Narwal account sign-in on the app settings page, with an emailed code or a password. Only the session is stored, never the password.
+- A Connection setting per robot: Local network (default) or Narwal cloud. In cloud mode the robot is controlled through your Narwal account, for example when it is not reachable on the local network.
+
 ## [1.1.10] - 2026-09-25
 
 ### Fixed
