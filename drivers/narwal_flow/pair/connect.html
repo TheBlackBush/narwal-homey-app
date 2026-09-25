@@ -311,7 +311,7 @@ function renderRobot(robot) {
     btn.appendChild(action);
     btn.onclick = function() {
       if (narwalBusy) return;
-      if (view.action === 'Add') addDevice(robot.device);
+      if (view.action === 'Add') addFoundRobot(robot);
       else identify(robot);
     };
   }
@@ -320,6 +320,14 @@ function renderRobot(robot) {
   item.appendChild(btn);
   robot.element = item;
   return item;
+}
+
+// A found robot is added exactly like a typed IP: same validation, same
+// device, and the same steps Homey shows afterwards.
+function addFoundRobot(robot) {
+  byId('ip').value = robot.ip;
+  byId('port').value = 9002;
+  connectNarwal();
 }
 
 function identify(robot) {
