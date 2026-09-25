@@ -3,7 +3,16 @@
 All notable changes to this project are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
-## [1.2.1] - 2026-09-26
+## [1.2.2] - 2026-09-26
+
+### Fixed
+- The app no longer crashes when a robot's connection is restarted while it is still connecting (IP change, settings change, Local/Cloud switch, app shutdown).
+- "Connection lost" fires once per outage instead of on every reconnect attempt, and a robot that accepts and drops the connection no longer causes a reconnect loop every few seconds.
+- Robot commands only accept the robot's answer to that command, so Pause, Locate and Start no longer report success from an unrelated reply.
+- Signing out of the Narwal account can no longer be undone by a token refresh that was still running.
+- The app package now contains only the files the app needs.
+
+ - 2026-09-26
 
 ### Changed
 - Local or Cloud is now one switch for the whole app on the app settings page, instead of a setting per robot. Robot settings are back to IP address and port only.

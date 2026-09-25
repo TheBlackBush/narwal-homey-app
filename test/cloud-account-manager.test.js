@@ -170,3 +170,18 @@ test('status reports the mode and account changes say whether robots must reconn
   assert.strictEqual(events.at(-1).modeChanged, false);
   assert.strictEqual(events.at(-1).mode, 'cloud');
 });
+
+test('a token refresh that finishes after sign-out does not sign the account back in', () => {
+  const settings = fakeSettings({
+    [SETTINGS_KEY]: {
+      country: 'IL', email: 'me@example.com', uuid: UUID, accessToken: 'a', refreshToken: 'r',
+    },
+  });
+  const manager = new CloudAccountManager({ settings, fetch: async () => {} });
+  const old = manager.getAccount();
+
+  manager.logout();
+  old._emitTokens(); // what a refresh already in flight does when it lands
+
+  assert.ok(!(SETTINGS_KEY in settings.data), 'old tokens are not stored again');
+});
