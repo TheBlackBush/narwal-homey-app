@@ -201,3 +201,26 @@ test('a broker lookup failure surfaces as error and close', async () => {
   assert.deepStrictEqual(events, ['error', 'close']);
   assert.strictEqual(socket.readyState, CLOSED);
 });
+
+test('NarwalClient in cloud mode sends its wake sequence and reports status from the cloud', async () => {
+  const { NarwalClient } = require('../lib/NarwalClient'); // eslint-disable-line global-require
+  const mqtt = fakeMqtt();
+  const client = new NarwalClient({
+    productKey: PRODUCT, deviceId: DEVICE, pollInterval: 60000, cloud: { account: fakeAccount(), connect: mqtt.connect },
+  });
+  const statuses = [];
+  client.on('status', (s) => statuses.push(s));
+  client.start();
+  await tick();
+  mqtt.state.client.emit('connect', { reasonCode: 0 });
+  await new Promise((resolve) => setTimeout(resolve, 700));
+
+  const topics = mqtt.state.client.published.map((p) => p.topic.split('/').slice(3).join('/'));
+  assert.ok(topics.includes('common/notify_app_event'), 'wake sequence published');
+  assert.ok(topics.includes('status/get_device_base_status'));
+  assert.ok(mqtt.state.client.published.every((p) => p.topic.startsWith(`${BASE}/`)), 'only this robot');
+
+  mqtt.state.client.emit('message', `${BASE}/status/robot_base_status`, buildCloudPayload(UUID, Buffer.from([0x1a, 0x02, 0x08, 0x0a])));
+  assert.strictEqual(statuses.at(-1).state, 'docked');
+  client.stop();
+});
