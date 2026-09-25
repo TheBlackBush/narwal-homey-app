@@ -3,6 +3,15 @@
 All notable changes to this project are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [1.1.9] - 2026-09-25
+
+### Fixed
+- The robot search on the pairing screen starts again. It waited for a Homey event that pairing screens never receive, so it stayed on "Searching…" and Continue could not connect.
+- The IP address field keeps its text and cursor inside the field.
+
+### Changed
+- Searching shows an animated indicator, and the section disappears after 5 seconds when no robot is found.
+
 ## [1.1.8] - 2026-09-25
 
 ### Changed
