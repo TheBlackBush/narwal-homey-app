@@ -4,7 +4,9 @@ const test = require('node:test');
 const assert = require('node:assert');
 const { EventEmitter } = require('node:events');
 
-const { CloudSocket, OPEN, CLOSED } = require('../lib/cloud/CloudSocket');
+const {
+  CloudSocket, OPEN, CLOSED, SUBSCRIBE_TIMEOUT_MS,
+} = require('../lib/cloud/CloudSocket');
 const { buildCloudPayload, splitCloudPayload } = require('../lib/cloud/cloudFrame');
 const { NarwalBinaryProtocol, buildFrame, decodeProto } = require('../lib/NarwalBinaryProtocol');
 
@@ -135,25 +137,97 @@ test('delivers cloud messages as local frames the protocol parser reads', async 
   assert.strictEqual(received[1].shortTopic, 'common/yell');
 });
 
-test('answers pings while open and reports close once', async () => {
+test('a ping asks the robot for its status instead of answering for it', async () => {
   const { socket, client } = await openSocket();
   let pongs = 0;
-  let closes = 0;
   socket.on('pong', () => {
     pongs += 1;
   });
+
+  socket.ping();
+  for (let i = 0; i < 4; i += 1) await tick();
+
+  // Only a reply from the robot proves it is online.
+  assert.strictEqual(pongs, 0);
+  assert.ok(client.published.some((p) => p.topic === `${BASE}/status/get_device_base_status`));
+});
+
+test('reports close once', async () => {
+  const { socket, client } = await openSocket();
+  let closes = 0;
   socket.on('close', () => {
     closes += 1;
   });
 
-  socket.ping();
-  await tick();
   client.emit('close');
   client.emit('close');
 
-  assert.strictEqual(pongs, 1);
   assert.strictEqual(closes, 1);
   assert.strictEqual(socket.readyState, CLOSED);
+});
+
+function socketWithSubscribe(subscribe) {
+  const mqtt = fakeMqtt();
+  const socket = new CloudSocket({
+    account: fakeAccount(),
+    productId: PRODUCT,
+    deviceId: DEVICE,
+    connect: (url, options) => {
+      const client = mqtt.connect(url, options);
+      client.subscribe = subscribe;
+      return client;
+    },
+  });
+  const events = [];
+  socket.on('open', () => events.push('open'));
+  socket.on('error', () => events.push('error'));
+  socket.on('close', () => events.push('close'));
+  return { socket, mqtt, events };
+}
+
+test('a broadcast subscription the broker refuses closes the socket', async () => {
+  const { mqtt, events } = socketWithSubscribe((topics, opts, cb) => setImmediate(() => cb(new Error('Not authorized'))));
+  await tick();
+  mqtt.state.client.emit('connect', { reasonCode: 0 });
+  await tick(); await tick();
+
+  assert.deepStrictEqual(events, ['error', 'close']);
+  assert.strictEqual(mqtt.state.client.ended, true);
+});
+
+test('a broadcast subscription the broker never confirms closes the socket in time', async () => {
+  const { mqtt, events } = socketWithSubscribe(() => {});
+  await tick();
+  test.mock.timers.enable({ apis: ['setTimeout'] });
+  try {
+    mqtt.state.client.emit('connect', { reasonCode: 0 });
+    test.mock.timers.tick(SUBSCRIBE_TIMEOUT_MS);
+    await tick();
+
+    assert.deepStrictEqual(events, ['error', 'close']);
+  } finally {
+    test.mock.timers.reset();
+  }
+});
+
+test('an unconfirmed response subscription does not block later frames', async () => {
+  const { socket, client } = await openSocket();
+  client.subscribe = (topics, opts, cb) => {
+    client.subscribed.push(...[].concat(topics)); // never confirmed
+  };
+  test.mock.timers.enable({ apis: ['setTimeout'] });
+  try {
+    socket.send(buildFrame(`${BASE}/common/yell`, Buffer.alloc(0)));
+    socket.send(buildFrame(`${BASE}/task/pause`, Buffer.alloc(0)));
+    for (let i = 0; i < 4; i += 1) {
+      test.mock.timers.tick(SUBSCRIBE_TIMEOUT_MS);
+      await Promise.resolve(); await Promise.resolve(); await Promise.resolve();
+    }
+
+    assert.deepStrictEqual(client.published.map((p) => p.topic.split('/').slice(3).join('/')), ['common/yell', 'task/pause']);
+  } finally {
+    test.mock.timers.reset();
+  }
 });
 
 test('terminate ends the MQTT session', async () => {

@@ -3,7 +3,21 @@
 All notable changes to this project are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
-## [1.2.2] - 2026-09-26
+## [1.2.3] - 2026-09-26
+
+### Fixed
+- Flow triggers such as "Started cleaning" no longer fire twice when status updates arrive together.
+- A map update without rooms no longer clears the saved room list.
+- A room and map refresh handles the new map once, and the camera image is created once.
+- Cloud mode now notices when the robot goes offline instead of showing it as connected, and a cloud subscription that is refused or never confirmed makes the app reconnect instead of hanging.
+- A robot added through the cloud without a local IP now asks for the IP in Local mode instead of retrying a blank address.
+
+### Changed
+- Signing out of the Narwal account also ends the session on Narwal's server.
+- Mock mode can no longer be switched on from the pairing screen.
+- The app description and privacy text now describe the optional cloud mode.
+
+ - 2026-09-26
 
 ### Fixed
 - The app no longer crashes when a robot's connection is restarted while it is still connecting (IP change, settings change, Local/Cloud switch, app shutdown).

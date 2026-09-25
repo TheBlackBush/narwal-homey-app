@@ -156,3 +156,39 @@ test('adding a robot that is not on the account, or of another model, is refused
   await assert.rejects(driver._cloudDevice({ deviceId: 'nope' }), /not found/);
   await assert.rejects(driver._cloudDevice({ deviceId: 'ffffffffffffffffffffffffffcccccc' }), /Narwal Freo 20/);
 });
+
+function pairSession(driver) {
+  const handlers = {};
+  driver.onPair({
+    setHandler: (name, fn) => {
+      handlers[name] = fn;
+    },
+  });
+  return handlers;
+}
+
+test('the pairing screen can reach every handler it calls', () => {
+  const handlers = pairSession(fakeDriver());
+
+  for (const name of ['validate', 'list_devices', 'discover', 'identify', 'pairing_mode', 'cloud_robots', 'cloud_add']) {
+    assert.strictEqual(typeof handlers[name], 'function', name);
+  }
+});
+
+test('pairing cannot switch on mock mode; only NARWAL_MOCK=1 can', async () => {
+  const probe = test.mock.method(NarwalClient, 'probe', async () => ({ deviceId: DEVICE_ID }));
+  const saved = process.env.NARWAL_MOCK;
+  delete process.env.NARWAL_MOCK;
+  try {
+    const handlers = pairSession(fakeDriver());
+
+    await assert.rejects(handlers.validate({ ip: '', dev_mock: true }), /IPv4/);
+    const { device } = await handlers.validate({ ip: '10.0.0.5', dev_mock: true });
+
+    assert.strictEqual(device.settings.dev_mock, false);
+    assert.strictEqual(probe.mock.calls[0].arguments[0].mock, false);
+  } finally {
+    if (saved === undefined) delete process.env.NARWAL_MOCK;
+    else process.env.NARWAL_MOCK = saved;
+  }
+});

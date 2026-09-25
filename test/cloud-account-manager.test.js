@@ -185,3 +185,23 @@ test('a token refresh that finishes after sign-out does not sign the account bac
 
   assert.ok(!(SETTINGS_KEY in settings.data), 'old tokens are not stored again');
 });
+
+test('sign-out also ends the session on the Narwal server, without waiting for it', async () => {
+  const settings = fakeSettings({
+    [SETTINGS_KEY]: {
+      country: 'IL', email: 'me@example.com', uuid: UUID, accessToken: 'a', refreshToken: 'r',
+    },
+  });
+  const calls = [];
+  const fetch = async (url, init) => {
+    calls.push({ path: new URL(url).pathname, auth: init.headers['auth-token'] });
+    throw new Error('offline'); // must not affect the local sign-out
+  };
+  const manager = new CloudAccountManager({ settings, fetch });
+
+  manager.logout();
+  assert.strictEqual(manager.status().signedIn, false, 'signed out at once');
+  await new Promise((resolve) => setImmediate(resolve));
+
+  assert.deepStrictEqual(calls, [{ path: '/user-authentication-server/v2/logout/getUserLogout', auth: 'a' }]);
+});

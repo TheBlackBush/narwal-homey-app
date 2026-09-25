@@ -58,5 +58,8 @@
   },
   "1.2.2": {
     "en": "Fixes a crash when a robot reconnects while it is still connecting, stops repeated \"connection lost\" Flow triggers during an outage, and makes robot commands report their real result."
+  },
+  "1.2.3": {
+    "en": "Flow triggers no longer fire twice, rooms are no longer cleared by maps without rooms, and cloud mode now notices when the robot goes offline. Signing out also ends the session at Narwal."
   }
 }

@@ -2,11 +2,11 @@
 
 ![Homey](https://img.shields.io/badge/Homey-SDK%20v3-00AEEF?style=for-the-badge)
 ![App ID](https://img.shields.io/badge/App%20ID-com.narwal.global-683df5?style=for-the-badge)
-![Version](https://img.shields.io/badge/Version-1.2.2-683df5?style=for-the-badge)
-![Local First](https://img.shields.io/badge/Local--First-No%20Cloud-2ea44f?style=for-the-badge)
+![Version](https://img.shields.io/badge/Version-1.2.3-683df5?style=for-the-badge)
+![Local First](https://img.shields.io/badge/Local--First-Cloud%20optional-2ea44f?style=for-the-badge)
 ![License](https://img.shields.io/badge/License-MIT-111827?style=for-the-badge)
 
-Control your Narwal robot vacuum directly from Homey Pro over your local network — **no Narwal cloud login, no internet round-trips, no external servers**. The app talks to supported robots through their local WebSocket API and exposes device controls, live status, Flow cards, room cleaning and a Homey widget.
+Control your Narwal robot vacuum directly from Homey Pro over your local network: **local by default, no Narwal account needed**. Cloud mode (sign in with your Narwal account in the app settings) is optional. The app talks to supported robots through their local WebSocket API and exposes device controls, live status, Flow cards, room cleaning and a Homey widget.
 
 > Unofficial community app. Not affiliated with, authorised by, or endorsed by Narwal. “Narwal” and “Freo” are trademarks of their respective owners and are used here only to describe compatibility.
 
@@ -156,7 +156,7 @@ Some robots appear to allow only one local client at a time. Close the official 
 
 ## Privacy
 
-This app communicates only with your robot on your local network. It does not use Narwal cloud services, does not require a Narwal account, and does not send telemetry or analytics to the developer, Narwal or any third party.
+This app talks to your robot on your local network by default. Cloud mode is optional: only when you switch Connection to Cloud and sign in with your Narwal account in the app settings does the app connect to Narwal's servers, and then only to control your own robots. Your password is never stored; only the session from Narwal is kept on your Homey. The app sends no telemetry or analytics to the developer, Narwal or any third party.
 
 ## Development
 
