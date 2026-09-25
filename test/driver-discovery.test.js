@@ -97,3 +97,62 @@ test('identifying rejects anything that is not an IPv4 address', async () => {
   await assert.rejects(driver._identifyRobot({ ip: 'example.com', suffix: 'ab7721' }), /IPv4/);
   assert.strictEqual(probe.mock.callCount(), 0);
 });
+
+function withCloud(driver, { mode = 'cloud', signedIn = true, robots = [] } = {}) {
+  const account = { signedIn, listRobots: async () => robots };
+  driver.homey.app = {
+    cloud: {
+      getMode: () => mode,
+      getAccount: () => (signedIn ? account : null),
+      status: () => ({ mode, signedIn, email: signedIn ? 'me@example.com' : null }),
+    },
+  };
+  return driver;
+}
+
+const ACCOUNT_ROBOTS = [
+  { deviceId: DEVICE_ID, productId: 'QxMSPG6VSO', name: 'Kitchen robot' },
+  { deviceId: 'ffffffffffffffffffffffffffcccccc', productId: 'fjhpiem4ba', name: 'Upstairs' },
+];
+
+test('the pairing screen learns the app mode and sign-in state', () => {
+  const driver = withCloud(fakeDriver(), { mode: 'cloud', signedIn: false });
+
+  assert.deepStrictEqual(driver._pairingMode(), { mode: 'cloud', signedIn: false });
+});
+
+test('cloud pairing lists the account robots with their local IP when found', async () => {
+  const driver = withCloud(fakeDriver({ results: [{ name: '_app_wss_server_ab7721', address: '10.0.0.2' }] }), { robots: ACCOUNT_ROBOTS });
+
+  const robots = await driver._listCloudRobots();
+
+  assert.deepStrictEqual(robots.map((r) => [r.name, r.group, r.ip]), [
+    ['Kitchen robot', 'match', '10.0.0.2'],
+    ['Upstairs', 'other', ''],
+  ]);
+});
+
+test('cloud pairing asks to sign in when no account is signed in', async () => {
+  const driver = withCloud(fakeDriver(), { signedIn: false });
+
+  await assert.rejects(driver._listCloudRobots(), /Sign in/);
+});
+
+test('adding a cloud robot builds a device with its device id and model key', async () => {
+  const driver = withCloud(fakeDriver({ results: [{ name: '_app_wss_server_ab7721', address: '10.0.0.2' }] }), { robots: ACCOUNT_ROBOTS });
+
+  const device = await driver._cloudDevice({ deviceId: DEVICE_ID });
+
+  assert.strictEqual(device.data.id, DEVICE_ID);
+  assert.strictEqual(device.name, 'Kitchen robot');
+  assert.strictEqual(device.store.deviceId, DEVICE_ID);
+  assert.strictEqual(device.store.productKey, 'QxMSPG6VSO');
+  assert.strictEqual(device.settings.ip, '10.0.0.2');
+});
+
+test('adding a robot that is not on the account, or of another model, is refused', async () => {
+  const driver = withCloud(fakeDriver(), { robots: ACCOUNT_ROBOTS });
+
+  await assert.rejects(driver._cloudDevice({ deviceId: 'nope' }), /not found/);
+  await assert.rejects(driver._cloudDevice({ deviceId: 'ffffffffffffffffffffffffffcccccc' }), /Narwal Freo 20/);
+});

@@ -163,30 +163,32 @@
     .narwal-robot-name { display: block; font-weight: 700; font-size: 14px; }
     .narwal-robot-detail { display: block; font-size: 12px; color: var(--muted); margin-top: 2px; line-height: 1.35; }
     .narwal-robot-action { flex: none; font-size: 13px; font-weight: 800; color: var(--primary); }
+    .local-only[hidden] { display: none; }
   </style>
 </head>
 <body>
   <main class="shell">
     <section class="hero">
-      <div class="eyebrow">Local connection</div>
+      <div class="eyebrow" id="eyebrow">Local connection</div>
       <h1>Connect Freo Z10 Pro / Turbo</h1>
-      <p>Homey will verify the robot over your local network and add it in one step.</p>
+      <p id="heroText">Homey will verify the robot over your local network and add it in one step.</p>
     </section>
 
     <section class="card">
       <div class="section-title">
         <div class="robot-dot">N</div>
-        <div><strong>Freo Z10 Pro / Turbo</strong><span>Use a reserved/static IP for best reliability.</span></div>
+        <div><strong>Freo Z10 Pro / Turbo</strong><span id="sectionHint">Use a reserved/static IP for best reliability.</span></div>
       </div>
 
       <div class="found" id="foundSection">
         <div class="found-head">
-          <div class="found-title">Robots found on your network</div>
+          <div class="found-title" id="foundTitle">Robots found on your network</div>
           <button type="button" id="searchAgain" class="found-again" hidden>Search again</button>
         </div>
         <ul id="foundList" class="found-list"></ul>
-        <div id="foundNote" class="found-searching" role="status"><span class="spinner" aria-hidden="true"></span>Searching for robots…</div>
+        <div id="foundNote" class="found-searching" role="status"><span class="spinner" aria-hidden="true"></span><span id="foundNoteText">Searching for robots…</span></div>
       </div>
+      <div class="local-only">
       <div class="field">
         <label for="ip">Robot IP address</label>
         <input type="text" id="ip" value="" placeholder="192.168.1.50" inputmode="decimal" autocomplete="off" />
@@ -204,16 +206,17 @@
           <div class="hint">Default.</div>
         </div>
       </div>
+      </div>
 
       <div id="status" class="status" role="status" aria-live="polite"></div>
 
-      <div class="actions">
+      <div class="actions local-only">
         <button id="connectButton" class="homey-button-primary-full" type="button">
           <span id="buttonLabel">Continue</span>
         </button>
       </div>
 
-      <div class="tips"><ul><li>Close the official Narwal app during pairing to avoid competing local connections.</li><li>If the robot is sleeping, wake it once, close the Narwal app, then try again.</li></ul></div>
+      <div class="tips local-only"><ul><li>Close the official Narwal app during pairing to avoid competing local connections.</li><li>If the robot is sleeping, wake it once, close the Narwal app, then try again.</li></ul></div>
     </section>
   </main>
 <script type="application/javascript">
@@ -226,6 +229,9 @@ var VALIDATE_TIMEOUT_MS = 20000;
 var narwalHomey = null;
 var narwalBusy = false;
 var narwalSearching = false;
+var narwalCloud = false;
+var MODE_TIMEOUT_MS = 5000;
+var CLOUD_LIST_TIMEOUT_MS = 20000;
 
 function byId(id) { return document.getElementById(id); }
 
@@ -278,12 +284,21 @@ function addDevice(device) {
 // A robot's line: name, detail and an optional action. Everything is set via
 // textContent, never HTML.
 function robotView(robot) {
+  if (narwalCloud) return cloudRobotView(robot);
   if (robot.added) return { name: NARWAL_PAIRING.display, detail: robot.ip + ' · Already added' };
   if (robot.checking) return { name: 'Narwal robot', detail: robot.ip + ' · Checking…' };
   if (robot.group === 'match' && robot.device) return { name: NARWAL_PAIRING.display, detail: robot.ip, action: 'Add' };
   if (robot.group === 'other') return { name: robot.modelName, detail: robot.ip + ' · Add it under ' + robot.modelName + ' instead' };
   if (robot.responded) return { name: 'Narwal robot', detail: robot.ip + ' · Model not supported by this app' };
   return { name: 'Narwal robot', detail: robot.ip + ' · Not answering. Wake the robot, then retry.', action: 'Retry' };
+}
+
+function cloudRobotView(robot) {
+  var where = robot.ip ? ' · ' + robot.ip : '';
+  if (robot.added) return { name: robot.name, detail: robot.modelName + where + ' · Already added' };
+  if (robot.group === 'match') return { name: robot.name, detail: robot.modelName + where, action: 'Add' };
+  if (robot.group === 'other') return { name: robot.name, detail: robot.modelName + ' · Add it under ' + robot.modelName + ' instead' };
+  return { name: robot.name, detail: robot.modelName + ' · Not supported by this app' };
 }
 
 function renderRobot(robot) {
@@ -311,7 +326,8 @@ function renderRobot(robot) {
     btn.appendChild(action);
     btn.onclick = function() {
       if (narwalBusy) return;
-      if (view.action === 'Add') addFoundRobot(robot);
+      if (narwalCloud) addCloudRobot(robot);
+      else if (view.action === 'Add') addFoundRobot(robot);
       else identify(robot);
     };
   }
@@ -328,6 +344,67 @@ function addFoundRobot(robot) {
   byId('ip').value = robot.ip;
   byId('port').value = 9002;
   connectNarwal();
+}
+
+// Cloud mode: the device comes from the account list, no local probe.
+function addCloudRobot(robot) {
+  setBusy(true);
+  setStatus('busy', 'Adding ' + robot.name + '…');
+  emit('cloud_add', { deviceId: robot.deviceId }, CLOUD_LIST_TIMEOUT_MS, 'The Narwal cloud did not answer. Try again.')
+    .then(function(result) { return addDevice(result.device); })
+    .catch(function(err) {
+      setStatus('error', err && err.message ? err.message : String(err));
+      setBusy(false);
+    });
+}
+
+function listCloudRobots() {
+  if (narwalSearching) return;
+  narwalSearching = true;
+  var list = byId('foundList');
+  var note = byId('foundNote');
+  list.innerHTML = '';
+  setStatus('', '');
+  byId('foundSection').hidden = false;
+  note.hidden = false;
+  byId('searchAgain').hidden = true;
+  emit('cloud_robots', {}, CLOUD_LIST_TIMEOUT_MS, 'The Narwal cloud did not answer. Try again.')
+    .then(function(result) {
+      var robots = (result && result.robots) || [];
+      narwalSearching = false;
+      note.hidden = true;
+      byId('searchAgain').hidden = false;
+      if (!robots.length) {
+        setStatus('error', 'No robots on this Narwal account. Add the robot in the Narwal app first.');
+        return;
+      }
+      robots.forEach(function(robot) { list.appendChild(renderRobot(robot)); });
+      var addable = robots.filter(function(robot) { return robot.group === 'match' && !robot.added; });
+      if (!addable.length) setStatus('error', 'No ' + NARWAL_PAIRING.display + ' left to add on this account.');
+    }, function(err) {
+      narwalSearching = false;
+      note.hidden = true;
+      byId('searchAgain').hidden = false;
+      setStatus('error', err && err.message ? err.message : String(err));
+    });
+}
+
+function showCloudMode(signedIn) {
+  narwalCloud = true;
+  byId('eyebrow').textContent = 'Cloud connection';
+  byId('heroText').textContent = 'Homey connects to the robot through your Narwal account.';
+  byId('sectionHint').textContent = 'Choose the robot to add from your Narwal account.';
+  byId('foundTitle').textContent = 'Robots on your Narwal account';
+  byId('foundNoteText').textContent = 'Loading your robots…';
+  byId('searchAgain').textContent = 'Refresh';
+  var locals = document.querySelectorAll('.local-only');
+  for (var i = 0; i < locals.length; i++) locals[i].hidden = true;
+  if (!signedIn) {
+    byId('foundSection').hidden = true;
+    setStatus('error', 'Sign in to your Narwal account first: open Apps, Narwal, Configure, then come back to add the robot.');
+    return;
+  }
+  listCloudRobots();
 }
 
 function identify(robot) {
@@ -396,7 +473,10 @@ byId('connectButton').addEventListener('click', function(event) {
   event.preventDefault();
   connectNarwal();
 });
-byId('searchAgain').addEventListener('click', discover);
+byId('searchAgain').addEventListener('click', function() {
+  if (narwalCloud) listCloudRobots();
+  else discover();
+});
 
 // Pairing views get a global Homey object (onHomeyReady is only called on
 // settings pages and widgets), so start as soon as the page has loaded.
@@ -409,7 +489,13 @@ function startPairing(HomeyInstance) {
   if (typeof narwalHomey.setTitle === 'function') narwalHomey.setTitle('Connect ' + NARWAL_PAIRING.display);
   if (typeof narwalHomey.showNextButton === 'function') narwalHomey.showNextButton(false);
   if (typeof narwalHomey.ready === 'function') narwalHomey.ready();
-  discover();
+  // The app settings choose Local or Cloud for every robot.
+  emit('pairing_mode', {}, MODE_TIMEOUT_MS, 'No mode')
+    .then(function(result) { return result || {}; }, function() { return {}; })
+    .then(function(result) {
+      if (result.mode === 'cloud') showCloudMode(result.signedIn);
+      else discover();
+    });
 }
 window.onHomeyReady = startPairing;
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', function() { startPairing(); });

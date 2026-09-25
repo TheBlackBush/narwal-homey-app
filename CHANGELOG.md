@@ -3,6 +3,14 @@
 All notable changes to this project are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [1.2.1] - 2026-09-26
+
+### Changed
+- Local or Cloud is now one switch for the whole app on the app settings page, instead of a setting per robot. Robot settings are back to IP address and port only.
+
+### Added
+- In Cloud mode the pairing screen lists the robots on your Narwal account: add the one you want, see which ones are already added, and which belong under another model. In Local mode pairing works as before (search the network or enter the IP address).
+
 ## [1.2.0] - 2026-09-26
 
 ### Added
