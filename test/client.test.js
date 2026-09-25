@@ -3,6 +3,7 @@
 const test = require('node:test');
 const assert = require('node:assert');
 const { once } = require('node:events');
+const net = require('node:net');
 
 const { NarwalClient } = require('../lib/NarwalClient');
 const C = require('../lib/constants');
@@ -383,4 +384,17 @@ test('binary robot leaving the dock with a stale docked code is not shown as doc
   assert.strictEqual(status.docked, false);
   assert.notStrictEqual(status.state, RobotState.DOCKED);
   client.stop();
+});
+
+test('probe gives up after timeoutMs when a robot accepts but never answers', async () => {
+  const server = net.createServer(() => {});
+  await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
+  const { port } = server.address();
+  const startedAt = Date.now();
+  try {
+    await assert.rejects(NarwalClient.probe({ ip: '127.0.0.1', port, timeoutMs: 300 }), /timed out/i);
+    assert.ok(Date.now() - startedAt < 3000, 'probe should honour timeoutMs');
+  } finally {
+    server.close();
+  }
 });

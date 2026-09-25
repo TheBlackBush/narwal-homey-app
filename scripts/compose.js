@@ -57,6 +57,16 @@ function build() {
     app.drivers.push(driver);
   }
 
+  // 3b. Discovery strategies.
+  const discoveryDir = path.join(root, '.homeycompose/discovery');
+  if (fs.existsSync(discoveryDir)) {
+    const discovery = {};
+    for (const file of fs.readdirSync(discoveryDir).filter((f) => f.endsWith('.json')).sort()) {
+      discovery[path.basename(file, '.json')] = readJSON(path.join(discoveryDir, file));
+    }
+    if (Object.keys(discovery).length > 0) app.discovery = discovery;
+  }
+
   // 4. Widgets.
   const widgetsDir = path.join(root, 'widgets');
   if (fs.existsSync(widgetsDir)) {

@@ -3,6 +3,47 @@
 All notable changes to this project are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [1.1.10] - 2026-09-25
+
+### Fixed
+- Adding a robot from the found-robots list now follows the same steps as entering its IP address and pressing Continue, including Homey's room selection afterwards.
+
+## [1.1.9] - 2026-09-25
+
+### Fixed
+- The robot search on the pairing screen starts again. It waited for a Homey event that pairing screens never receive, so it stayed on "Searching…" and Continue could not connect.
+- The IP address field keeps its text and cursor inside the field.
+
+### Changed
+- Searching shows an animated indicator, and the section disappears after 5 seconds when no robot is found.
+
+## [1.1.8] - 2026-09-25
+
+### Changed
+- Restored the original pairing screen design (header, card and styling). The layout fixes are kept: the Continue button stays in the page flow below the fields, so it no longer covers them while typing, and the tips sit below the button.
+
+## [1.1.7] - 2026-09-25
+
+### Changed
+- Redesigned the pairing screen with Homey's own styles. The Connect button no longer covers the fields when the keyboard is open.
+- Robots found on the network are listed right away and checked one by one, so the list no longer waits on a sleeping robot. A robot that does not answer can be retried, and the search can be run again.
+
+### Fixed
+- The robot search now starts once Homey's pairing session is ready, so it no longer stays on "Searching…".
+- Entering an IP address of a robot that does not answer now shows an error instead of adding the robot without its device ID.
+
+## [1.1.6] - 2026-09-25
+
+### Added
+- Pairing lists Narwal robots found on your network. Robots of the chosen model can be added with one tap; robots of another model point to the right driver. Manual IP entry is still available.
+- Paired robots follow IP address changes automatically when they are visible on the network.
+
+### Changed
+- New devices use the robot's own device ID as their Homey identity instead of the IP address.
+
+### Fixed
+- A pairing probe that times out no longer risks an uncaught error in the app.
+
 ## [1.1.5] - 2026-09-24
 
 ### Changed

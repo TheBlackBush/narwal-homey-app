@@ -82,3 +82,6 @@ captures/
 .swarm/
 .claude/settings.local.json
 ruvector.db
+
+# Local plan execution workspace
+.superpowers/

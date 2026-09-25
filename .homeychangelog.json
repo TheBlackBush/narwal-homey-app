@@ -34,5 +34,20 @@
   },
   "1.1.5": {
     "en": "First App Store release under the app ID com.narwal.global. Local control of Narwal robot vacuums with cleaning mode settings, a Clean with settings Flow card, five suction levels, and reliable status for newer firmware."
+  },
+  "1.1.6": {
+    "en": "Pairing now lists Narwal robots found on your network, and paired robots follow IP address changes automatically. Manual IP entry is still available."
+  },
+  "1.1.7": {
+    "en": "Redesigned pairing: robots on your network are listed right away and checked one by one, with Retry and Search again. The Connect button no longer covers the fields, and a robot that does not answer shows an error instead of being added incomplete."
+  },
+  "1.1.8": {
+    "en": "Restored the original pairing screen design with the layout fixed: the Continue button no longer covers the fields while typing."
+  },
+  "1.1.9": {
+    "en": "Fixed the robot search on the pairing screen staying on Searching, and the IP field cursor sitting outside the field. Searching now shows an animation and hides after 5 seconds when no robot is found."
+  },
+  "1.1.10": {
+    "en": "Adding a robot from the found-robots list now follows the same steps as entering its IP address, including choosing a room afterwards."
   }
 }

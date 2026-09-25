@@ -104,6 +104,9 @@
       outline: none;
       transition: border-color 0.16s ease, box-shadow 0.16s ease, background 0.16s ease;
     }
+    /* Homey injects its own input styles; these scoped rules keep text and
+       caret inside the field. */
+    .card .field input { padding: 12px 14px; text-indent: 0; line-height: 1.3; height: auto; margin: 0; box-sizing: border-box; }
     input:focus { border-color: var(--primary); box-shadow: 0 0 0 4px rgba(104, 61, 245, 0.14); }
     input:disabled { background: #f4f6fa; color: #667085; }
     .hint { font-size: 12px; color: var(--muted); margin-top: 6px; line-height: 1.35; }
@@ -120,7 +123,7 @@
     .status.error { display: block; color: var(--danger); background: #fff1f0; border: 1px solid #fecdca; }
     .status.ok { display: block; color: var(--success); background: #ecfdf3; border: 1px solid #abefc6; }
     .status.busy { display: block; color: #344054; background: #f5f2ff; border: 1px solid #d9ceff; }
-    .actions { margin-top: auto; padding-top: 18px; position: sticky; bottom: 0; background: linear-gradient(180deg, rgba(255,255,255,0), var(--card) 28%); }
+    .actions { margin-top: 18px; }
     @keyframes spin { to { transform: rotate(360deg); } }
     .tips {
       margin: 15px 0 0;
@@ -133,6 +136,33 @@
     }
     .tips ul { margin: 0; padding-left: 18px; }
     .tips li + li { margin-top: 4px; }
+    .found { margin-bottom: 16px; }
+    .found-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 8px; }
+    .found-title { font-weight: 760; font-size: 13px; }
+    .found-again { flex: none; white-space: nowrap; padding: 0; border: 0; background: none; color: var(--primary); font: inherit; font-size: 12px; font-weight: 700; }
+    .found-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+    .found[hidden], .found-searching[hidden] { display: none; }
+    .found-searching { display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-radius: 14px; background: #f7f4ff; color: var(--muted); font-size: 13px; }
+    .spinner { flex: none; width: 16px; height: 16px; border-radius: 50%; border: 2px solid #ddd2ff; border-top-color: var(--primary); animation: spin 0.8s linear infinite; }
+    @media (prefers-reduced-motion: reduce) { .spinner { animation-duration: 2.4s; } }
+    .narwal-robot {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      width: 100%;
+      padding: 12px 14px;
+      border-radius: 14px;
+      border: 1px solid #ddd2ff;
+      background: #f7f4ff;
+      color: var(--text);
+      font: inherit;
+      text-align: left;
+    }
+    .narwal-robot:disabled { opacity: 0.6; }
+    .narwal-robot-name { display: block; font-weight: 700; font-size: 14px; }
+    .narwal-robot-detail { display: block; font-size: 12px; color: var(--muted); margin-top: 2px; line-height: 1.35; }
+    .narwal-robot-action { flex: none; font-size: 13px; font-weight: 800; color: var(--primary); }
   </style>
 </head>
 <body>
@@ -149,6 +179,14 @@
         <div><strong>Narwal Flow</strong><span>Use a reserved/static IP for best reliability.</span></div>
       </div>
 
+      <div class="found" id="foundSection">
+        <div class="found-head">
+          <div class="found-title">Robots found on your network</div>
+          <button type="button" id="searchAgain" class="found-again" hidden>Search again</button>
+        </div>
+        <ul id="foundList" class="found-list"></ul>
+        <div id="foundNote" class="found-searching" role="status"><span class="spinner" aria-hidden="true"></span>Searching for robots…</div>
+      </div>
       <div class="field">
         <label for="ip">Robot IP address</label>
         <input type="text" id="ip" value="" placeholder="192.168.1.50" inputmode="decimal" autocomplete="off" />
@@ -169,146 +207,213 @@
 
       <div id="status" class="status" role="status" aria-live="polite"></div>
 
-      <div class="tips"><ul><li>Close the official Narwal app during pairing to avoid competing local connections.</li><li>If the robot is sleeping, wake it once, close the Narwal app, then try again.</li></ul></div>
-
       <div class="actions">
-        <button id="connectButton" class="homey-button-primary-full" type="button" onclick="connectNarwal(); return false;">
+        <button id="connectButton" class="homey-button-primary-full" type="button">
           <span id="buttonLabel">Continue</span>
         </button>
       </div>
+
+      <div class="tips"><ul><li>Close the official Narwal app during pairing to avoid competing local connections.</li><li>If the robot is sleeping, wake it once, close the Narwal app, then try again.</li></ul></div>
     </section>
   </main>
 <script type="application/javascript">
 var NARWAL_PAIRING = {
-  driverId: 'narwal_flow',
-  display: 'Narwal Flow',
-  modelId: 'narwal_flow_ax12',
-  productKey: 'QoEsI5qYXO',
-  defaultDeviceId: ''
+  display: 'Narwal Flow'
 };
-var narwalPairingBusy = false;
-var narwalPairingInitialized = false;
+var DISCOVER_TIMEOUT_MS = 5000;
+var IDENTIFY_TIMEOUT_MS = 20000;
+var VALIDATE_TIMEOUT_MS = 20000;
 var narwalHomey = null;
-
-function getHomey() {
-  return narwalHomey || window.Homey || (typeof Homey !== 'undefined' ? Homey : null);
-}
+var narwalBusy = false;
+var narwalSearching = false;
 
 function byId(id) { return document.getElementById(id); }
 
+function withTimeout(promise, ms, message) {
+  return Promise.race([
+    promise,
+    new Promise(function(resolve, reject) {
+      setTimeout(function() { reject(new Error(message)); }, ms);
+    })
+  ]);
+}
+
+function emit(event, data, ms, message) {
+  if (!narwalHomey || typeof narwalHomey.emit !== 'function') return Promise.reject(new Error('Homey is not ready yet. Close this window and try again.'));
+  return withTimeout(narwalHomey.emit(event, data), ms, message);
+}
+
 function setStatus(type, text) {
   var el = byId('status');
-  if (!el) return;
   el.className = 'status ' + (type || '');
   el.textContent = text || '';
 }
 
 function setBusy(isBusy) {
-  narwalPairingBusy = isBusy;
+  narwalBusy = isBusy;
   var btn = byId('connectButton');
-  var label = byId('buttonLabel');
-  if (btn) {
-    btn.disabled = isBusy;
-    if (isBusy) {
-      btn.classList.add('is-disabled');
-      btn.classList.add('is-loading');
-    } else {
-      btn.classList.remove('is-disabled');
-      btn.classList.remove('is-loading');
-    }
+  btn.disabled = isBusy;
+  if (isBusy) {
+    btn.classList.add('is-loading');
+    btn.classList.add('is-disabled');
+  } else {
+    btn.classList.remove('is-loading');
+    btn.classList.remove('is-disabled');
   }
-  if (label) label.textContent = 'Continue';
+  var buttons = byId('foundList').querySelectorAll('button[data-action]');
+  for (var i = 0; i < buttons.length; i++) buttons[i].disabled = isBusy || buttons[i].getAttribute('data-enabled') !== '1';
 }
 
-function makeDevice(payload, status) {
-  return {
-    name: NARWAL_PAIRING.display,
-    data: { id: NARWAL_PAIRING.modelId + '-' + payload.ip + '-' + payload.port },
-    store: {
-      model: NARWAL_PAIRING.modelId,
-      protocol: 'v1',
-      productKey: NARWAL_PAIRING.productKey,
-      deviceId: status && status.deviceId ? status.deviceId : (NARWAL_PAIRING.defaultDeviceId || null)
-    },
-    settings: {
-      ip: payload.ip,
-      port: payload.port,
-      poll_interval: 60,
-      dev_mock: false
-    }
-  };
+function addDevice(device) {
+  setBusy(true);
+  setStatus('ok', 'Adding ' + NARWAL_PAIRING.display + ' to Homey…');
+  return narwalHomey.createDevice(device)
+    .then(function() { return narwalHomey.done(); })
+    .catch(function(err) {
+      setStatus('error', err && err.message ? err.message : String(err));
+      setBusy(false);
+    });
 }
 
-function emitValidate(payload) {
-  var HomeyRef = getHomey();
-  if (!HomeyRef || typeof HomeyRef.emit !== 'function') return Promise.reject(new Error('Homey.emit is unavailable.'));
-  return Promise.race([
-    HomeyRef.emit('validate', payload),
-    new Promise(function(resolve) {
-      setTimeout(function() { resolve({ timeout: true, device: makeDevice(payload, null), name: NARWAL_PAIRING.display }); }, 12000);
-    })
-  ]);
+// A robot's line: name, detail and an optional action. Everything is set via
+// textContent, never HTML.
+function robotView(robot) {
+  if (robot.added) return { name: NARWAL_PAIRING.display, detail: robot.ip + ' · Already added' };
+  if (robot.checking) return { name: 'Narwal robot', detail: robot.ip + ' · Checking…' };
+  if (robot.group === 'match' && robot.device) return { name: NARWAL_PAIRING.display, detail: robot.ip, action: 'Add' };
+  if (robot.group === 'other') return { name: robot.modelName, detail: robot.ip + ' · Add it under ' + robot.modelName + ' instead' };
+  if (robot.responded) return { name: 'Narwal robot', detail: robot.ip + ' · Model not supported by this app' };
+  return { name: 'Narwal robot', detail: robot.ip + ' · Not answering. Wake the robot, then retry.', action: 'Retry' };
 }
 
-function createDevice(device) {
-  var HomeyRef = getHomey();
-  if (!HomeyRef || typeof HomeyRef.createDevice !== 'function') return Promise.reject(new Error('Homey.createDevice is unavailable.'));
-  return HomeyRef.createDevice(device).then(function(result) {
-    if (HomeyRef && typeof HomeyRef.done === 'function') return HomeyRef.done();
-    return result;
-  });
+function renderRobot(robot) {
+  var view = robotView(robot);
+  var btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = 'narwal-robot';
+  btn.setAttribute('data-action', view.action || '');
+  btn.setAttribute('data-enabled', view.action ? '1' : '0');
+  btn.disabled = narwalBusy || !view.action;
+  var text = document.createElement('span');
+  var name = document.createElement('span');
+  name.className = 'narwal-robot-name';
+  name.textContent = view.name;
+  var detail = document.createElement('span');
+  detail.className = 'narwal-robot-detail';
+  detail.textContent = view.detail;
+  text.appendChild(name);
+  text.appendChild(detail);
+  btn.appendChild(text);
+  if (view.action) {
+    var action = document.createElement('span');
+    action.className = 'narwal-robot-action';
+    action.textContent = view.action;
+    btn.appendChild(action);
+    btn.onclick = function() {
+      if (narwalBusy) return;
+      if (view.action === 'Add') addFoundRobot(robot);
+      else identify(robot);
+    };
+  }
+  var item = robot.element || document.createElement('li');
+  item.innerHTML = '';
+  item.appendChild(btn);
+  robot.element = item;
+  return item;
+}
+
+// A found robot is added exactly like a typed IP: same validation, same
+// device, and the same steps Homey shows afterwards.
+function addFoundRobot(robot) {
+  byId('ip').value = robot.ip;
+  byId('port').value = 9002;
+  connectNarwal();
+}
+
+function identify(robot) {
+  robot.checking = true;
+  renderRobot(robot);
+  return emit('identify', { ip: robot.ip, suffix: robot.suffix }, IDENTIFY_TIMEOUT_MS, 'No answer')
+    .then(function(result) {
+      robot.checking = false;
+      robot.group = result.group;
+      robot.modelName = result.modelName;
+      robot.responded = result.responded;
+      robot.device = result.device;
+      renderRobot(robot);
+    }, function() {
+      robot.checking = false;
+      robot.responded = false;
+      renderRobot(robot);
+    });
+}
+
+function discover() {
+  if (narwalSearching) return;
+  narwalSearching = true;
+  var list = byId('foundList');
+  var note = byId('foundNote');
+  list.innerHTML = '';
+  byId('foundSection').hidden = false;
+  note.hidden = false;
+  byId('searchAgain').hidden = true;
+  emit('discover', {}, DISCOVER_TIMEOUT_MS, 'Search timed out')
+    .then(function(result) { return (result && result.robots) || []; }, function() { return []; })
+    .then(function(robots) {
+      narwalSearching = false;
+      note.hidden = true;
+      // Nothing found: remove the section and leave the manual form.
+      if (!robots.length) {
+        byId('foundSection').hidden = true;
+        return;
+      }
+      byId('searchAgain').hidden = false;
+      robots.forEach(function(robot) {
+        list.appendChild(renderRobot(robot));
+        if (!robot.added) identify(robot);
+      });
+    });
 }
 
 function connectNarwal() {
-  if (narwalPairingBusy) return false;
+  if (narwalBusy) return;
   var ip = (byId('ip').value || '').trim();
   var port = parseInt(byId('port').value, 10) || 9002;
-  var payload = { ip: ip, port: port, model: NARWAL_PAIRING.modelId, dev_mock: false };
-
   setBusy(true);
   setStatus('busy', 'Connecting to ' + NARWAL_PAIRING.display + '…');
-
-  emitValidate(payload)
+  emit('validate', { ip: ip, port: port, dev_mock: false }, VALIDATE_TIMEOUT_MS, 'The robot did not answer. Wake it, close the Narwal app, and try again.')
     .then(function(result) {
-      var device = result && result.device ? result.device : makeDevice(payload, result || null);
-      var details = [];
-      if (result && result.timeout) details.push('Validation timed out; adding with saved local settings.');
-      if (result && typeof result.battery === 'number') details.push('Battery ' + result.battery + '%');
-      if (result && result.firmware) details.push('Firmware ' + result.firmware);
-      setStatus('ok', 'Adding ' + NARWAL_PAIRING.display + ' to Homey…' + (details.length ? '\n' + details.join(' · ') : ''));
-      return createDevice(device);
+      if (!result || !result.device) throw new Error('The robot did not answer. Wake it, close the Narwal app, and try again.');
+      return addDevice(result.device);
     })
     .catch(function(err) {
-      var message = err && err.message ? err.message : String(err || 'Pairing failed');
-      setStatus('error', message);
-      var HomeyRef = null;
-      try { HomeyRef = getHomey(); } catch (e) {}
-      if (HomeyRef && typeof HomeyRef.alert === 'function') HomeyRef.alert(message, 'error');
-    })
-    .then(function() { setBusy(false); }, function() { setBusy(false); });
-  return false;
+      setStatus('error', err && err.message ? err.message : String(err));
+      setBusy(false);
+    });
 }
 
-function initNarwalPairing(HomeyInstance) {
+byId('connectButton').addEventListener('click', function(event) {
+  event.preventDefault();
+  connectNarwal();
+});
+byId('searchAgain').addEventListener('click', discover);
+
+// Pairing views get a global Homey object (onHomeyReady is only called on
+// settings pages and widgets), so start as soon as the page has loaded.
+var narwalStarted = false;
+function startPairing(HomeyInstance) {
   if (HomeyInstance) narwalHomey = HomeyInstance;
-  if (narwalPairingInitialized) return;
-  if (document.readyState === 'loading') return;
-  narwalPairingInitialized = true;
-  var HomeyRef = getHomey();
-  if (HomeyRef) {
-    if (typeof HomeyRef.setTitle === 'function') HomeyRef.setTitle('Connect ' + NARWAL_PAIRING.display);
-    if (typeof HomeyRef.showNextButton === 'function') HomeyRef.showNextButton(false);
-    if (typeof HomeyRef.ready === 'function') HomeyRef.ready();
-  } else {
-    setStatus('error', 'Homey pairing API is not available yet. Close this pairing window and try again.');
-  }
-  var btn = byId('connectButton');
-  if (btn) btn.addEventListener('click', function(event) { event.preventDefault(); connectNarwal(); return false; });
+  if (!narwalHomey && typeof Homey !== 'undefined') narwalHomey = Homey;
+  if (narwalStarted || !narwalHomey) return;
+  narwalStarted = true;
+  if (typeof narwalHomey.setTitle === 'function') narwalHomey.setTitle('Connect ' + NARWAL_PAIRING.display);
+  if (typeof narwalHomey.showNextButton === 'function') narwalHomey.showNextButton(false);
+  if (typeof narwalHomey.ready === 'function') narwalHomey.ready();
+  discover();
 }
-
-document.addEventListener('DOMContentLoaded', initNarwalPairing);
-window.connectNarwal = connectNarwal;
-window.onHomeyReady = function(HomeyInstance) { initNarwalPairing(HomeyInstance); };
+window.onHomeyReady = startPairing;
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', function() { startPairing(); });
+else startPairing();
 </script>
 </body>
 </html>

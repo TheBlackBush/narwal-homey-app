@@ -1,6 +1,7 @@
 'use strict';
 
 const Homey = require('homey');
+const { DiscoveryWatcher } = require('./lib/DiscoveryWatcher');
 
 /**
  * Narwal app entry point.
@@ -18,10 +19,31 @@ class NarwalApp extends Homey.App {
     process.on('unhandledRejection', (reason) => {
       this.error('Unhandled rejection:', reason);
     });
+
+    // Follow robots that move to a new IP. Discovery is optional: robots that
+    // never appear in mDNS keep their saved IP.
+    let strategy = null;
+    try {
+      strategy = this.homey.discovery.getStrategy('narwal');
+    } catch (err) {
+      this.log(`mDNS discovery unavailable: ${err.message}`);
+    }
+    this._discoveryWatcher = new DiscoveryWatcher({
+      strategy,
+      getDevices: () => [...this._narwalDevices],
+      log: (...args) => this.log(...args),
+      error: (...args) => this.error(...args),
+    });
+    this._discoveryWatcher.start();
   }
 
   registerNarwalDevice(device) {
     this._narwalDevices.add(device);
+  }
+
+  // Called by a device once its client has started.
+  checkDiscoveredAddress(device) {
+    if (this._discoveryWatcher) this._discoveryWatcher.checkDevice(device);
   }
 
   unregisterNarwalDevice(device) {
