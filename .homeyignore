@@ -4,6 +4,10 @@
 diagnostics/
 diagnostics/**
 *.chlsj
+*.chls
+*.chlz
+*.apk
+*.apkm
 *.pem
 *.key
 
