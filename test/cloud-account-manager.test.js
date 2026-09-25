@@ -39,7 +39,9 @@ const session = { token: 'access', refresh_token: 'refresh', uuid: UUID };
 test('starts signed out with no stored account', () => {
   const manager = new CloudAccountManager({ settings: fakeSettings(), fetch: async () => {} });
 
-  assert.deepStrictEqual(manager.status(), { signedIn: false, email: null, country: null });
+  assert.deepStrictEqual(manager.status(), {
+    mode: 'local', signedIn: false, email: null, country: null,
+  });
   assert.strictEqual(manager.getAccount(), null);
 });
 
@@ -55,7 +57,9 @@ test('password sign-in stores tokens only and reports the account', async () => 
   await manager.loginWithPassword({ email: ' me@example.com ', password: 'secret', country: 'il' });
 
   assert.strictEqual(calls[0].host, 'il-app.narwaltech.com');
-  assert.deepStrictEqual(manager.status(), { signedIn: true, email: 'me@example.com', country: 'IL' });
+  assert.deepStrictEqual(manager.status(), {
+    mode: 'local', signedIn: true, email: 'me@example.com', country: 'IL',
+  });
   assert.ok(!JSON.stringify(settings.data[SETTINGS_KEY]).includes('secret'), 'password is not stored');
   assert.strictEqual(settings.data[SETTINGS_KEY].refreshToken, 'refresh');
   assert.strictEqual(changes, 1);
@@ -135,4 +139,34 @@ test('sign-out forgets the account', async () => {
   assert.strictEqual(manager.getAccount(), null);
   assert.ok(!(SETTINGS_KEY in settings.data));
   assert.strictEqual(changes, 1);
+});
+
+test('the app connection mode defaults to local and is stored', () => {
+  const settings = fakeSettings();
+  const manager = new CloudAccountManager({ settings, fetch: async () => {} });
+  const events = [];
+  manager.on('changed', (e) => events.push(e));
+
+  assert.strictEqual(manager.getMode(), 'local');
+  manager.setMode('cloud');
+  assert.strictEqual(manager.getMode(), 'cloud');
+  assert.strictEqual(settings.data.connection_mode, 'cloud');
+  assert.strictEqual(events.at(-1).modeChanged, true);
+
+  manager.setMode('cloud');
+  assert.strictEqual(events.length, 1, 'no event when the mode stays the same');
+  assert.throws(() => manager.setMode('satellite'), /Local or Cloud/);
+});
+
+test('status reports the mode and account changes say whether robots must reconnect', async () => {
+  const { fetch } = fakeFetch({ '/user-authentication-server/v2/login/loginByEmail': () => ({ json: { code: 0, result: session } }) });
+  const manager = new CloudAccountManager({ settings: fakeSettings({ connection_mode: 'cloud' }), fetch });
+  const events = [];
+  manager.on('changed', (e) => events.push(e));
+
+  assert.strictEqual(manager.status().mode, 'cloud');
+  await manager.loginWithPassword({ email: 'me@example.com', password: 'secret', country: 'IL' });
+
+  assert.strictEqual(events.at(-1).modeChanged, false);
+  assert.strictEqual(events.at(-1).mode, 'cloud');
 });

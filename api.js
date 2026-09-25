@@ -9,6 +9,10 @@ module.exports = {
     return homey.app.getCloudStatus();
   },
 
+  async setConnectionMode({ homey, body }) {
+    return homey.app.setConnectionMode(body || {});
+  },
+
   async cloudLoginPassword({ homey, body }) {
     return homey.app.cloudLoginWithPassword(body || {});
   },

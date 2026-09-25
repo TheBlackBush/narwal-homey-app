@@ -40,14 +40,25 @@ class NarwalApp extends Homey.App {
     // Optional Narwal account (cloud connection). Devices set to use the
     // cloud reconnect when the user signs in or out.
     this.cloud = new CloudAccountManager({ settings: this.homey.settings });
-    this.cloud.on('changed', () => {
+    this.cloud.on('changed', (event) => {
+      // Reconnect when the mode changes, or when the account changes in cloud mode.
+      if (!event.modeChanged && event.mode !== 'cloud') return;
       for (const device of this._narwalDevices) {
-        if (typeof device.onCloudAccountChanged === 'function') device.onCloudAccountChanged();
+        if (typeof device.onConnectionChanged === 'function') device.onConnectionChanged();
       }
     });
   }
 
   getCloudStatus() {
+    return this.cloud.status();
+  }
+
+  getConnectionMode() {
+    return this.cloud ? this.cloud.getMode() : 'local';
+  }
+
+  setConnectionMode({ mode } = {}) {
+    this.cloud.setMode(mode);
     return this.cloud.status();
   }
 
@@ -104,7 +115,6 @@ class NarwalApp extends Homey.App {
         driverId: device.driver && device.driver.id ? device.driver.id : null,
         available: this._getDeviceAvailable(device),
         ip: settings.ip || '',
-        connectionMode: settings.connection_mode || 'local',
         port: settings.port || 9002,
         state: device.getCapabilityValue('narwal_status') || device.getCapabilityValue('vacuumcleaner_state') || 'Unknown',
         battery: device.getCapabilityValue('measure_battery'),

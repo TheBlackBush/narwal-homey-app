@@ -75,6 +75,10 @@
     "cloudLogout": {
       "method": "POST",
       "path": "/cloud/logout"
+    },
+    "setConnectionMode": {
+      "method": "POST",
+      "path": "/connection-mode"
     }
   }
 }

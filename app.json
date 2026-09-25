@@ -1,5 +1,4 @@
 {
-  "_comment": "This file is generated. Please edit .homeycompose/app.json instead.",
   "id": "com.narwal.global",
   "version": "1.2.0",
   "compatibility": ">=12.4.0",
@@ -76,6 +75,185 @@
     "cloudLogout": {
       "method": "POST",
       "path": "/cloud/logout"
+    },
+    "setConnectionMode": {
+      "method": "POST",
+      "path": "/connection-mode"
+    }
+  },
+  "capabilities": {
+    "narwal_charging": {
+      "type": "boolean",
+      "title": {
+        "en": "Charging"
+      },
+      "desc": {
+        "en": "Whether the robot is currently charging"
+      },
+      "getable": true,
+      "setable": false,
+      "uiComponent": "sensor",
+      "insights": true,
+      "icon": "/assets/capabilities/narwal-charging.svg"
+    },
+    "narwal_clean_area": {
+      "type": "number",
+      "title": {
+        "en": "Cleaning area"
+      },
+      "desc": {
+        "en": "Area cleaned in the current/last session"
+      },
+      "getable": true,
+      "setable": false,
+      "uiComponent": "sensor",
+      "units": {
+        "en": "m²"
+      },
+      "decimals": 1,
+      "insights": true,
+      "icon": "/assets/capabilities/narwal-clean-area.svg"
+    },
+    "narwal_clean_time": {
+      "type": "number",
+      "title": {
+        "en": "Cleaning time"
+      },
+      "desc": {
+        "en": "Duration of the current/last session"
+      },
+      "getable": true,
+      "setable": false,
+      "uiComponent": "sensor",
+      "units": {
+        "en": "min"
+      },
+      "decimals": 0,
+      "insights": true,
+      "icon": "/assets/capabilities/narwal-clean-time.svg"
+    },
+    "narwal_connected": {
+      "type": "boolean",
+      "title": {
+        "en": "Connected"
+      },
+      "desc": {
+        "en": "Local connection to the robot is active"
+      },
+      "getable": true,
+      "setable": false,
+      "uiComponent": "sensor",
+      "icon": "/assets/capabilities/narwal-connected.svg"
+    },
+    "narwal_current_room": {
+      "type": "string",
+      "title": {
+        "en": "Current room"
+      },
+      "desc": {
+        "en": "Room currently being cleaned"
+      },
+      "getable": true,
+      "setable": false,
+      "uiComponent": "sensor",
+      "icon": "/assets/capabilities/narwal-current-room.svg"
+    },
+    "narwal_docked": {
+      "type": "boolean",
+      "title": {
+        "en": "Docked"
+      },
+      "desc": {
+        "en": "Whether the robot is on its dock"
+      },
+      "getable": true,
+      "setable": false,
+      "uiComponent": "sensor",
+      "insights": true,
+      "icon": "/assets/capabilities/narwal-docked.svg"
+    },
+    "narwal_fan_speed": {
+      "type": "enum",
+      "title": {
+        "en": "Fan speed"
+      },
+      "desc": {
+        "en": "Suction power level"
+      },
+      "getable": true,
+      "setable": true,
+      "uiComponent": "picker",
+      "values": [
+        {
+          "id": "quiet",
+          "title": {
+            "en": "Quiet"
+          }
+        },
+        {
+          "id": "normal",
+          "title": {
+            "en": "Standard"
+          }
+        },
+        {
+          "id": "strong",
+          "title": {
+            "en": "Strong"
+          }
+        },
+        {
+          "id": "max",
+          "title": {
+            "en": "Super Powerful"
+          }
+        },
+        {
+          "id": "ultra",
+          "title": {
+            "en": "Ultra Powerful"
+          }
+        }
+      ]
+    },
+    "narwal_firmware": {
+      "type": "string",
+      "title": {
+        "en": "Firmware"
+      },
+      "desc": {
+        "en": "Robot firmware version"
+      },
+      "getable": true,
+      "setable": false,
+      "uiComponent": "sensor",
+      "icon": "/assets/capabilities/narwal-firmware.svg"
+    },
+    "narwal_last_error": {
+      "type": "string",
+      "title": {
+        "en": "Last error"
+      },
+      "desc": {
+        "en": "Most recent connection or robot error"
+      },
+      "getable": true,
+      "setable": false,
+      "uiComponent": "sensor",
+      "icon": "/assets/capabilities/narwal-last-error.svg"
+    },
+    "narwal_status": {
+      "type": "string",
+      "title": {
+        "en": "Status"
+      },
+      "desc": {
+        "en": "Readable robot status"
+      },
+      "getable": true,
+      "setable": false,
+      "uiComponent": "sensor",
+      "icon": "/assets/capabilities/narwal-status.svg"
     }
   },
   "flow": {
@@ -907,31 +1085,6 @@
           },
           "children": [
             {
-              "id": "connection_mode",
-              "type": "dropdown",
-              "label": {
-                "en": "Connection"
-              },
-              "value": "local",
-              "values": [
-                {
-                  "id": "local",
-                  "label": {
-                    "en": "Local network"
-                  }
-                },
-                {
-                  "id": "cloud",
-                  "label": {
-                    "en": "Narwal cloud (account)"
-                  }
-                }
-              ],
-              "hint": {
-                "en": "Local network talks to the robot directly (recommended). Narwal cloud uses the Narwal account signed in on the app settings page, and works when the robot is not reachable on the local network."
-              }
-            },
-            {
               "id": "ip",
               "type": "text",
               "label": {
@@ -1282,31 +1435,6 @@
             "en": "Connection"
           },
           "children": [
-            {
-              "id": "connection_mode",
-              "type": "dropdown",
-              "label": {
-                "en": "Connection"
-              },
-              "value": "local",
-              "values": [
-                {
-                  "id": "local",
-                  "label": {
-                    "en": "Local network"
-                  }
-                },
-                {
-                  "id": "cloud",
-                  "label": {
-                    "en": "Narwal cloud (account)"
-                  }
-                }
-              ],
-              "hint": {
-                "en": "Local network talks to the robot directly (recommended). Narwal cloud uses the Narwal account signed in on the app settings page, and works when the robot is not reachable on the local network."
-              }
-            },
             {
               "id": "ip",
               "type": "text",
@@ -1687,31 +1815,6 @@
           },
           "children": [
             {
-              "id": "connection_mode",
-              "type": "dropdown",
-              "label": {
-                "en": "Connection"
-              },
-              "value": "local",
-              "values": [
-                {
-                  "id": "local",
-                  "label": {
-                    "en": "Local network"
-                  }
-                },
-                {
-                  "id": "cloud",
-                  "label": {
-                    "en": "Narwal cloud (account)"
-                  }
-                }
-              ],
-              "hint": {
-                "en": "Local network talks to the robot directly (recommended). Narwal cloud uses the Narwal account signed in on the app settings page, and works when the robot is not reachable on the local network."
-              }
-            },
-            {
               "id": "ip",
               "type": "text",
               "label": {
@@ -2062,31 +2165,6 @@
             "en": "Connection"
           },
           "children": [
-            {
-              "id": "connection_mode",
-              "type": "dropdown",
-              "label": {
-                "en": "Connection"
-              },
-              "value": "local",
-              "values": [
-                {
-                  "id": "local",
-                  "label": {
-                    "en": "Local network"
-                  }
-                },
-                {
-                  "id": "cloud",
-                  "label": {
-                    "en": "Narwal cloud (account)"
-                  }
-                }
-              ],
-              "hint": {
-                "en": "Local network talks to the robot directly (recommended). Narwal cloud uses the Narwal account signed in on the app settings page, and works when the robot is not reachable on the local network."
-              }
-            },
             {
               "id": "ip",
               "type": "text",
@@ -2439,31 +2517,6 @@
           },
           "children": [
             {
-              "id": "connection_mode",
-              "type": "dropdown",
-              "label": {
-                "en": "Connection"
-              },
-              "value": "local",
-              "values": [
-                {
-                  "id": "local",
-                  "label": {
-                    "en": "Local network"
-                  }
-                },
-                {
-                  "id": "cloud",
-                  "label": {
-                    "en": "Narwal cloud (account)"
-                  }
-                }
-              ],
-              "hint": {
-                "en": "Local network talks to the robot directly (recommended). Narwal cloud uses the Narwal account signed in on the app settings page, and works when the robot is not reachable on the local network."
-              }
-            },
-            {
               "id": "ip",
               "type": "text",
               "label": {
@@ -2815,31 +2868,6 @@
           },
           "children": [
             {
-              "id": "connection_mode",
-              "type": "dropdown",
-              "label": {
-                "en": "Connection"
-              },
-              "value": "local",
-              "values": [
-                {
-                  "id": "local",
-                  "label": {
-                    "en": "Local network"
-                  }
-                },
-                {
-                  "id": "cloud",
-                  "label": {
-                    "en": "Narwal cloud (account)"
-                  }
-                }
-              ],
-              "hint": {
-                "en": "Local network talks to the robot directly (recommended). Narwal cloud uses the Narwal account signed in on the app settings page, and works when the robot is not reachable on the local network."
-              }
-            },
-            {
               "id": "ip",
               "type": "text",
               "label": {
@@ -3099,6 +3127,16 @@
       "id": "narwal_flow_2"
     }
   ],
+  "discovery": {
+    "narwal": {
+      "type": "mdns-sd",
+      "mdns-sd": {
+        "name": "narwal_sweeper",
+        "protocol": "tcp"
+      },
+      "id": "{{name}}"
+    }
+  },
   "widgets": {
     "vacuum-map": {
       "name": {
@@ -3166,191 +3204,6 @@
         }
       },
       "id": "vacuum-map"
-    }
-  },
-  "capabilities": {
-    "narwal_charging": {
-      "type": "boolean",
-      "title": {
-        "en": "Charging"
-      },
-      "desc": {
-        "en": "Whether the robot is currently charging"
-      },
-      "getable": true,
-      "setable": false,
-      "uiComponent": "sensor",
-      "insights": true,
-      "icon": "/assets/capabilities/narwal-charging.svg"
-    },
-    "narwal_clean_area": {
-      "type": "number",
-      "title": {
-        "en": "Cleaning area"
-      },
-      "desc": {
-        "en": "Area cleaned in the current/last session"
-      },
-      "getable": true,
-      "setable": false,
-      "uiComponent": "sensor",
-      "units": {
-        "en": "m²"
-      },
-      "decimals": 1,
-      "insights": true,
-      "icon": "/assets/capabilities/narwal-clean-area.svg"
-    },
-    "narwal_clean_time": {
-      "type": "number",
-      "title": {
-        "en": "Cleaning time"
-      },
-      "desc": {
-        "en": "Duration of the current/last session"
-      },
-      "getable": true,
-      "setable": false,
-      "uiComponent": "sensor",
-      "units": {
-        "en": "min"
-      },
-      "decimals": 0,
-      "insights": true,
-      "icon": "/assets/capabilities/narwal-clean-time.svg"
-    },
-    "narwal_connected": {
-      "type": "boolean",
-      "title": {
-        "en": "Connected"
-      },
-      "desc": {
-        "en": "Local connection to the robot is active"
-      },
-      "getable": true,
-      "setable": false,
-      "uiComponent": "sensor",
-      "icon": "/assets/capabilities/narwal-connected.svg"
-    },
-    "narwal_current_room": {
-      "type": "string",
-      "title": {
-        "en": "Current room"
-      },
-      "desc": {
-        "en": "Room currently being cleaned"
-      },
-      "getable": true,
-      "setable": false,
-      "uiComponent": "sensor",
-      "icon": "/assets/capabilities/narwal-current-room.svg"
-    },
-    "narwal_docked": {
-      "type": "boolean",
-      "title": {
-        "en": "Docked"
-      },
-      "desc": {
-        "en": "Whether the robot is on its dock"
-      },
-      "getable": true,
-      "setable": false,
-      "uiComponent": "sensor",
-      "insights": true,
-      "icon": "/assets/capabilities/narwal-docked.svg"
-    },
-    "narwal_fan_speed": {
-      "type": "enum",
-      "title": {
-        "en": "Fan speed"
-      },
-      "desc": {
-        "en": "Suction power level"
-      },
-      "getable": true,
-      "setable": true,
-      "uiComponent": "picker",
-      "values": [
-        {
-          "id": "quiet",
-          "title": {
-            "en": "Quiet"
-          }
-        },
-        {
-          "id": "normal",
-          "title": {
-            "en": "Standard"
-          }
-        },
-        {
-          "id": "strong",
-          "title": {
-            "en": "Strong"
-          }
-        },
-        {
-          "id": "max",
-          "title": {
-            "en": "Super Powerful"
-          }
-        },
-        {
-          "id": "ultra",
-          "title": {
-            "en": "Ultra Powerful"
-          }
-        }
-      ]
-    },
-    "narwal_firmware": {
-      "type": "string",
-      "title": {
-        "en": "Firmware"
-      },
-      "desc": {
-        "en": "Robot firmware version"
-      },
-      "getable": true,
-      "setable": false,
-      "uiComponent": "sensor",
-      "icon": "/assets/capabilities/narwal-firmware.svg"
-    },
-    "narwal_last_error": {
-      "type": "string",
-      "title": {
-        "en": "Last error"
-      },
-      "desc": {
-        "en": "Most recent connection or robot error"
-      },
-      "getable": true,
-      "setable": false,
-      "uiComponent": "sensor",
-      "icon": "/assets/capabilities/narwal-last-error.svg"
-    },
-    "narwal_status": {
-      "type": "string",
-      "title": {
-        "en": "Status"
-      },
-      "desc": {
-        "en": "Readable robot status"
-      },
-      "getable": true,
-      "setable": false,
-      "uiComponent": "sensor",
-      "icon": "/assets/capabilities/narwal-status.svg"
-    }
-  },
-  "discovery": {
-    "narwal": {
-      "type": "mdns-sd",
-      "mdns-sd": {
-        "name": "narwal_sweeper",
-        "protocol": "tcp"
-      },
-      "id": "{{name}}"
     }
   }
 }

@@ -67,10 +67,20 @@
     </fieldset>
   </form>
 
-  <form class="homey-form section" id="accountForm" onsubmit="return false;">
+  <form class="homey-form section" id="connectionForm" onsubmit="return false;">
+    <fieldset class="homey-form-fieldset">
+      <legend class="homey-form-legend">Connection</legend>
+      <div class="method-row">
+        <label class="homey-form-radio"><input class="homey-form-radio-input" type="radio" name="connectionMode" value="local" checked /><span class="homey-form-radio-checkmark"></span><span class="homey-form-radio-text">Local</span></label>
+        <label class="homey-form-radio"><input class="homey-form-radio-input" type="radio" name="connectionMode" value="cloud" /><span class="homey-form-radio-checkmark"></span><span class="homey-form-radio-text">Cloud</span></label>
+      </div>
+      <p class="account-note" id="connectionNote"></p>
+    </fieldset>
+  </form>
+  <form class="homey-form section" id="accountForm" onsubmit="return false;" hidden>
     <fieldset class="homey-form-fieldset">
       <legend class="homey-form-legend">Narwal account</legend>
-      <p class="account-note">Optional. Local network control works without an account. Sign in to let a robot use the Narwal cloud (set Connection to Narwal cloud in the robot's settings). Your password is never stored.</p>
+      <p class="account-note">Sign in with the account you use in the Narwal app. Your password is never stored.</p>
       <div id="accountSignedIn" hidden>
         <div class="account-row">
           <div id="accountSummary" class="card-value"></div>
@@ -175,7 +185,21 @@ function errorText(err) {
   return (err && (err.message || err.error)) || String(err || 'Something went wrong.');
 }
 
+var CONNECTION_NOTES = {
+  local: 'Robots are found on your local network, or added by IP address. No account needed.',
+  cloud: 'Robots connect through your Narwal account. Sign in below, then add robots from your account.'
+};
+
+function renderMode(mode) {
+  var current = mode === 'cloud' ? 'cloud' : 'local';
+  var radios = document.querySelectorAll('input[name="connectionMode"]');
+  for (var i = 0; i < radios.length; i++) radios[i].checked = radios[i].value === current;
+  byId('connectionNote').textContent = CONNECTION_NOTES[current];
+  byId('accountForm').hidden = current !== 'cloud';
+}
+
 function renderAccount(status) {
+  if (status && status.mode) renderMode(status.mode);
   var signedIn = Boolean(status && status.signedIn);
   byId('accountSignedIn').hidden = !signedIn;
   byId('accountSignedOut').hidden = signedIn;
@@ -200,6 +224,20 @@ function withButton(button, work) {
 }
 
 function initAccount() {
+  var modes = document.querySelectorAll('input[name="connectionMode"]');
+  for (var m = 0; m < modes.length; m++) {
+    modes[m].addEventListener('change', function(event) {
+      var mode = event.target.value;
+      renderMode(mode);
+      setAccountMessage('', '');
+      apiPost('/connection-mode', { mode: mode })
+        .then(renderAccount)
+        .catch(function(err) {
+          setAccountMessage(errorText(err), 'bad');
+          apiGet('/cloud').then(renderAccount);
+        });
+    });
+  }
   var methods = document.querySelectorAll('input[name="signInMethod"]');
   for (var i = 0; i < methods.length; i++) {
     methods[i].addEventListener('change', function(event) {
