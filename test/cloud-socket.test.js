@@ -1,0 +1,203 @@
+'use strict';
+
+const test = require('node:test');
+const assert = require('node:assert');
+const { EventEmitter } = require('node:events');
+
+const { CloudSocket, OPEN, CLOSED } = require('../lib/cloud/CloudSocket');
+const { buildCloudPayload, splitCloudPayload } = require('../lib/cloud/cloudFrame');
+const { NarwalBinaryProtocol, buildFrame, decodeProto } = require('../lib/NarwalBinaryProtocol');
+
+const UUID = 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa';
+const PRODUCT = 'QxMSPG6VSO';
+const DEVICE = '0123456789abcdef0123456789abcdef';
+const BASE = `/${PRODUCT}/${DEVICE}`;
+const tick = () => new Promise((resolve) => setImmediate(resolve));
+
+function fakeAccount(overrides = {}) {
+  return {
+    uuid: UUID,
+    accessToken: 'access-1',
+    refreshed: 0,
+    brokerUrl: async () => 'mqtts://broker.example:8883',
+    async refresh() {
+      this.refreshed += 1; this.accessToken = 'access-2';
+    },
+    ...overrides,
+  };
+}
+
+function fakeMqtt() {
+  const state = { options: null, url: null, client: null };
+  const connect = (url, options) => {
+    const client = new EventEmitter();
+    client.subscribed = [];
+    client.published = [];
+    client.ended = false;
+    client.subscribe = (topics, opts, cb) => {
+      client.subscribed.push(...[].concat(topics)); setImmediate(() => cb && cb(null));
+    };
+    client.publish = (topic, payload, opts, cb) => {
+      client.published.push({ topic, payload, opts }); if (cb) setImmediate(() => cb(null));
+    };
+    client.end = (force, cb) => {
+      client.ended = true; if (cb) cb();
+    };
+    Object.assign(state, { url, options, client });
+    return client;
+  };
+  return { connect, state };
+}
+
+async function openSocket(account = fakeAccount()) {
+  const mqtt = fakeMqtt();
+  const socket = new CloudSocket({
+    account, productId: PRODUCT, deviceId: DEVICE, connect: mqtt.connect,
+  });
+  const opened = new Promise((resolve) => socket.once('open', resolve));
+  await tick();
+  mqtt.state.client.emit('connect', { reasonCode: 0 });
+  await opened;
+  return { socket, mqtt, client: mqtt.state.client };
+}
+
+test('connects to the account broker with the account uuid and access token', async () => {
+  const { socket, mqtt } = await openSocket();
+
+  assert.strictEqual(mqtt.state.url, 'mqtts://broker.example:8883');
+  assert.strictEqual(mqtt.state.options.protocolVersion, 5);
+  assert.strictEqual(mqtt.state.options.username, UUID);
+  assert.strictEqual(mqtt.state.options.password, 'access-1');
+  assert.match(mqtt.state.options.clientId, new RegExp(`^app_${UUID}_`));
+  assert.strictEqual(socket.readyState, OPEN);
+});
+
+test('subscribes to the robot broadcasts explicitly (the broker ignores wildcards)', async () => {
+  const { client } = await openSocket();
+
+  assert.ok(client.subscribed.includes(`${BASE}/status/robot_base_status`));
+  assert.ok(client.subscribed.includes(`${BASE}/status/working_status`));
+  assert.ok(!client.subscribed.some((t) => t.includes('#') || t.includes('+')));
+});
+
+test('sends local frames as cloud requests with a response topic, subscribed first', async () => {
+  const { socket, client } = await openSocket();
+
+  socket.send(buildFrame(`${BASE}/common/yell`, Buffer.from([0x08, 0x01])));
+  await tick(); await tick();
+
+  const sent = client.published[0];
+  assert.strictEqual(sent.topic, `${BASE}/common/yell`);
+  assert.ok(client.subscribed.indexOf(`${BASE}/common/yell/response`) >= 0, 'response topic subscribed');
+  assert.strictEqual(sent.opts.properties.responseTopic, `${BASE}/common/yell/response`);
+  assert.ok(Buffer.isBuffer(sent.opts.properties.correlationData));
+  const { header, body } = splitCloudPayload(sent.payload);
+  assert.deepStrictEqual(decodeProto(header), { 1: UUID, 2: UUID });
+  assert.deepStrictEqual(body, Buffer.from([0x08, 0x01]));
+});
+
+test('keeps the order of frames sent back to back', async () => {
+  const { socket, client } = await openSocket();
+
+  socket.send(buildFrame(`${BASE}/common/notify_app_event`, Buffer.alloc(0)));
+  socket.send(buildFrame(`${BASE}/common/active_robot_publish`, Buffer.alloc(0)));
+  socket.send(buildFrame(`${BASE}/status/get_device_base_status`, Buffer.alloc(0)));
+  for (let i = 0; i < 6; i += 1) await tick();
+
+  assert.deepStrictEqual(client.published.map((p) => p.topic.split('/').slice(3).join('/')), [
+    'common/notify_app_event', 'common/active_robot_publish', 'status/get_device_base_status',
+  ]);
+});
+
+test('does not publish frames for other robots or product keys', async () => {
+  const { socket, client } = await openSocket();
+
+  socket.send(buildFrame('//common/get_device_info', Buffer.alloc(0)));
+  socket.send(buildFrame(`/QoEsI5qYXO/${DEVICE}/common/get_device_info`, Buffer.alloc(0)));
+  for (let i = 0; i < 4; i += 1) await tick();
+
+  assert.strictEqual(client.published.length, 0);
+});
+
+test('delivers cloud messages as local frames the protocol parser reads', async () => {
+  const { socket, client } = await openSocket();
+  const protocol = new NarwalBinaryProtocol({ productKey: PRODUCT, deviceId: DEVICE });
+  const received = [];
+  socket.on('message', (frame) => received.push(protocol.parse(frame)));
+
+  client.emit('message', `${BASE}/status/robot_base_status`, buildCloudPayload(UUID, Buffer.from([0x1a, 0x02, 0x08, 0x0a])));
+  client.emit('message', `${BASE}/common/yell/response`, buildCloudPayload(UUID, Buffer.from([0x08, 0x01])));
+
+  assert.strictEqual(received[0].type, 'broadcast');
+  assert.strictEqual(received[0].shortTopic, 'status/robot_base_status');
+  assert.deepStrictEqual(received[0].decoded, { 3: { 1: 10 } });
+  assert.strictEqual(received[1].type, 'response');
+  assert.strictEqual(received[1].shortTopic, 'common/yell');
+});
+
+test('answers pings while open and reports close once', async () => {
+  const { socket, client } = await openSocket();
+  let pongs = 0;
+  let closes = 0;
+  socket.on('pong', () => {
+    pongs += 1;
+  });
+  socket.on('close', () => {
+    closes += 1;
+  });
+
+  socket.ping();
+  await tick();
+  client.emit('close');
+  client.emit('close');
+
+  assert.strictEqual(pongs, 1);
+  assert.strictEqual(closes, 1);
+  assert.strictEqual(socket.readyState, CLOSED);
+});
+
+test('terminate ends the MQTT session', async () => {
+  const { socket, client } = await openSocket();
+
+  socket.terminate();
+
+  assert.strictEqual(client.ended, true);
+  assert.strictEqual(socket.readyState, CLOSED);
+});
+
+test('a rejected MQTT login refreshes the token and reports the error', async () => {
+  const account = fakeAccount();
+  const mqtt = fakeMqtt();
+  const socket = new CloudSocket({
+    account, productId: PRODUCT, deviceId: DEVICE, connect: mqtt.connect,
+  });
+  const errors = [];
+  socket.on('error', (err) => errors.push(err));
+  await tick();
+
+  const authError = new Error('Connection refused: Not authorized');
+  authError.code = 135;
+  mqtt.state.client.emit('error', authError);
+  await tick();
+
+  assert.strictEqual(account.refreshed, 1);
+  assert.strictEqual(errors.length, 1);
+});
+
+test('a broker lookup failure surfaces as error and close', async () => {
+  const account = fakeAccount({
+    brokerUrl: async () => {
+      throw new Error('Sign in again');
+    },
+  });
+  const socket = new CloudSocket({
+    account, productId: PRODUCT, deviceId: DEVICE, connect: fakeMqtt().connect,
+  });
+  const events = [];
+  socket.on('error', () => events.push('error'));
+  socket.on('close', () => events.push('close'));
+  await tick(); await tick();
+
+  assert.deepStrictEqual(events, ['error', 'close']);
+  assert.strictEqual(socket.readyState, CLOSED);
+});
