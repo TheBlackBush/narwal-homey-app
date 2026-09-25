@@ -86,3 +86,6 @@ ruvector.db
 
 # Local plan execution workspace
 .superpowers/
+*.apk
+*.apkm
+*.xapk
