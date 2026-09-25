@@ -3,6 +3,11 @@
 All notable changes to this project are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [1.1.10] - 2026-09-25
+
+### Fixed
+- Adding a robot from the found-robots list now follows the same steps as entering its IP address and pressing Continue, including Homey's room selection afterwards.
+
 ## [1.1.9] - 2026-09-25
 
 ### Fixed
