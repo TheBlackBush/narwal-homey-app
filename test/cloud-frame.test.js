@@ -9,17 +9,31 @@ const {
 const { NarwalBinaryProtocol, decodeProto, buildFrame } = require('../lib/NarwalBinaryProtocol');
 
 const UUID = 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa';
+// Header field 5 is a nested message; the generic decoder reads it as text.
+function headerFields(header) {
+  const { readFields } = require('../lib/NarwalMapCodec'); // eslint-disable-line global-require
+  const f = readFields(header);
+  const text = (x) => x.value.toString('utf8');
+  const out = { 1: text(f[1][0]), 2: text(f[2][0]) };
+  if (f[5]) out[5] = { 1: text(readFields(f[5][0].value)[1][0]) };
+  return out;
+}
+
 const PRODUCT = 'QxMSPG6VSO';
 const DEVICE = '0123456789abcdef0123456789abcdef';
 
-test('cloud payload wraps the body behind a user header with the account uuid twice', () => {
+test('cloud payload wraps the body behind the official header: account uuid twice and the reply address', () => {
   const body = Buffer.from([0x08, 0x01]);
-  const payload = buildCloudPayload(UUID, body);
+  const responseTopic = `/${PRODUCT}/${DEVICE}/common/yell/response`;
+  const payload = buildCloudPayload(UUID, body, responseTopic);
 
   assert.strictEqual(payload[0], 0x01);
   const { header, body: rest } = splitCloudPayload(payload);
-  assert.deepStrictEqual(decodeProto(header), { 1: UUID, 2: UUID });
+  // Header {1 extendedString, 2 uuid, 5 properties {1 responseUrl}}; without
+  // the reply address the robot does not answer over the cloud.
+  assert.deepStrictEqual(headerFields(header), { 1: UUID, 2: UUID, 5: { 1: responseTopic } });
   assert.deepStrictEqual(rest, body);
+  assert.deepStrictEqual(decodeProto(splitCloudPayload(buildCloudPayload(UUID, body)).header), { 1: UUID, 2: UUID });
 });
 
 test('splitting a payload without the cloud frame returns it unchanged', () => {
@@ -27,9 +41,9 @@ test('splitting a payload without the cloud frame returns it unchanged', () => {
   assert.deepStrictEqual(splitCloudPayload(raw), { header: null, body: raw });
 });
 
-test('correlation data carries the request id, a zero and the time', () => {
+test('correlation data is the official AppMessageMark: request id and the time in microseconds', () => {
   const decoded = decodeProto(buildCorrelationData('req-1', 1790000000000));
-  assert.deepStrictEqual(decoded, { 1: 'req-1', 3: 0, 4: 1790000000000 });
+  assert.deepStrictEqual(decoded, { 1: 'req-1', 3: 1790000000000000 });
 });
 
 test('cloud messages become local frames the existing parser understands', () => {

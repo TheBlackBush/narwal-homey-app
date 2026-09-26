@@ -3,6 +3,108 @@
 All notable changes to this project are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [1.3.11] - 2026-09-26
+
+### Changed
+- The device buttons are ordered Start cleaning, Pause, Resume, Stop, Return to dock, Locate. Robots that are already paired get the new order the next time the app starts, with no need to re-pair.
+
+## [1.3.10] - 2026-09-26
+
+### Added
+- Live robot position and cleaning path on the map widget. The robot's position updates are pushed to the widget at most every 2 seconds (with a fallback check every 5 seconds while it works). The path of the current clean is drawn under the robot and stays visible after docking until the next clean starts.
+
+## [1.3.9] - 2026-09-26
+
+### Changed
+- New widget preview images that follow Homey's guidelines: simple shapes, no text, transparent background, light and dark.
+- When the robot or dock sits where a room name would go, the name moves just above or below instead of being left out.
+- The robot shows its heading as a soft direction cone.
+
+## [1.3.8] - 2026-09-26
+
+### Changed
+- Redesigned map widget. The map fills the square widget with the Narwal app's room colours (neighbouring rooms always differ) and thin walls, and follows Homey's light or dark theme. Room names sit in small labels; long names wrap to two lines, and labels that would not fit or would overlap are left out. The dock and robot are marked. A status chip sits at the top, and the name, battery, room count and refresh button sit in one row at the bottom. Small widgets show battery and refresh only.
+- New widget setting: Show room names.
+- The widget receives the map as compact cell data (about 9 KB instead of about 290 KB) and only reloads it when it changes.
+
+## [1.3.7] - 2026-09-26
+
+### Fixed
+- Cloud mode receives the robot's replies, including the map. Requests now carry the reply address in their header and the Narwal app's correlation format; without them the robot did not answer over the cloud.
+- Cloud replies take 20 to 30 seconds, so the map request waits up to 60 seconds, and a command succeeds as soon as either its reply or the robot's status confirms it.
+
+## [1.3.6] - 2026-09-26
+
+### Added
+- The robot's map is saved on Homey and loaded at startup, so cleaning, room cleaning and the widget work before a fresh map arrives, including in Cloud mode. A fresh map is requested in the background until one arrives.
+- In Cloud mode, where the robot's replies are often lost, a command counts as done once the robot's status shows it (for example cleaning after Start). Locate counts as sent. A refusal from the robot is still reported.
+
+## [1.3.5] - 2026-09-26
+
+### Fixed
+- Undoes the 1.3.4 changes (one request at a time over the cloud, the shorter wake-up, and map retries). They did not bring back the robot's replies and made the cloud connection drop about every minute.
+
+## [1.3.4] - 2026-09-26
+
+### Changed
+- Cloud mode wakes the robot the way the Narwal app does (keep publishing, device page opened, status) and sends one request at a time, waiting up to 5 seconds for each reply.
+- A map request that gets no answer is retried after 1, 2 and then every 5 minutes until a map is loaded.
+
+## [1.3.3] - 2026-09-26
+
+### Fixed
+- Saved rooms keep their type, floor texture and type number instead of losing them right after the map loads.
+
+### Added
+- Diagnostics describe the Narwal sign-in session: the sign-in method, whether the account ID matches the one in the token, the token's field names and age, and the broker's scheme and port. No IDs, tokens or host names.
+
+## [1.3.2] - 2026-09-26
+
+### Fixed
+- Cloud mode subscribes only to the four status broadcasts it needs. (This did not make request replies arrive over the cloud; 1.3.7 fixed that.)
+
+## [1.3.1] - 2026-09-26
+
+### Added
+- Diagnostics record messages received per topic and the outcome of the last map request.
+
+## [1.3.0] - 2026-09-26
+
+### Changed
+- Room names match the Narwal app exactly. When several rooms share a type, each gets a number with no space, as in the Narwal app: "Toilet1", "Toilet2", "Toilet3". Flows keep working, because they store room IDs.
+
+### Fixed
+- Room names in any language (for example Hebrew) display correctly instead of as a code.
+- The map shows walls and rooms the way the Narwal app does, and every map cell is drawn in the right room's colour.
+- Room labels sit inside their rooms, also in L-shaped rooms.
+
+### Added
+- The map is fetched automatically once the robot connects, and again when it starts or stops working. While it cleans, live map updates are applied as they arrive.
+
+## [1.2.9] - 2026-09-26
+
+### Fixed
+- Cloud mode works without the Narwal phone app open. Homey now sends the robot the same "keep publishing" request as the Narwal app, and renews it every 30 seconds; before, a docked robot only answered over the cloud while the phone app was open.
+
+## [1.2.8] - 2026-09-26
+
+### Fixed
+- Cloud mode connects to docked robots again. A docked robot takes about 40 seconds to answer a new cloud connection; the app gave up after 45 seconds and started over, so it often never connected. It now waits up to 3 minutes for the first answer.
+
+## [1.2.7] - 2026-09-26
+
+### Added
+- Cloud diagnostics also record refused messages, the broker's reason for closing the connection, and messages on unexpected topics (with IDs masked).
+
+## [1.2.6] - 2026-09-26
+
+### Fixed
+- A robot counts as connected only once it answers. A cloud connection that stays silent no longer flips between connected and disconnected every minute, or fires "Connection lost" each time.
+- After reconnecting, the status no longer stays on "Disconnected".
+
+### Added
+- Connection diagnostics in the app's device data (messages received, cloud subscriptions, and whether the robot is on the Narwal account), without any IDs.
+
 ## [1.2.5] - 2026-09-26
 
 ### Fixed
@@ -17,13 +119,13 @@ All notable changes to this project are documented here. The format is based on
 ### Changed
 - Sign-in fields submit with Enter, and form fields have proper labels.
 
- - 2026-09-26
+## [1.2.4] - 2026-09-26
 
 ### Changed
 - Narwal account sign-in asks you to confirm you are 14 or older before anything is sent, since Narwal's sign-in states this on your behalf.
 - The email-code option warns that signing in with a code for an address without a Narwal account makes Narwal create one.
 
- - 2026-09-26
+## [1.2.3] - 2026-09-26
 
 ### Fixed
 - Flow triggers such as "Started cleaning" no longer fire twice when status updates arrive together.
@@ -37,7 +139,7 @@ All notable changes to this project are documented here. The format is based on
 - Mock mode can no longer be switched on from the pairing screen.
 - The app description and privacy text now describe the optional cloud mode.
 
- - 2026-09-26
+## [1.2.2] - 2026-09-26
 
 ### Fixed
 - The app no longer crashes when a robot's connection is restarted while it is still connecting (IP change, settings change, Local/Cloud switch, app shutdown).
@@ -46,7 +148,7 @@ All notable changes to this project are documented here. The format is based on
 - Signing out of the Narwal account can no longer be undone by a token refresh that was still running.
 - The app package now contains only the files the app needs.
 
- - 2026-09-26
+## [1.2.1] - 2026-09-26
 
 ### Changed
 - Local or Cloud is now one switch for the whole app on the app settings page, instead of a setting per robot. Robot settings are back to IP address and port only.

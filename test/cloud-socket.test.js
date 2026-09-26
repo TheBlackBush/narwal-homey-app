@@ -8,9 +8,21 @@ const {
   CloudSocket, OPEN, CLOSED, SUBSCRIBE_TIMEOUT_MS,
 } = require('../lib/cloud/CloudSocket');
 const { buildCloudPayload, splitCloudPayload } = require('../lib/cloud/cloudFrame');
-const { NarwalBinaryProtocol, buildFrame, decodeProto } = require('../lib/NarwalBinaryProtocol');
+const {
+  NarwalBinaryProtocol, buildFrame, decodeProto, parseFrame,
+} = require('../lib/NarwalBinaryProtocol');
 
 const UUID = 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa';
+// Header field 5 is a nested message; the generic decoder reads it as text.
+function headerFields(header) {
+  const { readFields } = require('../lib/NarwalMapCodec'); // eslint-disable-line global-require
+  const f = readFields(header);
+  const text = (x) => x.value.toString('utf8');
+  const out = { 1: text(f[1][0]), 2: text(f[2][0]) };
+  if (f[5]) out[5] = { 1: text(readFields(f[5][0].value)[1][0]) };
+  return out;
+}
+
 const PRODUCT = 'QxMSPG6VSO';
 const DEVICE = '0123456789abcdef0123456789abcdef';
 const BASE = `/${PRODUCT}/${DEVICE}`;
@@ -82,6 +94,14 @@ test('subscribes to the robot broadcasts explicitly (the broker ignores wildcard
   assert.ok(!client.subscribed.some((t) => t.includes('#') || t.includes('+')));
 });
 
+test('only the broadcasts the robot is asked to publish are subscribed, leaving room for reply topics', async () => {
+  const { client } = await openSocket();
+  // The broker appears to route only the first ~10 subscriptions of a session.
+  assert.deepStrictEqual(client.subscribed.map((t) => t.slice(BASE.length + 1)).sort(), [
+    'map/display_map', 'status/robot_base_status', 'status/working_status', 'upgrade/upgrade_status',
+  ]);
+});
+
 test('sends local frames as cloud requests with a response topic, subscribed first', async () => {
   const { socket, client } = await openSocket();
 
@@ -94,8 +114,9 @@ test('sends local frames as cloud requests with a response topic, subscribed fir
   assert.strictEqual(sent.opts.properties.responseTopic, `${BASE}/common/yell/response`);
   assert.ok(Buffer.isBuffer(sent.opts.properties.correlationData));
   const { header, body } = splitCloudPayload(sent.payload);
-  assert.deepStrictEqual(decodeProto(header), { 1: UUID, 2: UUID });
+  assert.deepStrictEqual(headerFields(header), { 1: UUID, 2: UUID, 5: { 1: `${BASE}/common/yell/response` } });
   assert.deepStrictEqual(body, Buffer.from([0x08, 0x01]));
+  assert.strictEqual(sent.opts.qos, 0, 'requests are published at QoS 0, as the official app does');
 });
 
 test('keeps the order of frames sent back to back', async () => {
@@ -318,4 +339,63 @@ test('frames keep flowing when the broker never acknowledges a publish', async (
   for (let i = 0; i < 6; i += 1) await tick();
 
   assert.deepStrictEqual(client.published.map((p) => p.topic.split('/').slice(3).join('/')), ['common/get_device_info', 'common/notify_app_event']);
+});
+
+test('the cloud socket counts what it subscribed, sent and received, without IDs', async () => {
+  const { socket, client } = await openSocket();
+
+  socket.send(buildFrame(`${BASE}/common/yell`, Buffer.alloc(0)));
+  for (let i = 0; i < 4; i += 1) await tick();
+  client.emit('message', `${BASE}/status/robot_base_status`, buildCloudPayload(UUID, Buffer.from([0x08, 0x01])));
+
+  const stats = socket.stats();
+  assert.strictEqual(stats.subscribed, 5, 'four broadcast topics plus the response topic');
+  assert.strictEqual(stats.refused, 0);
+  assert.strictEqual(stats.published, 1);
+  assert.strictEqual(stats.received, 1);
+  assert.deepStrictEqual(stats.lastTopics, ['status/robot_base_status']);
+  assert.ok(!JSON.stringify(stats).includes(DEVICE), 'no device id');
+});
+
+test('diagnostics record refused publishes, broker disconnects and messages for other topics, masked', async () => {
+  const { socket, client } = await openSocket();
+  client.publish = (topic, payload, opts, cb) => {
+    const err = new Error('Not authorized'); err.code = 135; cb(err);
+  };
+
+  socket.send(buildFrame(`${BASE}/common/yell`, Buffer.alloc(0)));
+  for (let i = 0; i < 4; i += 1) await tick();
+  client.emit('message', `${PRODUCT}/${DEVICE}/status/robot_base_status`, Buffer.alloc(0)); // no leading slash
+  client.emit('disconnect', { reasonCode: 142 });
+
+  const stats = socket.stats();
+  assert.strictEqual(stats.publishErrors, 1);
+  assert.strictEqual(stats.lastPublishError, '135 Not authorized');
+  assert.strictEqual(stats.rawReceived, 1);
+  assert.deepStrictEqual(stats.otherTopics, ['<product>/<device>/status/robot_base_status']);
+  assert.strictEqual(stats.disconnectReason, 142);
+});
+
+test('a cloud client renews the keep-publishing request every 30 seconds, official format only', async () => {
+  const { NarwalClient } = require('../lib/NarwalClient'); // eslint-disable-line global-require
+  const client = new NarwalClient({
+    productKey: PRODUCT, deviceId: DEVICE, pollInterval: 60000, cloud: { account: fakeAccount(), connect: () => {} },
+  });
+  const sent = [];
+  client._ws = {
+    readyState: 1, send: (f) => sent.push(parseFrame(f)), ping() {}, removeAllListeners() {}, terminate() {}, on() {},
+  };
+  test.mock.timers.enable({ apis: ['setInterval', 'setTimeout'] });
+  try {
+    client._onOpen();
+    test.mock.timers.tick(1000);
+    sent.length = 0;
+    test.mock.timers.tick(30000);
+    const publish = sent.filter((f) => f.shortTopic === 'common/active_robot_publish');
+    assert.strictEqual(publish.length, 1);
+    assert.strictEqual(decodeProto(publish[0].payload)['2'], 60000);
+  } finally {
+    client.stop();
+    test.mock.timers.reset();
+  }
 });

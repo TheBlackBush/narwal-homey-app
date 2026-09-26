@@ -138,12 +138,13 @@ class NarwalApp extends Homey.App {
         rooms: rooms.map((room) => ({
           id: room.id,
           name: room.name,
-          subtype: room.subtype || 0,
-          category: room.category || 0,
-          instanceIndex: room.instanceIndex || 0,
+          type: room.type || 0,
+          texture: room.texture || 0,
+          roomTypeId: room.roomTypeId || 0,
         })),
         defaultRooms: typeof device.getDefaultRoomsData === 'function' ? device.getDefaultRoomsData() : null,
         commandHistory: typeof device.getCommandHistory === 'function' ? device.getCommandHistory() : [],
+        diagnostics: typeof device.getDiagnostics === 'function' ? device.getDiagnostics() : null,
       };
     });
   }
@@ -167,6 +168,12 @@ class NarwalApp extends Homey.App {
       throw new Error('No Narwal vacuum selected.');
     }
     return device.getMapData();
+  }
+
+  getWidgetLive(deviceId) {
+    const device = this._getNarwalDevice(deviceId);
+    if (!device || typeof device.getLiveData !== 'function') throw new Error('No Narwal vacuum selected.');
+    return device.getLiveData();
   }
 
   getWidgetRooms(deviceId) {

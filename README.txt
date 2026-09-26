@@ -7,9 +7,10 @@ Features:
 - Live status for battery, charging, docked, connected, cleaning area, cleaning time, firmware and last error.
 - Fan-speed control: Quiet, Standard, Strong, Super Powerful and Ultra Powerful.
 - Flow cards for actions, conditions and triggers, including cleaning lifecycle, docking, battery and connection events.
-- Room cleaning support when the robot exposes room data locally.
-- Narwal Map widget for a best-effort local map snapshot and compact robot status.
-- Resilient local connection with reconnect, heartbeat keep-alive and polling fallback.
+- Room cleaning, with room names exactly as in the Narwal app.
+- Narwal Map widget: the robot's map in Narwal's room colours with room names and the dock, plus the robot's live position and cleaning path while it works. Follows Homey's light and dark theme.
+- Local connection by default; optional Cloud mode through your Narwal account with the same features.
+- Resilient connection with reconnect, heartbeat keep-alive and polling fallback.
 
 Supported models:
 - Narwal Flow / AX12
@@ -30,7 +31,8 @@ Setup tips:
 - Assign the robot a static IP address or DHCP reservation.
 - Close the official Narwal app while Homey is connected; some robots allow only one local connection at a time.
 - If pairing fails, wake the robot by opening the official app once, then close it and try again.
-- If rooms or map are empty, run a full map-building clean in the official app first, then use the Homey “Refresh rooms / map” action.
+- If rooms or map are empty, run a full map-building clean in the official app first, then use the Homey "Refresh rooms / map" action.
+- In Cloud mode the robot's replies take 20 to 30 seconds; commands are confirmed as soon as the robot's status shows the result.
 
 Privacy:
 This app talks to your robot on your local network by default. Cloud mode is optional: only when you switch Connection to Cloud and sign in with your Narwal account in the app settings does the app connect to Narwal's servers, and then only to control your own robots. Your password is never stored; only the session from Narwal is kept on your Homey. The app sends no telemetry or analytics to the developer, Narwal or any third party.

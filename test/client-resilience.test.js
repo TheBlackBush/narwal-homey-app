@@ -111,6 +111,7 @@ test('a new outage after the robot was back is reported again', () => {
     client._onClose(-1);
     client._ws = fakeOpenSocket();
     client._onOpen();
+    client._onMessage(Buffer.from([0x01, 0x00, 0x00])); // the robot answers
     client._onClose(1006);
 
     assert.deepStrictEqual(events, ['disconnected', 'connected', 'disconnected']);
@@ -127,6 +128,7 @@ test('the reconnect backoff only resets after the connection stays up', () => {
   try {
     client._reconnectAttempt = 5;
     client._onOpen();
+    client._onMessage(Buffer.from([0x01, 0x00, 0x00])); // the robot answers
     assert.strictEqual(client._reconnectAttempt, 5, 'a robot that accepts and drops at once keeps backing off');
 
     test.mock.timers.tick(C.CONNECTION_STABLE_MS);
@@ -264,9 +266,171 @@ test('a connection with no traffic for too long is closed and retried', () => {
   client._ws = fakeOpenSocket();
   try {
     client._onOpen();
+    client._onMessage(Buffer.from([0x01, 0x00, 0x00])); // the robot answers
     test.mock.timers.tick(C.HEARTBEAT_TIMEOUT_MS + C.HEARTBEAT_INTERVAL_MS);
 
     assert.deepStrictEqual(events, ['connected', 'disconnected']);
+  } finally {
+    client.stop();
+    test.mock.timers.reset();
+  }
+});
+
+test('the robot counts as connected only once it has sent something', () => {
+  test.mock.timers.enable({ apis: ['setInterval', 'setTimeout'] });
+  const { client, events } = offlineClient();
+  client._ws = fakeOpenSocket();
+  try {
+    client._onOpen();
+    assert.deepStrictEqual(events, [], 'an open but silent link is not a connection');
+    assert.strictEqual(client.connected, false);
+
+    client._onMessage(Buffer.from([0x01, 0x00, 0x00])); // any frame from the robot
+    client._onMessage(Buffer.from([0x01, 0x00, 0x00]));
+    assert.deepStrictEqual(events, ['connected'], 'reported once');
+    assert.strictEqual(client.connected, true);
+    assert.strictEqual(client.diagnostics().framesReceived, 2);
+  } finally {
+    client.stop();
+    test.mock.timers.reset();
+  }
+});
+
+test('a link that opens but stays silent is reported as one outage, not a flapping connection', () => {
+  test.mock.timers.enable({ apis: ['setInterval', 'setTimeout', 'Date'] });
+  const { client, events } = offlineClient();
+  try {
+    for (let i = 0; i < 3; i += 1) {
+      client._ws = fakeOpenSocket();
+      client._onOpen();
+      test.mock.timers.tick(C.HEARTBEAT_TIMEOUT_MS + C.HEARTBEAT_INTERVAL_MS);
+    }
+    assert.deepStrictEqual(events, ['disconnected']);
+  } finally {
+    client.stop();
+    test.mock.timers.reset();
+  }
+});
+
+test('a cloud link waits for a slow robot to answer before giving up', () => {
+  test.mock.timers.enable({ apis: ['setInterval', 'setTimeout', 'Date'] });
+  const client = new NarwalClient({
+    productKey: 'QxMSPG6VSO', deviceId: 'dev', pollInterval: 60000, cloud: { account: {}, connect: () => {} },
+  });
+  client._scheduleReconnect = () => {};
+  const events = [];
+  client.on('disconnected', () => events.push('disconnected'));
+  client._ws = fakeOpenSocket();
+  try {
+    client._onOpen();
+    // A docked robot can take about a minute to answer over the cloud.
+    test.mock.timers.tick(90000);
+    assert.deepStrictEqual(events, [], 'still waiting for the first answer');
+
+    test.mock.timers.tick(C.CLOUD_FIRST_ANSWER_TIMEOUT_MS);
+    assert.deepStrictEqual(events, ['disconnected'], 'gives up eventually');
+  } finally {
+    client.stop();
+    test.mock.timers.reset();
+  }
+});
+
+async function settle() {
+  for (let i = 0; i < 8; i += 1) await tick();
+}
+
+function cloudClient() {
+  const client = new NarwalClient({
+    productKey: 'QxMSPG6VSO', deviceId: 'dev', pollInterval: 60000, cloud: { account: {}, connect: () => {} },
+  });
+  client._ws = fakeOpenSocket();
+  client._connected = true;
+  return client;
+}
+
+test('in Cloud mode a command without a reply counts as done once the status shows it', async () => {
+  test.mock.timers.enable({ apis: ['setTimeout', 'setInterval'] });
+  const client = cloudClient();
+  try {
+    client.lastStatus = { state: C.RobotState.CLEANING };
+    const pending = client.pauseClean();
+    await settle();
+    test.mock.timers.tick(C.CLOUD_REPLY_TIMEOUT_MS);
+    for (let i = 0; i < 4; i += 1) await tick();
+
+    client._resolveStatusWaiters(null, { state: C.RobotState.PAUSED });
+    client.emit('status', { state: C.RobotState.PAUSED });
+    const result = await pending;
+    assert.strictEqual(result.ok, true);
+    assert.strictEqual(result.confirmedBy, 'status');
+  } finally {
+    client.stop();
+    test.mock.timers.reset();
+  }
+});
+
+test('in Cloud mode a command the status never confirms is an error', async () => {
+  test.mock.timers.enable({ apis: ['setTimeout', 'setInterval'] });
+  const client = cloudClient();
+  try {
+    client.lastStatus = { state: C.RobotState.DOCKED };
+    client.lastMap = {
+      meta: { mapId: 7 }, rooms: [{ id: '1' }],
+    };
+    const pending = client.startClean();
+    pending.catch(() => {});
+    for (let i = 0; i < 4; i += 1) await tick();
+    test.mock.timers.tick(C.CLOUD_REPLY_TIMEOUT_MS);
+    for (let i = 0; i < 4; i += 1) await tick();
+    test.mock.timers.tick(C.CLOUD_CONFIRM_TIMEOUT_MS);
+    for (let i = 0; i < 4; i += 1) await tick();
+
+    await assert.rejects(pending, /did not confirm/);
+  } finally {
+    client.stop();
+    test.mock.timers.reset();
+  }
+});
+
+test('in Cloud mode Locate counts as sent without a reply', async () => {
+  test.mock.timers.enable({ apis: ['setTimeout', 'setInterval'] });
+  const client = cloudClient();
+  try {
+    const pending = client.locate();
+    await settle();
+    test.mock.timers.tick(C.CLOUD_REPLY_TIMEOUT_MS);
+    for (let i = 0; i < 4; i += 1) await tick();
+    const result = await pending;
+    assert.strictEqual(result.ok, true);
+    assert.strictEqual(result.confirmedBy, 'sent');
+  } finally {
+    client.stop();
+    test.mock.timers.reset();
+  }
+});
+
+test('in Cloud mode a real refusal from the robot is still an error', async () => {
+  const client = cloudClient();
+  const pending = client.pauseClean();
+  await settle();
+  client._enqueueBinaryResponse(reply('task/pause', { 1: 2 }));
+  await assert.rejects(pending);
+  client.stop();
+});
+
+test('in Cloud mode the status can confirm a command before its slow reply arrives', async () => {
+  test.mock.timers.enable({ apis: ['setTimeout', 'setInterval'] });
+  const client = cloudClient();
+  try {
+    client.lastStatus = { state: C.RobotState.PAUSED };
+    const pending = client.resumeClean();
+    await settle();
+    test.mock.timers.tick(2000); // well before the reply time-out
+    client.emit('status', { state: C.RobotState.CLEANING });
+    await settle();
+
+    const result = await pending;
+    assert.strictEqual(result.confirmedBy, 'status');
   } finally {
     client.stop();
     test.mock.timers.reset();

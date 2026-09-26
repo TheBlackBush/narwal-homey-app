@@ -23,6 +23,7 @@ function fakeDevice(settings = { ip: '10.0.0.1', port: 9002, dev_mock: false }) 
   device.log = () => {};
   device.error = () => {};
   device.getSettings = () => ({ ...settings });
+  device.getStoreValue = () => null;
   device.setSettings = async (next) => {
     device.settingsWrites.push(next); Object.assign(settings, next);
   };
@@ -180,6 +181,68 @@ test('in Cloud mode a signed-in app connects the robot through the account', () 
 
   assert.strictEqual(device._client.cloud.account, account);
   assert.strictEqual(start.mock.callCount(), 1);
+  device._stopClient();
+  start.mock.restore();
+});
+
+test('the cloud check says whether this robot is on the Narwal account, without IDs', async () => {
+  const account = {
+    signedIn: true,
+    listRobots: async () => [
+      { deviceId: 'other-flow2', productId: 'QxMSPG6VSO' },
+      { deviceId: 'a-freo', productId: 'fjhpiem4ba' },
+    ],
+  };
+  const device = cloudDevice(account); // stored deviceId 'dev', productKey 'QxMSPG6VSO'
+
+  const check = await device._checkCloudAccount();
+
+  assert.deepStrictEqual(check, {
+    onAccount: false, accountRobots: 2, sameModelRobots: 1, checkedAt: check.checkedAt,
+  });
+  assert.ok(!JSON.stringify(check).includes('other-flow2'));
+});
+
+test('connecting again replaces a stale Disconnected status', async () => {
+  const device = cloudDevice({ signedIn: true });
+  const values = { narwal_status: 'Disconnected' };
+  device.getCapabilityValue = (cap) => values[cap];
+  device.hasCapability = () => true;
+  device.setCapabilityValue = async (cap, value) => {
+    values[cap] = value;
+  };
+  device.setAvailable = async () => {};
+  device._trigger = async () => {};
+
+  await device._onConnected();
+
+  assert.strictEqual(values.narwal_status, 'Connected');
+});
+
+test('the device hands its saved map to the client and saves each new one', () => {
+  const { NarwalClient } = require('../lib/NarwalClient'); // eslint-disable-line global-require
+  const start = test.mock.method(NarwalClient.prototype, 'start', () => {});
+  const device = fakeDevice();
+  const store = {
+    static_map: {
+      version: 1, runs: [0, 4], width: 2, height: 2, rooms: [],
+    },
+  };
+  device.getStoreValue = (key) => store[key] || null;
+  device.setStoreValue = async (key, value) => {
+    store[key] = value;
+  };
+  device.getCapabilityValue = () => null;
+  device.homey.app = { getConnectionMode: () => 'local' };
+
+  device._startClient();
+  assert.strictEqual(device._client.lastStaticMap.grid.length, 4, 'saved map loaded');
+
+  device._client.emit('staticMap', {
+    width: 1, height: 1, grid: [0x0101], rooms: [], mapId: 9,
+  });
+  assert.strictEqual(store.static_map.mapId, 9);
+  assert.deepStrictEqual(store.static_map.runs, [0x0101, 1]);
   device._stopClient();
   start.mock.restore();
 });

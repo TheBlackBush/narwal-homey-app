@@ -49,7 +49,7 @@ test('password sign-in uses the country host, sends the official fields and keep
   assert.strictEqual(calls[0].body.password, 'secret');
   assert.strictEqual(account.uuid, UUID);
   const state = account.toJSON();
-  assert.deepStrictEqual(Object.keys(state).sort(), ['accessToken', 'country', 'email', 'refreshToken', 'uuid']);
+  assert.deepStrictEqual(Object.keys(state).sort(), ['accessToken', 'country', 'email', 'method', 'refreshToken', 'uuid']);
   assert.ok(!JSON.stringify(state).includes('secret'));
 });
 
@@ -191,4 +191,28 @@ test('only an encrypted broker address is accepted, since the token is sent to i
     if (ok) assert.strictEqual(await account.brokerUrl(), url);
     else await assert.rejects(account.brokerUrl(), /broker/, url);
   }
+});
+
+test('session diagnostics compare the header id with the token without revealing either', async () => {
+  const payload = { uuid: 'abc-123', iat: Math.floor(Date.now() / 1000) - 600, clientType: 'app' };
+  const jwt = `h.${Buffer.from(JSON.stringify(payload)).toString('base64url')}.s`;
+  const account = NarwalCloudAccount.fromJSON({
+    country: 'IL', email: 'me@example.com', uuid: 'abc123', accessToken: jwt, refreshToken: 'r', method: 'code',
+  });
+  account._broker = 'mqtts://broker.example.com:8883';
+
+  const d = account.diagnostics();
+
+  assert.deepStrictEqual(d, {
+    signInMethod: 'code',
+    uuidMatchesToken: false,
+    uuidLength: 6,
+    uuidHasDashes: false,
+    tokenUuidLength: 7,
+    tokenClaimKeys: ['clientType', 'iat', 'uuid'],
+    tokenIssuedMinutesAgo: 10,
+    broker: { scheme: 'mqtts', port: 8883 },
+  });
+  const text = JSON.stringify(d);
+  assert.ok(!text.includes('abc') && !text.includes('broker.example'), 'no ids or hosts');
 });

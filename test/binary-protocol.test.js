@@ -345,3 +345,25 @@ test('garbage frames never throw out of the parser', () => {
     assert.doesNotThrow(() => protocol.parse(input), input.toString('hex'));
   }
 });
+
+test('the keep-publishing request matches the official app', () => {
+  const { buildActivePublishRequest } = require('../lib/NarwalBinaryProtocol'); // eslint-disable-line global-require
+  // {1: TopicDuration{1 working, 2 display map, 3 base status (ms)}, 2: publish window (ms)}
+  assert.deepStrictEqual(decodeProto(buildActivePublishRequest()), { 1: { 1: 2000, 2: 2000, 3: 2000 }, 2: 60000 });
+});
+
+test('the wake burst tells the robot the device page is open and asks it to keep publishing', () => {
+  const protocol = new NarwalBinaryProtocol({ productKey: 'QxMSPG6VSO', deviceId: 'dev' });
+  const frames = protocol.buildWakeFrames({ legacy: false }).map((f) => parseFrame(f));
+  const topics = frames.map((f) => f.shortTopic);
+
+  const events = frames.filter((f) => f.shortTopic === 'common/notify_app_event').map((f) => decodeProto(f.payload)['1']);
+  assert.deepStrictEqual(events, [1, 2], 'app start, then device page entered');
+  const publish = frames.filter((f) => f.shortTopic === 'common/active_robot_publish');
+  assert.strictEqual(publish.length, 1, 'only the official request without legacy frames');
+  assert.deepStrictEqual(decodeProto(publish[0].payload)['2'], 60000);
+  assert.ok(topics.includes('status/get_device_base_status'));
+
+  const legacy = protocol.buildWakeFrames().map((f) => parseFrame(f)).filter((f) => f.shortTopic === 'common/active_robot_publish');
+  assert.strictEqual(legacy.length, 3, 'local keeps the older requests as well');
+});
