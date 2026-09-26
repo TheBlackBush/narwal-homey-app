@@ -100,5 +100,8 @@
   },
   "1.3.6": {
     "en": "Cloud mode works like Local: the map is saved on Homey and reused, and commands are confirmed by the robot's status when its reply is lost."
+  },
+  "1.3.7": {
+    "en": "Cloud mode now gets the robot's replies, including the map: requests are sent in the same format as the Narwal app."
   }
 }

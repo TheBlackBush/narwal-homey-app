@@ -13,6 +13,16 @@ const {
 } = require('../lib/NarwalBinaryProtocol');
 
 const UUID = 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa';
+// Header field 5 is a nested message; the generic decoder reads it as text.
+function headerFields(header) {
+  const { readFields } = require('../lib/NarwalMapCodec'); // eslint-disable-line global-require
+  const f = readFields(header);
+  const text = (x) => x.value.toString('utf8');
+  const out = { 1: text(f[1][0]), 2: text(f[2][0]) };
+  if (f[5]) out[5] = { 1: text(readFields(f[5][0].value)[1][0]) };
+  return out;
+}
+
 const PRODUCT = 'QxMSPG6VSO';
 const DEVICE = '0123456789abcdef0123456789abcdef';
 const BASE = `/${PRODUCT}/${DEVICE}`;
@@ -104,8 +114,9 @@ test('sends local frames as cloud requests with a response topic, subscribed fir
   assert.strictEqual(sent.opts.properties.responseTopic, `${BASE}/common/yell/response`);
   assert.ok(Buffer.isBuffer(sent.opts.properties.correlationData));
   const { header, body } = splitCloudPayload(sent.payload);
-  assert.deepStrictEqual(decodeProto(header), { 1: UUID, 2: UUID });
+  assert.deepStrictEqual(headerFields(header), { 1: UUID, 2: UUID, 5: { 1: `${BASE}/common/yell/response` } });
   assert.deepStrictEqual(body, Buffer.from([0x08, 0x01]));
+  assert.strictEqual(sent.opts.qos, 0, 'requests are published at QoS 0, as the official app does');
 });
 
 test('keeps the order of frames sent back to back', async () => {

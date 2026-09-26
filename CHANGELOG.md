@@ -3,7 +3,13 @@
 All notable changes to this project are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
-## [1.3.6] - 2026-09-26
+## [1.3.7] - 2026-09-26
+
+### Fixed
+- Cloud mode receives the robot's replies, including the map. Requests now carry the reply address in their header and the Narwal app's correlation format; without them the robot did not answer over the cloud.
+- Cloud replies take 20 to 30 seconds, so the map request waits up to 60 seconds, and a command succeeds as soon as either its reply or the robot's status confirms it.
+
+ - 2026-09-26
 
 ### Added
 - The robot's map is saved on Homey and loaded at startup, so cleaning, room cleaning and the widget work before a fresh map arrives, including in Cloud mode. A fresh map is requested in the background until one arrives.

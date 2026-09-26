@@ -417,3 +417,22 @@ test('in Cloud mode a real refusal from the robot is still an error', async () =
   await assert.rejects(pending);
   client.stop();
 });
+
+test('in Cloud mode the status can confirm a command before its slow reply arrives', async () => {
+  test.mock.timers.enable({ apis: ['setTimeout', 'setInterval'] });
+  const client = cloudClient();
+  try {
+    client.lastStatus = { state: C.RobotState.PAUSED };
+    const pending = client.resumeClean();
+    await settle();
+    test.mock.timers.tick(2000); // well before the reply time-out
+    client.emit('status', { state: C.RobotState.CLEANING });
+    await settle();
+
+    const result = await pending;
+    assert.strictEqual(result.confirmedBy, 'status');
+  } finally {
+    client.stop();
+    test.mock.timers.reset();
+  }
+});
