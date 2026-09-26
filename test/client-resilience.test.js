@@ -311,3 +311,26 @@ test('a link that opens but stays silent is reported as one outage, not a flappi
     test.mock.timers.reset();
   }
 });
+
+test('a cloud link waits for a slow robot to answer before giving up', () => {
+  test.mock.timers.enable({ apis: ['setInterval', 'setTimeout', 'Date'] });
+  const client = new NarwalClient({
+    productKey: 'QxMSPG6VSO', deviceId: 'dev', pollInterval: 60000, cloud: { account: {}, connect: () => {} },
+  });
+  client._scheduleReconnect = () => {};
+  const events = [];
+  client.on('disconnected', () => events.push('disconnected'));
+  client._ws = fakeOpenSocket();
+  try {
+    client._onOpen();
+    // A docked robot can take about a minute to answer over the cloud.
+    test.mock.timers.tick(90000);
+    assert.deepStrictEqual(events, [], 'still waiting for the first answer');
+
+    test.mock.timers.tick(C.CLOUD_FIRST_ANSWER_TIMEOUT_MS);
+    assert.deepStrictEqual(events, ['disconnected'], 'gives up eventually');
+  } finally {
+    client.stop();
+    test.mock.timers.reset();
+  }
+});
