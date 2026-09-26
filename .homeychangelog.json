@@ -88,5 +88,8 @@
   },
   "1.3.2": {
     "en": "Cloud mode subscribes only to the status broadcasts it needs."
+  },
+  "1.3.3": {
+    "en": "Rooms keep their type details, and the diagnostics describe the Narwal sign-in session (without any IDs)."
   }
 }

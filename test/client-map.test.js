@@ -78,7 +78,9 @@ async function replyWithMap(client, seqId) {
 test('the map is requested once the robot first answers, and decoded with official names', async () => {
   const client = robotClient();
   const maps = [];
+  const roomLists = [];
   client.on('map', (m) => maps.push(m));
+  client.on('rooms', (r) => roomLists.push(r));
 
   client.receive('status/robot_base_status', Buffer.alloc(0)); // first answer
   await tick();
@@ -88,6 +90,14 @@ test('the map is requested once the robot first answers, and decoded with offici
   assert.strictEqual(maps.length, 1);
   assert.deepStrictEqual(maps[0].rooms.map((r) => r.name), ['Toilet1', 'Toilet2']);
   assert.strictEqual(maps[0].grid.length, W * H);
+  assert.deepStrictEqual(roomLists.at(-1), [
+    {
+      id: '1', name: 'Toilet1', type: 6, texture: 0, roomTypeId: 1,
+    },
+    {
+      id: '2', name: 'Toilet2', type: 6, texture: 0, roomTypeId: 2,
+    },
+  ], 'the rooms event keeps type details');
   client.stop();
 });
 

@@ -3,7 +3,15 @@
 All notable changes to this project are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
-## [1.3.2] - 2026-09-26
+## [1.3.3] - 2026-09-26
+
+### Fixed
+- Saved rooms keep their type, floor texture and type number instead of losing them right after the map loads.
+
+### Added
+- Diagnostics describe the Narwal sign-in session: the sign-in method, whether the account ID matches the one in the token, the token's field names and age, and the broker's scheme and port. No IDs, tokens or host names.
+
+ - 2026-09-26
 
 ### Fixed
 - Cloud mode subscribes only to the four status broadcasts it needs. (This did not make request replies arrive over the cloud; that is still being investigated.)
