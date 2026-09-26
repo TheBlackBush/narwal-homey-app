@@ -3,7 +3,12 @@
 All notable changes to this project are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
-## [1.2.8] - 2026-09-26
+## [1.2.9] - 2026-09-26
+
+### Fixed
+- Cloud mode works without the Narwal phone app open. Homey now sends the robot the same "keep publishing" request as the Narwal app, and renews it every 30 seconds; before, a docked robot only answered over the cloud while the phone app was open.
+
+ - 2026-09-26
 
 ### Fixed
 - Cloud mode connects to docked robots again. A docked robot takes about 40 seconds to answer a new cloud connection; the app gave up after 45 seconds and started over, so it often never connected. It now waits up to 3 minutes for the first answer.

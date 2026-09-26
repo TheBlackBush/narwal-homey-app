@@ -8,7 +8,9 @@ const {
   CloudSocket, OPEN, CLOSED, SUBSCRIBE_TIMEOUT_MS,
 } = require('../lib/cloud/CloudSocket');
 const { buildCloudPayload, splitCloudPayload } = require('../lib/cloud/cloudFrame');
-const { NarwalBinaryProtocol, buildFrame, decodeProto } = require('../lib/NarwalBinaryProtocol');
+const {
+  NarwalBinaryProtocol, buildFrame, decodeProto, parseFrame,
+} = require('../lib/NarwalBinaryProtocol');
 
 const UUID = 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa';
 const PRODUCT = 'QxMSPG6VSO';
@@ -353,4 +355,28 @@ test('diagnostics record refused publishes, broker disconnects and messages for 
   assert.strictEqual(stats.rawReceived, 1);
   assert.deepStrictEqual(stats.otherTopics, ['<product>/<device>/status/robot_base_status']);
   assert.strictEqual(stats.disconnectReason, 142);
+});
+
+test('a cloud client renews the keep-publishing request every 30 seconds, official format only', async () => {
+  const { NarwalClient } = require('../lib/NarwalClient'); // eslint-disable-line global-require
+  const client = new NarwalClient({
+    productKey: PRODUCT, deviceId: DEVICE, pollInterval: 60000, cloud: { account: fakeAccount(), connect: () => {} },
+  });
+  const sent = [];
+  client._ws = {
+    readyState: 1, send: (f) => sent.push(parseFrame(f)), ping() {}, removeAllListeners() {}, terminate() {}, on() {},
+  };
+  test.mock.timers.enable({ apis: ['setInterval', 'setTimeout'] });
+  try {
+    client._onOpen();
+    test.mock.timers.tick(1000);
+    sent.length = 0;
+    test.mock.timers.tick(30000);
+    const publish = sent.filter((f) => f.shortTopic === 'common/active_robot_publish');
+    assert.strictEqual(publish.length, 1);
+    assert.strictEqual(decodeProto(publish[0].payload)['2'], 60000);
+  } finally {
+    client.stop();
+    test.mock.timers.reset();
+  }
 });

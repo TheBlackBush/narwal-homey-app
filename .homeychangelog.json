@@ -76,5 +76,8 @@
   },
   "1.2.8": {
     "en": "Cloud mode now connects to docked robots: the app waits for the robot to wake up and answer instead of reconnecting too early."
+  },
+  "1.2.9": {
+    "en": "Cloud mode no longer needs the Narwal phone app to be open: Homey now asks the robot to keep sending its status the way the Narwal app does."
   }
 }
