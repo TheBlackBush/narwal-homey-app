@@ -67,5 +67,8 @@
   },
   "1.2.5": {
     "en": "Refresh status now waits for the robot, the map widget scales its map and no longer reloads on every resize, and the settings and pairing screens handle errors more clearly."
+  },
+  "1.2.6": {
+    "en": "A robot now counts as connected only once it answers, so a silent cloud connection no longer flips between connected and disconnected. The status text updates again after reconnecting."
   }
 }

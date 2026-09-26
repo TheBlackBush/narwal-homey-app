@@ -319,3 +319,19 @@ test('frames keep flowing when the broker never acknowledges a publish', async (
 
   assert.deepStrictEqual(client.published.map((p) => p.topic.split('/').slice(3).join('/')), ['common/get_device_info', 'common/notify_app_event']);
 });
+
+test('the cloud socket counts what it subscribed, sent and received, without IDs', async () => {
+  const { socket, client } = await openSocket();
+
+  socket.send(buildFrame(`${BASE}/common/yell`, Buffer.alloc(0)));
+  for (let i = 0; i < 4; i += 1) await tick();
+  client.emit('message', `${BASE}/status/robot_base_status`, buildCloudPayload(UUID, Buffer.from([0x08, 0x01])));
+
+  const stats = socket.stats();
+  assert.ok(stats.subscribed > 5, 'broadcast topics plus the response topic');
+  assert.strictEqual(stats.refused, 0);
+  assert.strictEqual(stats.published, 1);
+  assert.strictEqual(stats.received, 1);
+  assert.deepStrictEqual(stats.lastTopics, ['status/robot_base_status']);
+  assert.ok(!JSON.stringify(stats).includes(DEVICE), 'no device id');
+});

@@ -3,7 +3,16 @@
 All notable changes to this project are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
-## [1.2.5] - 2026-09-26
+## [1.2.6] - 2026-09-26
+
+### Fixed
+- A robot counts as connected only once it answers. A cloud connection that stays silent no longer flips between connected and disconnected every minute, or fires "Connection lost" each time.
+- After reconnecting, the status no longer stays on "Disconnected".
+
+### Added
+- Connection diagnostics in the app's device data (messages received, cloud subscriptions, and whether the robot is on the Narwal account), without any IDs.
+
+ - 2026-09-26
 
 ### Fixed
 - "Refresh status" and the fallback poll wait for the robot's answer instead of returning the last known status.

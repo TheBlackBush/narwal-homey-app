@@ -111,6 +111,7 @@ test('a new outage after the robot was back is reported again', () => {
     client._onClose(-1);
     client._ws = fakeOpenSocket();
     client._onOpen();
+    client._onMessage(Buffer.from([0x01, 0x00, 0x00])); // the robot answers
     client._onClose(1006);
 
     assert.deepStrictEqual(events, ['disconnected', 'connected', 'disconnected']);
@@ -127,6 +128,7 @@ test('the reconnect backoff only resets after the connection stays up', () => {
   try {
     client._reconnectAttempt = 5;
     client._onOpen();
+    client._onMessage(Buffer.from([0x01, 0x00, 0x00])); // the robot answers
     assert.strictEqual(client._reconnectAttempt, 5, 'a robot that accepts and drops at once keeps backing off');
 
     test.mock.timers.tick(C.CONNECTION_STABLE_MS);
@@ -264,9 +266,46 @@ test('a connection with no traffic for too long is closed and retried', () => {
   client._ws = fakeOpenSocket();
   try {
     client._onOpen();
+    client._onMessage(Buffer.from([0x01, 0x00, 0x00])); // the robot answers
     test.mock.timers.tick(C.HEARTBEAT_TIMEOUT_MS + C.HEARTBEAT_INTERVAL_MS);
 
     assert.deepStrictEqual(events, ['connected', 'disconnected']);
+  } finally {
+    client.stop();
+    test.mock.timers.reset();
+  }
+});
+
+test('the robot counts as connected only once it has sent something', () => {
+  test.mock.timers.enable({ apis: ['setInterval', 'setTimeout'] });
+  const { client, events } = offlineClient();
+  client._ws = fakeOpenSocket();
+  try {
+    client._onOpen();
+    assert.deepStrictEqual(events, [], 'an open but silent link is not a connection');
+    assert.strictEqual(client.connected, false);
+
+    client._onMessage(Buffer.from([0x01, 0x00, 0x00])); // any frame from the robot
+    client._onMessage(Buffer.from([0x01, 0x00, 0x00]));
+    assert.deepStrictEqual(events, ['connected'], 'reported once');
+    assert.strictEqual(client.connected, true);
+    assert.strictEqual(client.diagnostics().framesReceived, 2);
+  } finally {
+    client.stop();
+    test.mock.timers.reset();
+  }
+});
+
+test('a link that opens but stays silent is reported as one outage, not a flapping connection', () => {
+  test.mock.timers.enable({ apis: ['setInterval', 'setTimeout', 'Date'] });
+  const { client, events } = offlineClient();
+  try {
+    for (let i = 0; i < 3; i += 1) {
+      client._ws = fakeOpenSocket();
+      client._onOpen();
+      test.mock.timers.tick(C.HEARTBEAT_TIMEOUT_MS + C.HEARTBEAT_INTERVAL_MS);
+    }
+    assert.deepStrictEqual(events, ['disconnected']);
   } finally {
     client.stop();
     test.mock.timers.reset();

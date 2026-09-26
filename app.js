@@ -144,6 +144,7 @@ class NarwalApp extends Homey.App {
         })),
         defaultRooms: typeof device.getDefaultRoomsData === 'function' ? device.getDefaultRoomsData() : null,
         commandHistory: typeof device.getCommandHistory === 'function' ? device.getCommandHistory() : [],
+        diagnostics: typeof device.getDiagnostics === 'function' ? device.getDiagnostics() : null,
       };
     });
   }

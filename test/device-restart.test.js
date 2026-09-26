@@ -183,3 +183,37 @@ test('in Cloud mode a signed-in app connects the robot through the account', () 
   device._stopClient();
   start.mock.restore();
 });
+
+test('the cloud check says whether this robot is on the Narwal account, without IDs', async () => {
+  const account = {
+    signedIn: true,
+    listRobots: async () => [
+      { deviceId: 'other-flow2', productId: 'QxMSPG6VSO' },
+      { deviceId: 'a-freo', productId: 'fjhpiem4ba' },
+    ],
+  };
+  const device = cloudDevice(account); // stored deviceId 'dev', productKey 'QxMSPG6VSO'
+
+  const check = await device._checkCloudAccount();
+
+  assert.deepStrictEqual(check, {
+    onAccount: false, accountRobots: 2, sameModelRobots: 1, checkedAt: check.checkedAt,
+  });
+  assert.ok(!JSON.stringify(check).includes('other-flow2'));
+});
+
+test('connecting again replaces a stale Disconnected status', async () => {
+  const device = cloudDevice({ signedIn: true });
+  const values = { narwal_status: 'Disconnected' };
+  device.getCapabilityValue = (cap) => values[cap];
+  device.hasCapability = () => true;
+  device.setCapabilityValue = async (cap, value) => {
+    values[cap] = value;
+  };
+  device.setAvailable = async () => {};
+  device._trigger = async () => {};
+
+  await device._onConnected();
+
+  assert.strictEqual(values.narwal_status, 'Connected');
+});
