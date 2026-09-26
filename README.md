@@ -13,15 +13,16 @@ Control your Narwal robot vacuum directly from Homey Pro over your local network
 ## Features
 
 - Local LAN connection to the robot, usually on WebSocket port `9002`.
+- Optional Cloud mode: sign in with your Narwal account in the app settings to control the robot through the Narwal cloud, with the same features as Local.
 - Separate Homey drivers for each supported model.
 - Start, pause, resume and stop cleaning.
 - Return to dock and locate the robot.
 - Live battery, charging, docked, connected, cleaning area/time, firmware, status and last error.
 - Fan-speed control: `Quiet`, `Standard`, `Strong`, `Super Powerful`, `Ultra Powerful` (Freo Z10 Pro / Turbo: up to Super Powerful). A level chosen while docked is used for the next clean.
-- Room cleaning with Flow autocomplete when rooms are available locally.
+- Room cleaning with Flow autocomplete. Room names match the Narwal app (custom names in any language, and numbered types such as `Toilet1`, `Toilet2`).
 - Cleaning mode settings (mode, water level, mop strength, passes, route) and a Clean with settings Flow card for one-off cleans.
 - Flow actions, conditions and triggers for common automation scenarios.
-- Narwal Map widget for a best-effort map snapshot and compact status bar.
+- Narwal Map widget: the robot's map in the Narwal app's room colours, room names, dock, and the robot's live position and cleaning path, in Homey's light and dark theme.
 - Resilient reconnect, heartbeat keep-alive and polling fallback.
 - Mock robot support for development via `NARWAL_MOCK=1`.
 
@@ -119,15 +120,13 @@ Robots found on the network follow IP changes automatically; a DHCP reservation 
 
 ## Map, rooms and widget
 
-Room discovery and map rendering are best-effort local features:
+- The app requests the robot's map when it connects and when the robot starts or stops working, and keeps it up to date from the robot's live map updates while it cleans. The last map is saved on Homey, so cleaning and the widget work right away after a restart.
+- Rooms and their names come from the map and are used by the room Flow cards and the default rooms setting.
+- The **Narwal Map** widget draws the map with the Narwal app's room colours (neighbouring rooms always differ), thin walls, room names that fit, the dock, and the robot with its heading. While the robot cleans, its position and path update live (pushed about every 2 seconds). The path stays visible after docking until the next clean starts.
+- Widget settings: show status, show room names, and the refresh interval.
+- If no map is available yet, run a full map-building clean in the official app, then use **Refresh rooms / map** in Homey.
 
-- The app stores discovered room IDs/names per device.
-- Rooms are used for the **Clean selected room** Flow card.
-- The app renders a lightweight SVG map snapshot when the robot publishes map data locally.
-- The **Narwal Map** widget shows the cached map and current status.
-- If no map is available, run a full map-building clean in the official app, then use **Refresh rooms / map** in Homey.
-
-Core vacuum controls do not depend on map rendering.
+Core vacuum controls do not depend on the map, except starting a whole-home or room clean, which needs the map's room list.
 
 ## Troubleshooting
 
@@ -147,6 +146,10 @@ Some robots appear to allow only one local client at a time. Close the official 
 - Build a map in the official app first.
 - Use **Refresh rooms / map** in Homey.
 - If the widget still has no map, the current local payload may not contain parsable map data yet.
+
+### Cloud mode is slow to answer
+
+Over the Narwal cloud, the robot's replies take 20 to 30 seconds. The app waits for them, and commands succeed as soon as the robot's status shows the result, usually within a few seconds. If the official Narwal app shows a network error for the robot, Homey cannot reach it through the cloud either; restart the robot or check its internet access.
 
 ### Connection keeps dropping
 
@@ -189,10 +192,14 @@ api.js                         Homey app API routes
 lib/constants.js               Shared model metadata and enums
 lib/NarwalBinaryProtocol.js    Binary frame parser/builder
 lib/NarwalProtocol.js          Normalized commands/status helpers
-lib/NarwalClient.js            WebSocket lifecycle and command API
+lib/NarwalClient.js            Connection lifecycle (local or cloud) and command API
+lib/NarwalMapCodec.js          Map and live-map decoding, room names, saved maps
+lib/LiveTrail.js               Live cleaning path of the current clean
+lib/Discovery.js               mDNS helpers for pairing and IP changes
+lib/cloud/                     Narwal account sign-in, cloud MQTT socket, connection mode
 lib/NarwalHomeyDriver.js       Pairing, Flow card registration, autocomplete
 lib/NarwalHomeyDevice.js       Capability, Flow trigger and client bridge
-lib/MapParser.js               Room parsing and SVG map rendering
+lib/MapParser.js               Map objects and widget render data
 lib/MockSocket.js              Simulated robot for tests/dev mode
 drivers/*                      Model-specific Homey drivers and assets
 widgets/vacuum-map             Homey map/status widget

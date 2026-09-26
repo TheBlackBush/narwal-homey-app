@@ -56,7 +56,7 @@ All notable changes to this project are documented here. The format is based on
  - 2026-09-26
 
 ### Fixed
-- Cloud mode subscribes only to the four status broadcasts it needs. (This did not make request replies arrive over the cloud; that is still being investigated.)
+- Cloud mode subscribes only to the four status broadcasts it needs. (This did not make request replies arrive over the cloud; 1.3.7 fixed that.)
 
  - 2026-09-26
 
