@@ -3,7 +3,12 @@
 All notable changes to this project are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
-## [1.3.1] - 2026-09-26
+## [1.3.2] - 2026-09-26
+
+### Fixed
+- Cloud mode subscribes only to the four status broadcasts it needs, so the robot's replies to requests (the map, status and commands) are delivered.
+
+ - 2026-09-26
 
 ### Added
 - Diagnostics record messages received per topic and the outcome of the last map request.

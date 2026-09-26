@@ -84,6 +84,14 @@ test('subscribes to the robot broadcasts explicitly (the broker ignores wildcard
   assert.ok(!client.subscribed.some((t) => t.includes('#') || t.includes('+')));
 });
 
+test('only the broadcasts the robot is asked to publish are subscribed, leaving room for reply topics', async () => {
+  const { client } = await openSocket();
+  // The broker appears to route only the first ~10 subscriptions of a session.
+  assert.deepStrictEqual(client.subscribed.map((t) => t.slice(BASE.length + 1)).sort(), [
+    'map/display_map', 'status/robot_base_status', 'status/working_status', 'upgrade/upgrade_status',
+  ]);
+});
+
 test('sends local frames as cloud requests with a response topic, subscribed first', async () => {
   const { socket, client } = await openSocket();
 
@@ -330,7 +338,7 @@ test('the cloud socket counts what it subscribed, sent and received, without IDs
   client.emit('message', `${BASE}/status/robot_base_status`, buildCloudPayload(UUID, Buffer.from([0x08, 0x01])));
 
   const stats = socket.stats();
-  assert.ok(stats.subscribed > 5, 'broadcast topics plus the response topic');
+  assert.strictEqual(stats.subscribed, 5, 'four broadcast topics plus the response topic');
   assert.strictEqual(stats.refused, 0);
   assert.strictEqual(stats.published, 1);
   assert.strictEqual(stats.received, 1);
