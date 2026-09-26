@@ -334,3 +334,86 @@ test('a cloud link waits for a slow robot to answer before giving up', () => {
     test.mock.timers.reset();
   }
 });
+
+async function settle() {
+  for (let i = 0; i < 8; i += 1) await tick();
+}
+
+function cloudClient() {
+  const client = new NarwalClient({
+    productKey: 'QxMSPG6VSO', deviceId: 'dev', pollInterval: 60000, cloud: { account: {}, connect: () => {} },
+  });
+  client._ws = fakeOpenSocket();
+  client._connected = true;
+  return client;
+}
+
+test('in Cloud mode a command without a reply counts as done once the status shows it', async () => {
+  test.mock.timers.enable({ apis: ['setTimeout', 'setInterval'] });
+  const client = cloudClient();
+  try {
+    client.lastStatus = { state: C.RobotState.CLEANING };
+    const pending = client.pauseClean();
+    await settle();
+    test.mock.timers.tick(C.CLOUD_REPLY_TIMEOUT_MS);
+    for (let i = 0; i < 4; i += 1) await tick();
+
+    client._resolveStatusWaiters(null, { state: C.RobotState.PAUSED });
+    client.emit('status', { state: C.RobotState.PAUSED });
+    const result = await pending;
+    assert.strictEqual(result.ok, true);
+    assert.strictEqual(result.confirmedBy, 'status');
+  } finally {
+    client.stop();
+    test.mock.timers.reset();
+  }
+});
+
+test('in Cloud mode a command the status never confirms is an error', async () => {
+  test.mock.timers.enable({ apis: ['setTimeout', 'setInterval'] });
+  const client = cloudClient();
+  try {
+    client.lastStatus = { state: C.RobotState.DOCKED };
+    client.lastMap = {
+      meta: { mapId: 7 }, rooms: [{ id: '1' }],
+    };
+    const pending = client.startClean();
+    pending.catch(() => {});
+    for (let i = 0; i < 4; i += 1) await tick();
+    test.mock.timers.tick(C.CLOUD_REPLY_TIMEOUT_MS);
+    for (let i = 0; i < 4; i += 1) await tick();
+    test.mock.timers.tick(C.CLOUD_CONFIRM_TIMEOUT_MS);
+    for (let i = 0; i < 4; i += 1) await tick();
+
+    await assert.rejects(pending, /did not confirm/);
+  } finally {
+    client.stop();
+    test.mock.timers.reset();
+  }
+});
+
+test('in Cloud mode Locate counts as sent without a reply', async () => {
+  test.mock.timers.enable({ apis: ['setTimeout', 'setInterval'] });
+  const client = cloudClient();
+  try {
+    const pending = client.locate();
+    await settle();
+    test.mock.timers.tick(C.CLOUD_REPLY_TIMEOUT_MS);
+    for (let i = 0; i < 4; i += 1) await tick();
+    const result = await pending;
+    assert.strictEqual(result.ok, true);
+    assert.strictEqual(result.confirmedBy, 'sent');
+  } finally {
+    client.stop();
+    test.mock.timers.reset();
+  }
+});
+
+test('in Cloud mode a real refusal from the robot is still an error', async () => {
+  const client = cloudClient();
+  const pending = client.pauseClean();
+  await settle();
+  client._enqueueBinaryResponse(reply('task/pause', { 1: 2 }));
+  await assert.rejects(pending);
+  client.stop();
+});

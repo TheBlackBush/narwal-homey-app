@@ -3,7 +3,13 @@
 All notable changes to this project are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
-## [1.3.5] - 2026-09-26
+## [1.3.6] - 2026-09-26
+
+### Added
+- The robot's map is saved on Homey and loaded at startup, so cleaning, room cleaning and the widget work before a fresh map arrives, including in Cloud mode. A fresh map is requested in the background until one arrives.
+- In Cloud mode, where the robot's replies are often lost, a command counts as done once the robot's status shows it (for example cleaning after Start). Locate counts as sent. A refusal from the robot is still reported.
+
+ - 2026-09-26
 
 ### Fixed
 - Undoes the 1.3.4 changes (one request at a time over the cloud, the shorter wake-up, and map retries). They did not bring back the robot's replies and made the cloud connection drop about every minute.

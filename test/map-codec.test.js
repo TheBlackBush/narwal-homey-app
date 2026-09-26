@@ -247,3 +247,20 @@ test('a room label sits inside its room even when the centroid does not', () => 
 
   assert.strictEqual(cellId(label.x, label.y), 1);
 });
+
+test('a static map packs into a compact form and unpacks unchanged', () => {
+  const { packStaticMap, unpackStaticMap } = require('../lib/NarwalMapCodec'); // eslint-disable-line global-require
+  const s = decodeGetMapResponse(response(staticMap({ rooms: [room(1, 6, { roomTypeId: 1 }), room(3, 0, { name: 'סלון' })] })));
+  s.grid = [...Array(5000).fill(0), ...Array(3000).fill(0x0101), 0x20, ...Array(2000).fill(0)];
+  s.width = 100;
+  s.height = 100;
+
+  const packed = packStaticMap(s);
+  const json = JSON.stringify(packed);
+  const back = unpackStaticMap(JSON.parse(json));
+
+  assert.ok(json.length < 1000, `compact (${json.length} bytes)`);
+  assert.deepStrictEqual(back, s);
+  assert.strictEqual(unpackStaticMap(null), null);
+  assert.strictEqual(unpackStaticMap({ version: 99 }), null, 'unknown versions are ignored');
+});

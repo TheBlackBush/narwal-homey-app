@@ -170,3 +170,64 @@ test('a change in the working state fetches the map again (after the guard windo
     test.mock.timers.reset();
   }
 });
+
+function savedMap() {
+  const { decodeGetMapResponse, packStaticMap } = require('../lib/NarwalMapCodec'); // eslint-disable-line global-require
+  return packStaticMap(decodeGetMapResponse(getMapReply(10)));
+}
+
+test('a saved map is used at once, so starting a clean does not wait for a map reply', async () => {
+  const client = new NarwalClient({
+    ip: '127.0.0.1', productKey: PK, deviceId: DEV, pollInterval: 60000, savedMap: savedMap(),
+  });
+  client.sent = [];
+  client._ws = {
+    readyState: 1, send: (f) => client.sent.push(parseFrame(f).shortTopic), ping() {}, removeAllListeners() {}, terminate() {}, on() {},
+  };
+
+  assert.deepStrictEqual(client.lastMap.rooms.map((r) => r.name), ['Toilet1', 'Toilet2']);
+  const pending = client.startClean();
+  pending.catch(() => {});
+  await tick(); await tick();
+
+  assert.ok(client.sent.includes('clean/start_clean'), 'start sent with the saved map');
+  assert.ok(!client.sent.includes('map/get_map'), 'no map request needed first');
+  client.stop();
+});
+
+test('every new static map is reported for saving', async () => {
+  const client = robotClient();
+  const saved = [];
+  client.on('staticMap', (m) => saved.push(m));
+  client.receive('status/robot_base_status', Buffer.alloc(0));
+  await replyWithMap(client, 10);
+
+  assert.strictEqual(saved.length, 1);
+  assert.strictEqual(saved[0].seqId, 10);
+  client.stop();
+});
+
+test('without a fresh map this session, a failed map request is retried', async () => {
+  test.mock.timers.enable({ apis: ['setTimeout', 'setInterval', 'Date'] });
+  const client = robotClient();
+  try {
+    client.receive('status/robot_base_status', Buffer.alloc(0));
+    await tick();
+    const requests = () => client.sent.filter((t) => t === 'map/get_map').length;
+    assert.strictEqual(requests(), 1);
+
+    test.mock.timers.tick(C.SLOW_COMMAND_TIMEOUT_MS);
+    for (let i = 0; i < 5; i += 1) await tick();
+    test.mock.timers.tick(C.MAP_RETRY_DELAYS_MS[0]);
+    await tick();
+    assert.strictEqual(requests(), 2, 'retried');
+
+    await replyWithMap(client, 10);
+    test.mock.timers.tick(C.MAP_RETRY_DELAYS_MS.at(-1) * 2);
+    await tick();
+    assert.strictEqual(requests(), 2, 'no retries once a fresh map arrived');
+  } finally {
+    client.stop();
+    test.mock.timers.reset();
+  }
+});

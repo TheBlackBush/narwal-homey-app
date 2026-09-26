@@ -2,7 +2,7 @@
 
 ![Homey](https://img.shields.io/badge/Homey-SDK%20v3-00AEEF?style=for-the-badge)
 ![App ID](https://img.shields.io/badge/App%20ID-com.narwal.global-683df5?style=for-the-badge)
-![Version](https://img.shields.io/badge/Version-1.3.5-683df5?style=for-the-badge)
+![Version](https://img.shields.io/badge/Version-1.3.6-683df5?style=for-the-badge)
 ![Local First](https://img.shields.io/badge/Local--First-Cloud%20optional-2ea44f?style=for-the-badge)
 ![License](https://img.shields.io/badge/License-MIT-111827?style=for-the-badge)
 

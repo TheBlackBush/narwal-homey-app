@@ -23,6 +23,7 @@ function fakeDevice(settings = { ip: '10.0.0.1', port: 9002, dev_mock: false }) 
   device.log = () => {};
   device.error = () => {};
   device.getSettings = () => ({ ...settings });
+  device.getStoreValue = () => null;
   device.setSettings = async (next) => {
     device.settingsWrites.push(next); Object.assign(settings, next);
   };
@@ -216,4 +217,32 @@ test('connecting again replaces a stale Disconnected status', async () => {
   await device._onConnected();
 
   assert.strictEqual(values.narwal_status, 'Connected');
+});
+
+test('the device hands its saved map to the client and saves each new one', () => {
+  const { NarwalClient } = require('../lib/NarwalClient'); // eslint-disable-line global-require
+  const start = test.mock.method(NarwalClient.prototype, 'start', () => {});
+  const device = fakeDevice();
+  const store = {
+    static_map: {
+      version: 1, runs: [0, 4], width: 2, height: 2, rooms: [],
+    },
+  };
+  device.getStoreValue = (key) => store[key] || null;
+  device.setStoreValue = async (key, value) => {
+    store[key] = value;
+  };
+  device.getCapabilityValue = () => null;
+  device.homey.app = { getConnectionMode: () => 'local' };
+
+  device._startClient();
+  assert.strictEqual(device._client.lastStaticMap.grid.length, 4, 'saved map loaded');
+
+  device._client.emit('staticMap', {
+    width: 1, height: 1, grid: [0x0101], rooms: [], mapId: 9,
+  });
+  assert.strictEqual(store.static_map.mapId, 9);
+  assert.deepStrictEqual(store.static_map.runs, [0x0101, 1]);
+  device._stopClient();
+  start.mock.restore();
 });
