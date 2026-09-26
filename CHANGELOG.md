@@ -6,7 +6,7 @@ All notable changes to this project are documented here. The format is based on
 ## [1.3.2] - 2026-09-26
 
 ### Fixed
-- Cloud mode subscribes only to the four status broadcasts it needs, so the robot's replies to requests (the map, status and commands) are delivered.
+- Cloud mode subscribes only to the four status broadcasts it needs. (This did not make request replies arrive over the cloud; that is still being investigated.)
 
  - 2026-09-26
 
