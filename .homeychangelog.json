@@ -106,5 +106,8 @@
   },
   "1.3.8": {
     "en": "A redesigned map widget: the map fills the widget in Narwal's colours, follows Homey's light and dark theme, and shows room names, the dock and the robot."
+  },
+  "1.3.9": {
+    "en": "New map widget previews, room names that avoid the robot and dock, and a direction cone on the robot."
   }
 }

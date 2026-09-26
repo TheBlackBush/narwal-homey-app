@@ -336,13 +336,23 @@
         if (w > roomW * 1.6 || h > roomH * 1.2) return;
         var cx = fit.x + (room.label.x + 0.5) * fit.scale;
         var cy = fit.y + (room.label.y + 0.5) * fit.scale;
-        var box = { x: cx - w / 2, y: cy - h / 2, w: w, h: h };
-        box.x = Math.max(2, Math.min(box.x, fit.canvasW - w - 2));
-        box.y = Math.max(2, Math.min(box.y, fit.canvasH - h - 2));
-        var overlaps = placed.some(function(p) {
-          return box.x < p.x + p.w + 3 && p.x < box.x + box.w + 3 && box.y < p.y + p.h + 3 && p.y < box.y + box.h + 3;
+        var roomTop = fit.y + room.bbox.y0 * fit.scale;
+        var roomBottom = fit.y + (room.bbox.y1 + 1) * fit.scale;
+        // The room's own point first, then just above or below it (for
+        // example when the robot or dock sits on the label point).
+        var box = null;
+        [0, -(h + 6), h + 6].some(function(dy) {
+          var candidate = { x: cx - w / 2, y: cy - h / 2 + dy, w: w, h: h };
+          if (dy && (candidate.y < roomTop || candidate.y + h > roomBottom)) return false;
+          candidate.x = Math.max(2, Math.min(candidate.x, fit.canvasW - w - 2));
+          candidate.y = Math.max(2, Math.min(candidate.y, fit.canvasH - h - 2));
+          var clash = placed.some(function(p) {
+            return candidate.x < p.x + p.w + 3 && p.x < candidate.x + candidate.w + 3 && candidate.y < p.y + p.h + 3 && p.y < candidate.y + candidate.h + 3;
+          });
+          if (!clash) box = candidate;
+          return !clash;
         });
-        if (overlaps) return;
+        if (!box) return;
         placed.push(box);
         ctx.fillStyle = theme.labelBg;
         roundRect(ctx, box.x, box.y, w, h, Math.min(h / 2, 9));
@@ -395,25 +405,29 @@
       if (!point) return;
       var x = fit.x + (point.x + 0.5) * fit.scale;
       var y = fit.y + (point.y + 0.5) * fit.scale;
+      var r = markerSize(fit);
+      if (typeof point.theta === 'number') {
+        // Direction cone ahead of the robot. Map y points up; the display
+        // is flipped, so the screen angle is -theta.
+        var angle = -point.theta;
+        var reach = r * 3.2;
+        var cone = ctx.createRadialGradient(x, y, r, x, y, reach);
+        cone.addColorStop(0, 'rgba(104, 61, 245, 0.45)');
+        cone.addColorStop(1, 'rgba(104, 61, 245, 0)');
+        ctx.beginPath();
+        ctx.moveTo(x, y);
+        ctx.arc(x, y, reach, angle - 0.55, angle + 0.55);
+        ctx.closePath();
+        ctx.fillStyle = cone;
+        ctx.fill();
+      }
       ctx.beginPath();
-      ctx.arc(x, y, markerSize(fit), 0, Math.PI * 2);
+      ctx.arc(x, y, r, 0, Math.PI * 2);
       ctx.fillStyle = '#683df5';
       ctx.fill();
-      ctx.lineWidth = 2.5;
+      ctx.lineWidth = Math.max(2, r * 0.35);
       ctx.strokeStyle = '#ffffff';
       ctx.stroke();
-      if (typeof point.theta === 'number') {
-        // Map y points up; the display is flipped.
-        var dx = Math.cos(point.theta);
-        var dy = -Math.sin(point.theta);
-        ctx.beginPath();
-        ctx.moveTo(x + dx * 2, y + dy * 2);
-        ctx.lineTo(x + dx * 5.5, y + dy * 5.5);
-        ctx.lineWidth = 2;
-        ctx.lineCap = 'round';
-        ctx.strokeStyle = '#ffffff';
-        ctx.stroke();
-      }
     }
 
     function drawMap() {

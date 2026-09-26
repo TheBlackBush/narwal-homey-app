@@ -3,7 +3,14 @@
 All notable changes to this project are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
-## [1.3.8] - 2026-09-26
+## [1.3.9] - 2026-09-26
+
+### Changed
+- New widget preview images that follow Homey's guidelines: simple shapes, no text, transparent background, light and dark.
+- When the robot or dock sits where a room name would go, the name moves just above or below instead of being left out.
+- The robot shows its heading as a soft direction cone.
+
+ - 2026-09-26
 
 ### Changed
 - Redesigned map widget. The map fills the square widget with the Narwal app's room colours (neighbouring rooms always differ) and thin walls, and follows Homey's light or dark theme. Room names sit in small labels; long names wrap to two lines, and labels that would not fit or would overlap are left out. The dock and robot are marked. A status chip sits at the top, and the name, battery, room count and refresh button sit in one row at the bottom. Small widgets show battery and refresh only.
