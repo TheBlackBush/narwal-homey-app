@@ -3,7 +3,20 @@
 All notable changes to this project are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
-## [1.2.9] - 2026-09-26
+## [1.3.0] - 2026-09-26
+
+### Changed
+- Room names match the Narwal app exactly. When several rooms share a type, each gets a number with no space, as in the Narwal app: "Toilet1", "Toilet2", "Toilet3". Flows keep working, because they store room IDs.
+
+### Fixed
+- Room names in any language (for example Hebrew) display correctly instead of as a code.
+- The map shows walls and rooms the way the Narwal app does, and every map cell is drawn in the right room's colour.
+- Room labels sit inside their rooms, also in L-shaped rooms.
+
+### Added
+- The map is fetched automatically once the robot connects, and again when it starts or stops working. While it cleans, live map updates are applied as they arrive.
+
+ - 2026-09-26
 
 ### Fixed
 - Cloud mode works without the Narwal phone app open. Homey now sends the robot the same "keep publishing" request as the Narwal app, and renews it every 30 seconds; before, a docked robot only answered over the cloud while the phone app was open.
