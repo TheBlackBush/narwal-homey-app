@@ -170,3 +170,28 @@ test('a change in the working state fetches the map again (after the guard windo
     test.mock.timers.reset();
   }
 });
+
+test('a failed map request is retried while no map is loaded', async () => {
+  test.mock.timers.enable({ apis: ['setTimeout', 'setInterval', 'Date'] });
+  const client = robotClient();
+  try {
+    client.receive('status/robot_base_status', Buffer.alloc(0));
+    await tick();
+    const requests = () => client.sent.filter((t) => t === 'map/get_map').length;
+    assert.strictEqual(requests(), 1);
+
+    test.mock.timers.tick(C.SLOW_COMMAND_TIMEOUT_MS); // no reply: the request times out
+    for (let i = 0; i < 5; i += 1) await tick();
+    test.mock.timers.tick(C.MAP_RETRY_DELAYS_MS[0]);
+    await tick();
+    assert.strictEqual(requests(), 2, 'retried');
+
+    await replyWithMap(client, 10);
+    test.mock.timers.tick(C.MAP_RETRY_DELAYS_MS.at(-1) * 2);
+    await tick();
+    assert.strictEqual(requests(), 2, 'no retries once the map is loaded');
+  } finally {
+    client.stop();
+    test.mock.timers.reset();
+  }
+});

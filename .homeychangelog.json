@@ -91,5 +91,8 @@
   },
   "1.3.3": {
     "en": "Rooms keep their type details, and the diagnostics describe the Narwal sign-in session (without any IDs)."
+  },
+  "1.3.4": {
+    "en": "Cloud mode sends its requests one at a time, like the Narwal app, and keeps retrying the map until it loads."
   }
 }

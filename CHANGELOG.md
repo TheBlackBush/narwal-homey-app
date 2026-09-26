@@ -3,7 +3,13 @@
 All notable changes to this project are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
-## [1.3.3] - 2026-09-26
+## [1.3.4] - 2026-09-26
+
+### Changed
+- Cloud mode wakes the robot the way the Narwal app does (keep publishing, device page opened, status) and sends one request at a time, waiting up to 5 seconds for each reply.
+- A map request that gets no answer is retried after 1, 2 and then every 5 minutes until a map is loaded.
+
+ - 2026-09-26
 
 ### Fixed
 - Saved rooms keep their type, floor texture and type number instead of losing them right after the map loads.
