@@ -3,7 +3,12 @@
 All notable changes to this project are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
-## [1.3.0] - 2026-09-26
+## [1.3.1] - 2026-09-26
+
+### Added
+- Diagnostics record messages received per topic and the outcome of the last map request.
+
+ - 2026-09-26
 
 ### Changed
 - Room names match the Narwal app exactly. When several rooms share a type, each gets a number with no space, as in the Narwal app: "Toilet1", "Toilet2", "Toilet3". Flows keep working, because they store room IDs.

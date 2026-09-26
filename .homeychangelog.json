@@ -82,5 +82,8 @@
   },
   "1.3.0": {
     "en": "Room names now match the Narwal app exactly (for example Toilet1, Toilet2), names in any language display correctly, and the map shows walls and rooms properly. The map is fetched automatically when the robot connects and kept up to date while it cleans."
+  },
+  "1.3.1": {
+    "en": "More detailed map diagnostics for Cloud mode."
   }
 }
