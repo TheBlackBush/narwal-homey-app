@@ -329,3 +329,19 @@ test('binary base status regression table across firmware versions', () => {
     assert.strictEqual(status.docked, docked, `${firmware} ${situation}: docked`);
   }
 });
+
+test('a field that runs past the end of the buffer is an error, not a shorter value', () => {
+  // field 1, length-delimited, claims 10 bytes but only 3 follow
+  assert.throws(() => decodeProto(Buffer.from([0x0a, 0x0a, 0x61, 0x62, 0x63])), /truncated/);
+  // fixed 32-bit field with 2 of 4 bytes
+  assert.throws(() => decodeProto(Buffer.from([0x0d, 0x01, 0x02])), /truncated|range/i);
+});
+
+test('garbage frames never throw out of the parser', () => {
+  const protocol = new NarwalBinaryProtocol({ productKey: 'QxMSPG6VSO', deviceId: 'dev' });
+  const good = buildFrame('/QxMSPG6VSO/dev/status/robot_base_status', Buffer.from([0x0a, 0x0a, 0x61]));
+  const inputs = [Buffer.alloc(0), Buffer.from([0xff]), Buffer.from([0x01, 0x02, 0x03]), good.subarray(0, 5), good, Buffer.alloc(300, 0x7f)];
+  for (const input of inputs) {
+    assert.doesNotThrow(() => protocol.parse(input), input.toString('hex'));
+  }
+});

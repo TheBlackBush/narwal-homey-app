@@ -11,9 +11,9 @@ const FLOW_2 = { id: 'narwal_flow_2', name: 'Narwal Flow 2' };
 const DEVICE_ID = '0123456789abcdef0123456789ab7721';
 
 test('suffixFromName reads the 6-character robot id from service and host names', () => {
-  assert.strictEqual(suffixFromName('_app_wss_server_6B7721'), '6b7721');
-  assert.strictEqual(suffixFromName('_app_wss_server_6b7721._narwal_sweeper._tcp.local'), '6b7721');
-  assert.strictEqual(suffixFromName('NARWAL_6b7721.local'), '6b7721');
+  assert.strictEqual(suffixFromName('_app_wss_server_C0FFEE'), 'c0ffee');
+  assert.strictEqual(suffixFromName('_app_wss_server_c0ffee._narwal_sweeper._tcp.local'), 'c0ffee');
+  assert.strictEqual(suffixFromName('NARWAL_c0ffee.local'), 'c0ffee');
   assert.strictEqual(suffixFromName('homey'), null);
   assert.strictEqual(suffixFromName(undefined), null);
 });
@@ -24,7 +24,7 @@ test('resultSuffix falls back from name to host', () => {
 });
 
 test('pickIPv4 ignores IPv6 addresses', () => {
-  assert.strictEqual(pickIPv4({ address: '10.200.20.61' }), '10.200.20.61');
+  assert.strictEqual(pickIPv4({ address: '192.0.2.61' }), '192.0.2.61');
   assert.strictEqual(pickIPv4({ address: 'fd00::1' }), null);
   assert.strictEqual(pickIPv4({ address: 'fd00::1', addresses: ['fd00::1', '10.0.0.5'] }), '10.0.0.5');
   assert.strictEqual(pickIPv4({}), null);
@@ -40,14 +40,14 @@ test('matchesDeviceId needs both a device id and a suffix', () => {
 
 test('uniqueResults keeps one IPv4 entry per robot', () => {
   const results = [
-    { name: '_app_wss_server_6b7721', address: 'fd00::1' },
-    { name: '_app_wss_server_6b7721', address: '10.200.20.61' },
-    { name: '_app_wss_server_6b7721', address: '10.200.20.61' },
+    { name: '_app_wss_server_c0ffee', address: 'fd00::1' },
+    { name: '_app_wss_server_c0ffee', address: '192.0.2.61' },
+    { name: '_app_wss_server_c0ffee', address: '192.0.2.61' },
     { name: 'other_service', address: '10.0.0.9' },
     { name: '_app_wss_server_aaaaaa', address: '10.0.0.7' },
   ];
   assert.deepStrictEqual(uniqueResults(results), [
-    { suffix: '6b7721', ip: '10.200.20.61' },
+    { suffix: 'c0ffee', ip: '192.0.2.61' },
     { suffix: 'aaaaaa', ip: '10.0.0.7' },
   ]);
 });

@@ -47,6 +47,12 @@
     .room-id { color: var(--homey-text-color-light, #999); font-size: 11px; }
     .empty { padding: 16px 0; text-align: center; color: var(--homey-text-color-light, #777); font-size: 13px; }
     .section { margin-top: 18px; }
+    .account-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+    .account-row > * { flex: 1 1 160px; }
+    .account-note { font-size: 12px; color: var(--homey-text-color-light, #777); margin: 6px 0 10px; }
+    .account-message { font-size: 13px; margin-top: 8px; min-height: 18px; }
+    .method-row { display: flex; gap: 16px; margin: 6px 0 10px; }
+    [hidden] { display: none !important; }
   </style>
 </head>
 <body>
@@ -54,13 +60,91 @@
     <fieldset class="homey-form-fieldset">
       <legend class="homey-form-legend">Device</legend>
       <div class="topbar">
-        <select class="homey-form-select" id="deviceSelect"></select>
+        <select class="homey-form-select" id="deviceSelect" aria-label="Narwal device"></select>
         <button type="button" class="homey-button-secondary-shadow" id="refreshButton">Refresh status</button>
         <button type="button" class="homey-button-primary-shadow" id="refreshRoomsButton">Refresh rooms / map</button>
       </div>
     </fieldset>
   </form>
 
+  <form class="homey-form section" id="connectionForm" onsubmit="return false;">
+    <fieldset class="homey-form-fieldset">
+      <legend class="homey-form-legend">Connection</legend>
+      <div class="method-row">
+        <label class="homey-form-radio"><input class="homey-form-radio-input" type="radio" name="connectionMode" value="local" checked /><span class="homey-form-radio-checkmark"></span><span class="homey-form-radio-text">Local</span></label>
+        <label class="homey-form-radio"><input class="homey-form-radio-input" type="radio" name="connectionMode" value="cloud" /><span class="homey-form-radio-checkmark"></span><span class="homey-form-radio-text">Cloud</span></label>
+      </div>
+      <p class="account-note" id="connectionNote"></p>
+    </fieldset>
+  </form>
+  <form class="homey-form section" id="accountForm" onsubmit="return false;" hidden>
+    <fieldset class="homey-form-fieldset">
+      <legend class="homey-form-legend">Narwal account</legend>
+      <p class="account-note">Sign in with the account you use in the Narwal app. Your password is never stored.</p>
+      <div id="accountSignedIn" hidden>
+        <div class="account-row">
+          <div id="accountSummary" class="card-value"></div>
+          <button type="button" class="homey-button-secondary-shadow" id="signOutButton">Sign out</button>
+        </div>
+      </div>
+      <div id="accountSignedOut">
+        <div class="homey-form-group">
+          <label class="homey-form-label" for="accountCountry">Country of your Narwal account</label>
+          <select class="homey-form-select" id="accountCountry">
+            <option value="">Choose a country</option>
+            <option value="IL">Israel</option>
+            <option value="US">United States</option>
+            <option value="GB">United Kingdom</option>
+            <option value="DE">Germany</option>
+            <option value="FR">France</option>
+            <option value="NL">Netherlands</option>
+            <option value="BE">Belgium</option>
+            <option value="DK">Denmark</option>
+            <option value="SE">Sweden</option>
+            <option value="NO">Norway</option>
+            <option value="ES">Spain</option>
+            <option value="IT">Italy</option>
+            <option value="CH">Switzerland</option>
+            <option value="AT">Austria</option>
+            <option value="PL">Poland</option>
+            <option value="CN">China</option>
+            <option value="KR">South Korea</option>
+          </select>
+        </div>
+        <div class="homey-form-group">
+          <label class="homey-form-label" for="accountEmail">Email</label>
+          <input class="homey-form-input" id="accountEmail" type="email" autocomplete="username" placeholder="you@example.com" />
+        </div>
+        <div class="homey-form-group">
+          <label class="homey-form-checkbox"><input class="homey-form-checkbox-input" id="accountAdult" type="checkbox" /><span class="homey-form-checkbox-checkmark"></span><span class="homey-form-checkbox-text">I am 14 or older</span></label>
+          <p class="account-note">Narwal's sign-in confirms this on your behalf, as the Narwal app does.</p>
+        </div>
+        <div class="method-row">
+          <label class="homey-form-radio"><input class="homey-form-radio-input" type="radio" name="signInMethod" value="code" checked /><span class="homey-form-radio-checkmark"></span><span class="homey-form-radio-text">Email code</span></label>
+          <label class="homey-form-radio"><input class="homey-form-radio-input" type="radio" name="signInMethod" value="password" /><span class="homey-form-radio-checkmark"></span><span class="homey-form-radio-text">Password</span></label>
+        </div>
+        <div id="passwordFields" hidden>
+          <div class="homey-form-group">
+            <label class="homey-form-label" for="accountPassword">Password</label>
+            <input class="homey-form-input" id="accountPassword" type="password" autocomplete="current-password" />
+          </div>
+          <button type="button" class="homey-button-primary-shadow-full" id="passwordSignInButton">Sign in</button>
+        </div>
+        <div id="codeFields">
+          <p class="account-note">Check the email address first: if no Narwal account uses it, signing in with the code makes Narwal create a new account. This app then refuses to sign in, but Narwal keeps that account.</p>
+          <button type="button" class="homey-button-secondary-shadow-full" id="sendCodeButton">Email me a code</button>
+          <div id="codeEntry" hidden>
+            <div class="homey-form-group section">
+              <label class="homey-form-label" for="accountCode">Code from the email</label>
+              <input class="homey-form-input" id="accountCode" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="8" />
+            </div>
+            <button type="button" class="homey-button-primary-shadow-full" id="codeSignInButton">Sign in</button>
+          </div>
+        </div>
+      </div>
+      <div class="account-message" id="accountMessage" role="status" aria-live="polite"></div>
+    </fieldset>
+  </form>
   <div id="empty" class="empty">Loading Narwal devices…</div>
 
   <div id="content" style="display:none;">
@@ -90,7 +174,144 @@ function onHomeyReady(Homey) {
     renderSelected();
   });
   loadDevices();
+  initAccount();
   Homey.ready();
+}
+
+function byId(id) { return document.getElementById(id); }
+
+function setAccountMessage(text, kind) {
+  var el = byId('accountMessage');
+  el.textContent = text || '';
+  el.className = 'account-message' + (kind ? ' ' + kind : '');
+}
+
+function errorText(err) {
+  return (err && (err.message || err.error)) || String(err || 'Something went wrong.');
+}
+
+var CONNECTION_NOTES = {
+  local: 'Robots are found on your local network, or added by IP address. No account needed.',
+  cloud: 'Robots connect through your Narwal account. Sign in below, then add robots from your account.'
+};
+
+function renderMode(mode) {
+  var current = mode === 'cloud' ? 'cloud' : 'local';
+  var radios = document.querySelectorAll('input[name="connectionMode"]');
+  for (var i = 0; i < radios.length; i++) radios[i].checked = radios[i].value === current;
+  byId('connectionNote').textContent = CONNECTION_NOTES[current];
+  byId('accountForm').hidden = current !== 'cloud';
+}
+
+function renderAccount(status) {
+  if (status && status.mode) renderMode(status.mode);
+  var signedIn = Boolean(status && status.signedIn);
+  byId('accountSignedIn').hidden = !signedIn;
+  byId('accountSignedOut').hidden = signedIn;
+  byId('accountSummary').textContent = signedIn ? 'Signed in as ' + status.email + ' (' + status.country + ')' : '';
+  if (signedIn) {
+    byId('accountPassword').value = '';
+    byId('accountCode').value = '';
+    byId('codeEntry').hidden = true;
+  }
+}
+
+function accountInput() {
+  return {
+    email: byId('accountEmail').value.trim(),
+    country: byId('accountCountry').value,
+    adult: byId('accountAdult').checked
+  };
+}
+
+function withButton(button, work) {
+  setButtonLoading(button, true);
+  setAccountMessage('', '');
+  return work()
+    .catch(function(err) { setAccountMessage(errorText(err), 'bad'); })
+    .then(function() { setButtonLoading(button, false); });
+}
+
+function pressOnEnter(fieldId, buttonId) {
+  byId(fieldId).addEventListener('keydown', function(event) {
+    if (event.key !== 'Enter') return;
+    event.preventDefault();
+    byId(buttonId).click();
+  });
+}
+
+function setModesDisabled(disabled) {
+  var modes = document.querySelectorAll('input[name="connectionMode"]');
+  for (var i = 0; i < modes.length; i++) modes[i].disabled = disabled;
+}
+
+function initAccount() {
+  var modes = document.querySelectorAll('input[name="connectionMode"]');
+  for (var m = 0; m < modes.length; m++) {
+    modes[m].addEventListener('change', function(event) {
+      var mode = event.target.value;
+      renderMode(mode);
+      setAccountMessage('', '');
+      // One change at a time, so a late reply cannot show the wrong mode.
+      setModesDisabled(true);
+      apiPost('/connection-mode', { mode: mode })
+        .then(renderAccount)
+        .catch(function(err) {
+          setAccountMessage(errorText(err), 'bad');
+          return apiGet('/cloud').then(renderAccount).catch(function() {});
+        })
+        .then(function() { setModesDisabled(false); });
+    });
+  }
+  var methods = document.querySelectorAll('input[name="signInMethod"]');
+  for (var i = 0; i < methods.length; i++) {
+    methods[i].addEventListener('change', function(event) {
+      var usePassword = event.target.value === 'password';
+      byId('passwordFields').hidden = !usePassword;
+      byId('codeFields').hidden = usePassword;
+      setAccountMessage('', '');
+    });
+  }
+  byId('passwordSignInButton').addEventListener('click', function() {
+    var input = accountInput();
+    input.password = byId('accountPassword').value;
+    withButton(byId('passwordSignInButton'), function() {
+      return apiPost('/cloud/login-password', input).then(function(status) {
+        renderAccount(status);
+        setAccountMessage('Signed in.', 'good');
+      });
+    });
+  });
+  byId('sendCodeButton').addEventListener('click', function() {
+    withButton(byId('sendCodeButton'), function() {
+      return apiPost('/cloud/request-code', accountInput()).then(function() {
+        byId('codeEntry').hidden = false;
+        setAccountMessage('Code sent. Check your email, including spam.', 'good');
+      });
+    });
+  });
+  byId('codeSignInButton').addEventListener('click', function() {
+    var input = accountInput();
+    input.code = byId('accountCode').value.trim();
+    withButton(byId('codeSignInButton'), function() {
+      return apiPost('/cloud/login-code', input).then(function(status) {
+        renderAccount(status);
+        setAccountMessage('Signed in.', 'good');
+      });
+    });
+  });
+  byId('signOutButton').addEventListener('click', function() {
+    withButton(byId('signOutButton'), function() {
+      return apiPost('/cloud/logout', {}).then(function(status) {
+        renderAccount(status);
+        setAccountMessage('Signed out.', '');
+      });
+    });
+  });
+  // Enter in a field presses its button (a disabled button ignores it).
+  pressOnEnter('accountPassword', 'passwordSignInButton');
+  pressOnEnter('accountCode', 'codeSignInButton');
+  apiGet('/cloud').then(renderAccount).catch(function(err) { setAccountMessage(errorText(err), 'bad'); });
 }
 
 function apiGet(path) {
@@ -124,7 +345,9 @@ function loadDevices() {
   return apiGet('/devices')
     .then(function(result) {
       devices = Array.isArray(result) ? result : [];
-      if (!selectedId && devices[0]) selectedId = devices[0].id;
+      // A removed device must not stay selected.
+      var stillThere = devices.some(function(item) { return item.id === selectedId; });
+      if (!stillThere) selectedId = devices[0] ? devices[0].id : null;
       renderDeviceSelect();
       renderSelected();
     })
@@ -188,7 +411,7 @@ function renderSelected() {
 }
 
 function valueOrDash(value, suffix) {
-  if (value === null || value === undefined || value === '') return '—';
+  if (value === null || value === undefined || value === '') return '-';
   return suffix ? value + suffix : String(value);
 }
 
@@ -216,11 +439,15 @@ function renderStatus(device) {
   ].join('');
 }
 
+var ROOMS_EMPTY_TEXT = 'No rooms cached yet. Press Refresh rooms / map after mapping the robot.';
+
 function renderRooms(rooms) {
   var list = document.getElementById('roomList');
   var empty = document.getElementById('roomsEmpty');
   list.innerHTML = '';
   if (!rooms.length) {
+    // Replaces a "Refreshing…" or error text left by an earlier refresh.
+    empty.textContent = ROOMS_EMPTY_TEXT;
     empty.style.display = 'block';
     return;
   }

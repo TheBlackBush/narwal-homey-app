@@ -1,6 +1,6 @@
 {
   "id": "com.narwal.global",
-  "version": "1.1.10",
+  "version": "1.2.5",
   "compatibility": ">=12.4.0",
   "sdk": 3,
   "platforms": [
@@ -55,6 +55,30 @@
     "refreshRoomsMap": {
       "method": "POST",
       "path": "/refresh-rooms-map"
+    },
+    "getCloud": {
+      "method": "GET",
+      "path": "/cloud"
+    },
+    "cloudLoginPassword": {
+      "method": "POST",
+      "path": "/cloud/login-password"
+    },
+    "cloudRequestCode": {
+      "method": "POST",
+      "path": "/cloud/request-code"
+    },
+    "cloudLoginCode": {
+      "method": "POST",
+      "path": "/cloud/login-code"
+    },
+    "cloudLogout": {
+      "method": "POST",
+      "path": "/cloud/logout"
+    },
+    "setConnectionMode": {
+      "method": "POST",
+      "path": "/connection-mode"
     }
   }
 }

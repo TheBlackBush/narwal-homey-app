@@ -1,7 +1,7 @@
 {
   "name": "com.narwal.global",
-  "version": "1.1.10",
-  "description": "Control Narwal robot vacuums locally from Homey (no cloud).",
+  "version": "1.2.5",
+  "description": "Control Narwal robot vacuums from Homey, locally by default or through your Narwal account.",
   "main": "app.js",
   "scripts": {
     "build": "node scripts/compose.js",
@@ -13,6 +13,7 @@
     "deploy:local": "node scripts/deploy-local-homey.js"
   },
   "dependencies": {
+    "mqtt": "^5.16.0",
     "ws": "^8.18.3"
   },
   "devDependencies": {

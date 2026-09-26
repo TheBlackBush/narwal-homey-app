@@ -69,6 +69,7 @@ diagnostics/*.ndjson
 *.pcapng
 *.chls
 *.chlsj
+*.chlz
 *.mitm
 *.trace
 *.dump
@@ -82,6 +83,11 @@ captures/
 .swarm/
 .claude/settings.local.json
 ruvector.db
+agentdb.rvf
+agentdb.rvf.lock
 
 # Local plan execution workspace
 .superpowers/
+*.apk
+*.apkm
+*.xapk

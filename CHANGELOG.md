@@ -3,6 +3,63 @@
 All notable changes to this project are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [1.2.5] - 2026-09-26
+
+### Fixed
+- "Refresh status" and the fallback poll wait for the robot's answer instead of returning the last known status.
+- Replies the app does not wait for no longer pile up in memory, stopping the connection ends pending map requests at once, and truncated robot frames are rejected instead of being read short.
+- The cloud connection only uses an encrypted broker address.
+- The map widget scales the map to its size instead of clipping it, redraws on resize without asking the robot again, and clears "Map refreshed." after a few seconds.
+- App settings: the rooms message no longer stays on "Refreshing…", the Local/Cloud switch waits for each change to save, and a removed robot is no longer shown as selected.
+- Pairing: if the app cannot tell whether Local or Cloud is chosen, the screen says so and offers Try again instead of assuming Local.
+- Room colours in the map are limited to plain colour values.
+
+### Changed
+- Sign-in fields submit with Enter, and form fields have proper labels.
+
+ - 2026-09-26
+
+### Changed
+- Narwal account sign-in asks you to confirm you are 14 or older before anything is sent, since Narwal's sign-in states this on your behalf.
+- The email-code option warns that signing in with a code for an address without a Narwal account makes Narwal create one.
+
+ - 2026-09-26
+
+### Fixed
+- Flow triggers such as "Started cleaning" no longer fire twice when status updates arrive together.
+- A map update without rooms no longer clears the saved room list.
+- A room and map refresh handles the new map once, and the camera image is created once.
+- Cloud mode now notices when the robot goes offline instead of showing it as connected, and a cloud subscription that is refused or never confirmed makes the app reconnect instead of hanging.
+- A robot added through the cloud without a local IP now asks for the IP in Local mode instead of retrying a blank address.
+
+### Changed
+- Signing out of the Narwal account also ends the session on Narwal's server.
+- Mock mode can no longer be switched on from the pairing screen.
+- The app description and privacy text now describe the optional cloud mode.
+
+ - 2026-09-26
+
+### Fixed
+- The app no longer crashes when a robot's connection is restarted while it is still connecting (IP change, settings change, Local/Cloud switch, app shutdown).
+- "Connection lost" fires once per outage instead of on every reconnect attempt, and a robot that accepts and drops the connection no longer causes a reconnect loop every few seconds.
+- Robot commands only accept the robot's answer to that command, so Pause, Locate and Start no longer report success from an unrelated reply.
+- Signing out of the Narwal account can no longer be undone by a token refresh that was still running.
+- The app package now contains only the files the app needs.
+
+ - 2026-09-26
+
+### Changed
+- Local or Cloud is now one switch for the whole app on the app settings page, instead of a setting per robot. Robot settings are back to IP address and port only.
+
+### Added
+- In Cloud mode the pairing screen lists the robots on your Narwal account: add the one you want, see which ones are already added, and which belong under another model. In Local mode pairing works as before (search the network or enter the IP address).
+
+## [1.2.0] - 2026-09-26
+
+### Added
+- Optional Narwal account sign-in on the app settings page, with an emailed code or a password. Only the session is stored, never the password.
+- A Connection setting per robot: Local network (default) or Narwal cloud. In cloud mode the robot is controlled through your Narwal account, for example when it is not reachable on the local network.
+
 ## [1.1.10] - 2026-09-25
 
 ### Fixed
@@ -150,7 +207,7 @@ All notable changes to this project are documented here. The format is based on
 ## [1.0.0] - 2026-06-16
 
 ### Added
-- Local control of Narwal robot vacuums over the LAN WebSocket API (default port `9002`) — no cloud dependency.
+- Local control of Narwal robot vacuums over the LAN WebSocket API (default port `9002`), with no cloud dependency.
 - Custom pairing flow: robot IP, model selection and optional port, with live connectivity validation.
 - Capabilities: vacuum state, battery, charging, docked, fan speed (Quiet/Normal/Strong/Max), cleaning area, cleaning time, firmware version, connection status, and control buttons.
 - Room discovery from the robot map and a "Clean selected room" Flow card with room autocomplete.

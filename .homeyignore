@@ -1,18 +1,17 @@
-# Local/private development artifacts
-.env
-.env.*
-diagnostics/
-diagnostics/**
-*.chlsj
-*.pem
-*.key
-
-# Repository/development-only metadata
-.git/
-.git/**
-.github/
-.github/**
-node_modules/
-node_modules/**
-coverage/
-.nyc_output/
+# Allowlist: only what the app needs at runtime ships in the archive.
+# Everything else (notes, tests, scripts, captures, local databases) stays
+# out by default.
+/*
+!/app.js
+!/api.js
+!/app.json
+!/package.json
+!/package-lock.json
+!/LICENSE
+!/README.txt
+!/assets/
+!/drivers/
+!/lib/
+!/locales/
+!/settings/
+!/widgets/

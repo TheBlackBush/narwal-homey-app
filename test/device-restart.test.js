@@ -13,6 +13,8 @@ require.cache[homeyPath] = {
 };
 const NarwalHomeyDevice = require('../lib/NarwalHomeyDevice');
 
+const RESTART_DELAY_MS = 500;
+
 function fakeDevice(settings = { ip: '10.0.0.1', port: 9002, dev_mock: false }) {
   const device = Object.create(NarwalHomeyDevice.prototype);
   const timers = new Set();
@@ -64,11 +66,16 @@ test('two quick restarts schedule a single client start', async () => {
     device.starts += 1;
   };
 
-  device._restartClient();
-  device._restartClient();
-  await new Promise((resolve) => setTimeout(resolve, 700));
+  test.mock.timers.enable({ apis: ['setTimeout'] });
+  try {
+    device._restartClient();
+    device._restartClient();
+    test.mock.timers.tick(RESTART_DELAY_MS);
 
-  assert.strictEqual(device.starts, 1);
+    assert.strictEqual(device.starts, 1);
+  } finally {
+    test.mock.timers.reset();
+  }
 });
 
 test('the same new address reported twice updates the setting once', async () => {
@@ -77,12 +84,17 @@ test('the same new address reported twice updates the setting once', async () =>
     device.starts += 1;
   };
 
-  const results = await Promise.all([device.onDiscoveredAddress('10.0.0.2'), device.onDiscoveredAddress('10.0.0.2')]);
-  await new Promise((resolve) => setTimeout(resolve, 700));
+  test.mock.timers.enable({ apis: ['setTimeout'] });
+  try {
+    const results = await Promise.all([device.onDiscoveredAddress('10.0.0.2'), device.onDiscoveredAddress('10.0.0.2')]);
+    test.mock.timers.tick(RESTART_DELAY_MS);
 
-  assert.deepStrictEqual(results.sort(), [false, true]);
-  assert.strictEqual(device.settingsWrites.length, 1);
-  assert.strictEqual(device.starts, 1);
+    assert.deepStrictEqual(results.sort(), [false, true]);
+    assert.strictEqual(device.settingsWrites.length, 1);
+    assert.strictEqual(device.starts, 1);
+  } finally {
+    test.mock.timers.reset();
+  }
 });
 
 test('stopping the client cancels a pending restart', async () => {
@@ -91,9 +103,83 @@ test('stopping the client cancels a pending restart', async () => {
     device.starts += 1;
   };
 
-  device._restartClient();
-  device._stopClient();
-  await new Promise((resolve) => setTimeout(resolve, 700));
+  test.mock.timers.enable({ apis: ['setTimeout'] });
+  try {
+    device._restartClient();
+    device._stopClient();
+    test.mock.timers.tick(RESTART_DELAY_MS);
 
-  assert.strictEqual(device.starts, 0);
+    assert.strictEqual(device.starts, 0);
+  } finally {
+    test.mock.timers.reset();
+  }
+});
+
+function settingsDevice() {
+  const device = fakeDevice();
+  device.restarts = 0;
+  device._restartClient = () => {
+    device.restarts += 1;
+  };
+  device._validateDefaultRoomSettings = async () => {};
+  return device;
+}
+
+test('only connection settings reconnect the robot', async () => {
+  const device = settingsDevice();
+
+  for (const key of ['ip', 'port', 'poll_interval', 'dev_mock']) {
+    await device.onSettings({ changedKeys: [key], newSettings: device.getSettings() });
+  }
+  await device.onSettings({ changedKeys: ['default_fan_speed'], newSettings: device.getSettings() });
+
+  assert.strictEqual(device.restarts, 4);
+});
+
+test('choosing default rooms switches on starting with them', async () => {
+  const device = settingsDevice();
+  const newSettings = { ...device.getSettings(), default_room_ids: '1,2', use_default_rooms_for_start: false };
+
+  await device.onSettings({ changedKeys: ['default_room_ids'], newSettings });
+
+  assert.deepStrictEqual(device.settingsWrites, [{ use_default_rooms_for_start: true }]);
+  assert.strictEqual(device.restarts, 0);
+});
+
+function cloudDevice(account) {
+  const device = fakeDevice();
+  const store = { deviceId: 'dev', productKey: 'QxMSPG6VSO' };
+  device.unavailable = [];
+  device.getStoreValue = (key) => store[key] || null;
+  device.getCapabilityValue = () => null;
+  device.setUnavailable = async (message) => device.unavailable.push(message);
+  device.homey.app = { getConnectionMode: () => 'cloud', cloud: { getAccount: () => account } };
+  return device;
+}
+
+test('in Cloud mode a signed-out app leaves the robot unavailable without connecting', () => {
+  const { NarwalClient } = require('../lib/NarwalClient'); // eslint-disable-line global-require
+  const start = test.mock.method(NarwalClient.prototype, 'start', () => {});
+  const device = cloudDevice(null);
+
+  device._startClient();
+
+  assert.ok(!device._client, 'no client is created');
+  assert.match(device.unavailable[0], /Sign in/);
+  assert.strictEqual(start.mock.callCount(), 0);
+  start.mock.restore();
+});
+
+test('in Cloud mode a signed-in app connects the robot through the account', () => {
+  const { NarwalClient } = require('../lib/NarwalClient'); // eslint-disable-line global-require
+  const start = test.mock.method(NarwalClient.prototype, 'start', () => {});
+  const account = { signedIn: true };
+  const device = cloudDevice(account);
+
+  device._startClient();
+
+  assert.strictEqual(device._client.cloud.account, account);
+  assert.strictEqual(start.mock.callCount(), 1);
+  device._stopClient();
+  start.mock.restore();
 });

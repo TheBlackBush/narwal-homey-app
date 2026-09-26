@@ -1,6 +1,6 @@
 {
   "1.0.0": {
-    "en": "Initial release: local control of Narwal robot vacuums over WebSocket — cleaning controls, fan speed, battery/charging/dock status, room cleaning with autocomplete, resilient reconnect, and a full set of Flow cards."
+    "en": "Initial release: local control of Narwal robot vacuums over WebSocket: cleaning controls, fan speed, battery/charging/dock status, room cleaning with autocomplete, resilient reconnect, and a full set of Flow cards."
   },
   "1.0.11": {
     "en": "Added the Narwal Map widget, removed Last update from the device sensor list, kept status timestamps internal for app/widget use, and improved widget packaging/validation."
@@ -49,5 +49,23 @@
   },
   "1.1.10": {
     "en": "Adding a robot from the found-robots list now follows the same steps as entering its IP address, including choosing a room afterwards."
+  },
+  "1.2.0": {
+    "en": "Optional Narwal account sign-in (emailed code or password) and a per-robot Connection setting: Local network (default) or Narwal cloud."
+  },
+  "1.2.1": {
+    "en": "Choose Local or Cloud once for the whole app in the app settings. In Cloud mode the pairing screen lists the robots on your Narwal account to add."
+  },
+  "1.2.2": {
+    "en": "Fixes a crash when a robot reconnects while it is still connecting, stops repeated \"connection lost\" Flow triggers during an outage, and makes robot commands report their real result."
+  },
+  "1.2.3": {
+    "en": "Flow triggers no longer fire twice, rooms are no longer cleared by maps without rooms, and cloud mode now notices when the robot goes offline. Signing out also ends the session at Narwal."
+  },
+  "1.2.4": {
+    "en": "Signing in to a Narwal account now asks you to confirm you are 14 or older, and warns that an email code for an address without a Narwal account makes Narwal create one."
+  },
+  "1.2.5": {
+    "en": "Refresh status now waits for the robot, the map widget scales its map and no longer reloads on every resize, and the settings and pairing screens handle errors more clearly."
   }
 }
