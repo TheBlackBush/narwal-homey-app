@@ -61,6 +61,10 @@
     "refreshMap": {
       "method": "POST",
       "path": "/refresh-map"
+    },
+    "getLive": {
+      "method": "GET",
+      "path": "/live"
     }
   },
   "devices": {

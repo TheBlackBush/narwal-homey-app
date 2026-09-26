@@ -176,6 +176,10 @@
     var mapData = null;
     var mapStamp = null;
     var mapImage = null; // offscreen canvas, one pixel per cell
+    // Live position and path of the current clean, in display cells.
+    var live = { points: [], total: 0, robot: null, lost: false, at: 0, pushedAt: 0 };
+    var drawQueued = false;
+    var activeState = false; // cleaning or returning: live data is expected
 
     function byId(id) { return document.getElementById(id); }
 
@@ -184,12 +188,17 @@
         || document.documentElement.classList.contains('homey-dark-mode');
     }
 
-    function query() {
+    function selectedId() {
       try {
         var ids = HomeyRef.getDeviceIds ? HomeyRef.getDeviceIds() : [];
-        if (ids && ids.length) return '?did=' + encodeURIComponent(ids[0]);
+        if (ids && ids.length) return ids[0];
       } catch (err) { /* no device selected */ }
       return '';
+    }
+
+    function query() {
+      var id = selectedId();
+      return id ? '?did=' + encodeURIComponent(id) : '';
     }
 
     function api(method, path, body) {
@@ -223,11 +232,47 @@
 
     function stateClass(device) {
       var state = String(device.state || '').toLowerCase();
+      activeState = device.connected && /clean|returning|mapping|paus/.test(state);
       if (device.lastError && device.lastError !== 'None') return 'bad';
       if (!device.connected) return '';
       if (/clean|returning|mapping/.test(state)) return 'busy';
       if (/dock|charg/.test(state)) return 'home';
       return 'ok';
+    }
+
+    function scheduleDraw() {
+      if (drawQueued) return;
+      drawQueued = true;
+      window.requestAnimationFrame(function() {
+        drawQueued = false;
+        drawMap();
+      });
+    }
+
+    // A push carries the points added since `from`; anything that does not
+    // line up with what we have is fetched whole instead.
+    function applyLive(data) {
+      if (!data) return;
+      if (!data.from) live.points = (data.points || []).slice();
+      else if (data.from === live.total) live.points = live.points.concat(data.points || []);
+      else {
+        loadLive();
+        return;
+      }
+      live.total = data.total || live.points.length;
+      live.robot = data.robot || null;
+      live.lost = Boolean(data.lostPosition);
+      live.at = Date.now();
+      scheduleDraw();
+    }
+
+    function loadLive() {
+      return api('GET', '/live').then(function(data) {
+        applyLive({
+          from: 0, points: data.points, total: data.total, robot: data.robot, lostPosition: data.lostPosition
+        });
+        if (data.at) live.at = data.at;
+      }).catch(function() { /* live data is optional */ });
     }
 
     function updateStatus(device) {
@@ -430,6 +475,30 @@
       ctx.stroke();
     }
 
+    // The path of the current clean, broken where the robot jumped (a lost
+    // position or a new map) so no line cuts across the map.
+    function drawTrail(ctx, fit) {
+      var pts = live.points;
+      if (!pts || pts.length < 2) return;
+      var jump = Math.max(24, 0.18 * Math.min(mapData.width, mapData.height));
+      var dark = isDark();
+      ctx.lineCap = 'round';
+      ctx.lineJoin = 'round';
+      [[dark ? 'rgba(0, 0, 0, 0.25)' : 'rgba(50, 59, 108, 0.22)', 2.2], [dark ? 'rgba(255, 255, 255, 0.72)' : 'rgba(255, 255, 255, 0.95)', 0]].forEach(function(style) {
+        ctx.beginPath();
+        for (var i = 0; i < pts.length; i += 1) {
+          var x = fit.x + (pts[i].x + 0.5) * fit.scale;
+          var y = fit.y + (pts[i].y + 0.5) * fit.scale;
+          var jumped = i > 0 && (Math.abs(pts[i].x - pts[i - 1].x) > jump || Math.abs(pts[i].y - pts[i - 1].y) > jump);
+          if (i === 0 || jumped) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
+        }
+        ctx.strokeStyle = style[0];
+        ctx.lineWidth = Math.min(3.5, Math.max(1.5, fit.scale * 1.1)) + style[1];
+        ctx.stroke();
+      });
+    }
+
     function drawMap() {
       var canvas = byId('map');
       var stage = byId('stage');
@@ -456,8 +525,12 @@
       };
       ctx.imageSmoothingEnabled = scale < 2;
       ctx.drawImage(mapImage, fit.x, fit.y, mapData.width * scale, mapData.height * scale);
-      var robot = mapData.robot && !(mapData.dock && mapData.robot.x === mapData.dock.x && mapData.robot.y === mapData.dock.y)
-        ? mapData.robot : null;
+      drawTrail(ctx, fit);
+      // A recent live position wins over the one stored with the map.
+      var liveFresh = live.robot && Date.now() - live.at < 120000;
+      var pose = liveFresh ? live.robot : (live.lost ? null : mapData.robot);
+      var atDock = pose && mapData.dock && Math.abs(pose.x - mapData.dock.x) < 1.5 && Math.abs(pose.y - mapData.dock.y) < 1.5;
+      var robot = pose && !atDock ? pose : null;
       drawLabels(ctx, mapData, fit, [markerBox(mapData.dock, fit), markerBox(robot, fit)].filter(Boolean));
       drawDock(ctx, mapData.dock, fit);
       drawRobot(ctx, robot, fit);
@@ -518,7 +591,20 @@
       settings = Homey.getSettings ? Homey.getSettings() || {} : {};
       byId('bar').hidden = false;
       byId('refresh').addEventListener('click', refreshMap);
-      load().then(function() { Homey.ready(); }, function() { Homey.ready(); });
+      if (typeof Homey.on === 'function') {
+        Homey.on('narwal:live', function(data) {
+          var id = selectedId();
+          if (!data || (id && data.deviceId && data.deviceId !== id)) return;
+          live.pushedAt = Date.now();
+          applyLive(data);
+        });
+      }
+      load().then(function() { Homey.ready(); return loadLive(); }, function() { Homey.ready(); });
+      // Fallback when pushes do not arrive: poll the live data while the
+      // robot is working.
+      setInterval(function() {
+        if (activeState && Date.now() - live.pushedAt > 10000) loadLive();
+      }, 5000);
       var seconds = Math.max(15, Number(settings.refreshInterval || 30));
       pollTimer = setInterval(load, seconds * 1000);
 

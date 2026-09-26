@@ -3,7 +3,12 @@
 All notable changes to this project are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
-## [1.3.9] - 2026-09-26
+## [1.3.10] - 2026-09-26
+
+### Added
+- Live robot position and cleaning path on the map widget. The robot's position updates are pushed to the widget at most every 2 seconds (with a fallback check every 5 seconds while it works). The path of the current clean is drawn under the robot and stays visible after docking until the next clean starts.
+
+ - 2026-09-26
 
 ### Changed
 - New widget preview images that follow Homey's guidelines: simple shapes, no text, transparent background, light and dark.

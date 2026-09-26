@@ -123,3 +123,59 @@ test('every Flow trigger the device fires is a defined trigger card', () => {
   assert.deepStrictEqual([...fired].filter((id) => !defined.has(id)), []);
   assert.deepStrictEqual([...defined].filter((id) => !fired.has(id)), [], 'no trigger card is left unused');
 });
+
+function liveDevice() {
+  const device = fakeDevice();
+  device.pushes = [];
+  device.getId = () => 'dev-1';
+  device.homey.api = { realtime: (event, data) => device.pushes.push({ event, data }) };
+  device.homey.setTimeout = setTimeout;
+  device.homey.clearTimeout = clearTimeout;
+  device._client = {
+    lastStaticMap: {
+      border: {
+        bottom: 0, top: 9, left: 0, right: 9,
+      },
+    },
+  };
+  device._mapRenderData = { meta: { crop: { x: 0, y: 0, sourceHeight: 10 } } };
+  return device;
+}
+
+const live = (x, y, trail) => ({
+  robot: { x, y, theta: 0 }, lostPosition: false, trail: trail.map(([tx, ty]) => ({ x: tx, y: ty })),
+});
+
+test('live robot messages build a trail and are pushed to the widget, at most every 2 s', () => {
+  test.mock.timers.enable({ apis: ['setTimeout', 'Date'] });
+  const device = liveDevice();
+  try {
+    device._onLive(live(1, 1, [[0, 0], [1, 1]]));
+    device._onLive(live(2, 1, [[1, 1], [2, 1]]));
+    assert.strictEqual(device.pushes.length, 1, 'first push at once, the next waits');
+    assert.deepStrictEqual(device.pushes[0].data.points, [{ x: 0, y: 9 }, { x: 1, y: 8 }]);
+    assert.strictEqual(device.pushes[0].event, 'narwal:live');
+    assert.strictEqual(device.pushes[0].data.deviceId, 'dev-1');
+
+    test.mock.timers.tick(2000);
+    assert.strictEqual(device.pushes.length, 2);
+    assert.deepStrictEqual(device.pushes[1].data, {
+      deviceId: 'dev-1', robot: { x: 2, y: 8, theta: 0 }, lostPosition: false, from: 2, points: [{ x: 2, y: 8 }], total: 3,
+    });
+    assert.deepStrictEqual(device.getLiveData().points, [{ x: 0, y: 9 }, { x: 1, y: 8 }, { x: 2, y: 8 }]);
+  } finally {
+    test.mock.timers.reset();
+  }
+});
+
+test('a new clean starts a new trail', async () => {
+  const device = liveDevice();
+  device._applyStatusToCapabilities = async () => {};
+  device._onLive(live(1, 1, [[0, 0], [1, 1]]));
+  device._prev = { state: RobotState.DOCKED };
+
+  await device._onStatus({ state: RobotState.CLEANING, docked: false });
+
+  assert.deepStrictEqual(device.getLiveData().points, []);
+  clearTimeout(device._livePushTimer);
+});

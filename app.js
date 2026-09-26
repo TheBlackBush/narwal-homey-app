@@ -170,6 +170,12 @@ class NarwalApp extends Homey.App {
     return device.getMapData();
   }
 
+  getWidgetLive(deviceId) {
+    const device = this._getNarwalDevice(deviceId);
+    if (!device || typeof device.getLiveData !== 'function') throw new Error('No Narwal vacuum selected.');
+    return device.getLiveData();
+  }
+
   getWidgetRooms(deviceId) {
     const device = this._getNarwalDevice(deviceId);
     if (!device || typeof device.getRoomsData !== 'function') throw new Error('No Narwal vacuum selected.');
