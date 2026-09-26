@@ -224,14 +224,17 @@ test('toRenderData decodes Narwal compressed pixels into canvas payload', () => 
   assert.strictEqual(decoded.height, 2);
   assert.deepStrictEqual(decoded.pixels, [0, 0x20, 0x28, 256, 272, 512]);
 
-  const renderData = MapParser.toRenderData(map, { now: 999 });
+  const renderData = MapParser.toRenderData(map, { now: 999, cropPadding: 0 });
   assert.strictEqual(renderData.type, 'narwal-map');
-  assert.strictEqual(renderData.format, 'rgba');
+  assert.strictEqual(renderData.version, 2);
   assert.strictEqual(renderData.width, 3);
   assert.strictEqual(renderData.height, 2);
-  assert.strictEqual(Buffer.from(renderData.pixels, 'base64').length, 3 * 2 * 4);
+  // Top row is raw row 1: room 1, room 1 (edge), room 2; then 0, wall, wall.
+  const cells = [];
+  for (let i = 0; i < renderData.cells.length; i += 2) for (let n = 0; n < renderData.cells[i + 1]; n += 1) cells.push(renderData.cells[i]);
+  const code = (name) => renderData.rooms.find((room) => room.name === name).code;
+  assert.deepStrictEqual(cells, [code('Living Room'), code('Living Room'), code('Kitchen'), 0, 1, 1]);
   assert.deepStrictEqual(renderData.rooms.map((room) => room.name), ['Living Room', 'Kitchen']);
-  assert.deepStrictEqual(renderData.roomLabels.map((label) => label.name).sort(), ['Kitchen', 'Living Room']);
   assert.strictEqual(renderData.meta.renderedAt, 999);
 });
 

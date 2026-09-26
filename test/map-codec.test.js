@@ -216,18 +216,19 @@ test('rendering reads walls and masked room ids like the official app', () => {
   const { MapParser } = require('../lib/MapParser'); // eslint-disable-line global-require
   const s = decodeGetMapResponse(response(staticMap({ rooms: [room(1, 3), room(2, 4), room(3, 5)] })));
   const render = MapParser.toRenderData(MapParser.fromStaticMap(s, 1), { cropPadding: 0 });
-  const px = Buffer.from(render.pixels, 'base64');
+  const cells = [];
+  for (let i = 0; i < render.cells.length; i += 2) for (let n = 0; n < render.cells[i + 1]; n += 1) cells.push(render.cells[i]);
   // Display row 0 is the top (raw row 2); the bottom display row is the wall row.
-  const at = (x, y) => [...px.subarray((y * render.width + x) * 4, (y * render.width + x) * 4 + 4)];
-  const wall = at(0, 2);
-  const room3 = at(0, 0); // 0x10301: room 3 despite the clean-level bits
-  const room1 = at(0, 1);
+  const at = (x, y) => cells[y * render.width + x];
+  const code = (id) => render.rooms.find((r) => r.id === String(id)).code;
 
-  assert.deepStrictEqual(at(1, 0), at(2, 1), 'both room 2 cells share a colour');
-  assert.notDeepStrictEqual(room3, room1);
-  assert.strictEqual(wall[3], 255);
-  assert.deepStrictEqual(at(2, 0), wall, 'the 0x2028 cell is a wall');
-  assert.deepStrictEqual(render.roomLabels.map((l) => l.id).sort(), ['1', '2', '3']);
+  assert.strictEqual(at(0, 0), code(3), '0x10301 is room 3 despite the clean-level bits');
+  assert.strictEqual(at(1, 0), code(2));
+  assert.strictEqual(at(2, 1), code(2));
+  assert.strictEqual(at(0, 1), code(1));
+  assert.strictEqual(at(0, 2), 1, 'wall row');
+  assert.strictEqual(at(2, 0), 1, 'the 0x2028 cell is a wall');
+  assert.deepStrictEqual(render.rooms.map((r) => r.id).sort(), ['1', '2', '3']);
 });
 
 test('a room label sits inside its room even when the centroid does not', () => {
@@ -242,7 +243,7 @@ test('a room label sits inside its room even when the centroid does not', () => 
     width: 3, height: 3, grid, rooms: [{ id: 1, name: 'A' }, { id: 2, name: 'B' }], station: null,
   }, 1);
   const render = MapParser.toRenderData(map, { cropPadding: 0 });
-  const label = render.roomLabels.find((l) => l.id === '1');
+  const { label } = render.rooms.find((r) => r.id === '1');
   const cellId = (x, y) => (grid[(2 - y) * 3 + x] >> 8) & 0xff; // display row 0 is raw row 2
 
   assert.strictEqual(cellId(label.x, label.y), 1);

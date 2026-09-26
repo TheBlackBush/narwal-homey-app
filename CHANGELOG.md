@@ -3,7 +3,14 @@
 All notable changes to this project are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
-## [1.3.7] - 2026-09-26
+## [1.3.8] - 2026-09-26
+
+### Changed
+- Redesigned map widget. The map fills the square widget with the Narwal app's room colours (neighbouring rooms always differ) and thin walls, and follows Homey's light or dark theme. Room names sit in small labels; long names wrap to two lines, and labels that would not fit or would overlap are left out. The dock and robot are marked. A status chip sits at the top, and the name, battery, room count and refresh button sit in one row at the bottom. Small widgets show battery and refresh only.
+- New widget setting: Show room names.
+- The widget receives the map as compact cell data (about 9 KB instead of about 290 KB) and only reloads it when it changes.
+
+ - 2026-09-26
 
 ### Fixed
 - Cloud mode receives the robot's replies, including the map. Requests now carry the reply address in their header and the Narwal app's correlation format; without them the robot did not answer over the cloud.

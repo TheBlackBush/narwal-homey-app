@@ -5,421 +5,527 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="stylesheet" href="/homey-widget.css">
   <style>
-    :root { color-scheme: light dark; --narwal: #683df5; }
+    :root {
+      --accent: #683df5;
+      --text: var(--homey-text-color, #1d1d27);
+      --text-light: var(--homey-text-color-light, #6b6f80);
+      --surface: var(--homey-background-color, #ffffff);
+      --pill: rgba(104, 61, 245, 0.10);
+      --pill-muted: rgba(120, 124, 140, 0.12);
+      --line: rgba(120, 124, 140, 0.16);
+    }
+    .homey-dark-mode {
+      --pill: rgba(155, 124, 255, 0.18);
+      --pill-muted: rgba(255, 255, 255, 0.08);
+      --line: rgba(255, 255, 255, 0.08);
+    }
     * { box-sizing: border-box; }
-    html, body { width: 100%; height: 100%; margin: 0; overflow: hidden; }
-    .wrap {
+    html, body { width: 100%; height: 100%; margin: 0; overflow: hidden; background: transparent; }
+    .card {
+      position: relative;
       width: 100%;
       height: 100%;
-      min-height: 0;
       display: flex;
       flex-direction: column;
-      position: relative;
-      overflow: hidden;
-      border-radius: 22px;
-      background:
-        radial-gradient(circle at 18% 10%, rgba(104, 61, 245, 0.20), transparent 36%),
-        linear-gradient(145deg, rgba(248, 247, 255, 0.96), rgba(236, 232, 255, 0.82));
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     }
-    .map {
-      position: relative;
-      flex: 1 1 auto;
-      min-height: 0;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 10px 18px 24px;
-    }
-    .map::before {
-      content: '';
+    .stage { position: relative; flex: 1 1 auto; min-height: 0; }
+    .stage canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+    .chip {
       position: absolute;
-      inset: 4px 12px 16px;
-      border-radius: 24px;
-      background: rgba(255, 255, 255, 0.62);
-      box-shadow: inset 0 0 0 1px rgba(104, 61, 245, 0.10), 0 16px 42px rgba(20, 24, 45, 0.12);
-    }
-    .map canvas, .map svg {
-      position: relative;
-      z-index: 1;
-      display: block;
-      flex: 0 0 auto;
-      max-width: 100%;
-      max-height: 100%;
-      border-radius: 18px;
-      filter: saturate(1.06) contrast(1.03);
-    }
-    .map canvas {
-      background: #f8fafc;
-      box-shadow: 0 10px 26px rgba(16, 20, 40, 0.14);
-    }
-    .topbar {
-      position: relative;
-      z-index: 3;
-      flex: 0 0 auto;
-      margin: 10px 10px 0;
-      display: grid;
-      grid-template-columns: 1fr auto;
-      gap: 8px;
+      top: 10px;
+      left: 10px;
+      display: inline-flex;
       align-items: center;
-      padding: 8px 9px 8px 11px;
-      border-radius: 18px;
-      background: rgba(255, 255, 255, 0.84);
-      box-shadow: 0 10px 28px rgba(16, 20, 40, 0.12);
-      backdrop-filter: blur(14px);
-      -webkit-backdrop-filter: blur(14px);
-      border: 1px solid rgba(255, 255, 255, 0.54);
-    }
-    .name { min-width: 0; }
-    .title {
+      gap: 6px;
+      max-width: calc(100% - 20px);
+      padding: 4px 10px 4px 8px;
+      border-radius: 999px;
+      background: var(--surface);
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12);
+      font-size: 12px;
+      font-weight: 600;
+      white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
-      white-space: nowrap;
-      font: 800 13px -apple-system, BlinkMacSystemFont, sans-serif;
-      color: var(--homey-text-color, #111827);
     }
-    .subtitle {
-      margin-top: 2px;
-      display: flex;
-      gap: 6px;
-      align-items: center;
-      font: 650 11px -apple-system, BlinkMacSystemFont, sans-serif;
-      color: var(--homey-text-color-light, #6b7280);
-    }
-    .dot { width: 7px; height: 7px; border-radius: 999px; background: #9ca3af; flex: 0 0 auto; }
-    .dot.connected { background: #34c759; box-shadow: 0 0 0 3px rgba(52, 199, 89, 0.15); }
-    .dot.cleaning { background: var(--narwal); box-shadow: 0 0 0 3px rgba(104, 61, 245, 0.14); }
-    .dot.error { background: #ff3b30; box-shadow: 0 0 0 3px rgba(255, 59, 48, 0.14); }
-    .metrics { display: flex; gap: 6px; align-items: center; }
-    .pill {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      white-space: nowrap;
-      border-radius: 999px;
-      padding: 6px 8px;
-      min-width: 40px;
-      font: 800 11px -apple-system, BlinkMacSystemFont, sans-serif;
-      color: var(--narwal);
-      background: rgba(104, 61, 245, 0.12);
-    }
-    .pill.muted { color: #6b7280; background: rgba(107, 114, 128, 0.11); }
-    .refresh {
-      position: absolute;
-      z-index: 3;
-      right: 13px;
-      bottom: 13px;
-      width: 42px;
-      height: 42px;
-      border: 0;
-      border-radius: 999px;
-      cursor: pointer;
-      color: #fff;
-      background: var(--narwal);
-      box-shadow: 0 12px 24px rgba(104, 61, 245, 0.32);
-      font: 900 18px -apple-system, BlinkMacSystemFont, sans-serif;
-    }
-    .refresh:disabled { opacity: 0.62; cursor: wait; }
-    .refresh.loading { animation: pulse 0.9s ease-in-out infinite alternate; }
-    @keyframes pulse { from { transform: scale(1); } to { transform: scale(0.94); } }
-    .message {
-      position: absolute;
-      z-index: 3;
-      left: 14px;
-      right: 64px;
-      bottom: 18px;
-      min-height: 16px;
-      font: 700 11px -apple-system, BlinkMacSystemFont, sans-serif;
-      color: rgba(17, 24, 39, 0.62);
-      text-shadow: 0 1px 0 rgba(255, 255, 255, 0.7);
-      pointer-events: none;
-    }
-    .message.error { color: #ff3b30; }
-    .map-frame {
-      position: relative;
-      z-index: 1;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      width: 100%;
-      height: 100%;
-      min-width: 0;
-      min-height: 0;
-      overflow: visible;
-    }
+    .chip[hidden] { display: none; }
+    .dot { flex: none; width: 8px; height: 8px; border-radius: 50%; background: #9aa0ae; }
+    .dot.ok { background: #34c759; }
+    .dot.busy { background: #34c759; animation: pulse 1.6s ease-in-out infinite; }
+    .dot.home { background: #4a8cff; }
+    .dot.bad { background: #ff453a; }
+    @keyframes pulse { 50% { opacity: 0.35; } }
+    @media (prefers-reduced-motion: reduce) { .dot.busy { animation: none; } }
     .empty {
-      position: relative;
-      z-index: 1;
-      color: var(--homey-text-color-light, #7a7f8c);
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      padding: 24px;
       text-align: center;
-      font: 700 14px -apple-system, BlinkMacSystemFont, sans-serif;
-      padding: 16px;
+      color: var(--text-light);
+      font-size: 13px;
       line-height: 1.35;
     }
-    .empty small { display: block; margin-top: 5px; font-weight: 600; opacity: 0.72; }
-    .spinner {
-      width: 24px;
-      height: 24px;
-      margin: 0 auto 10px;
+    .empty[hidden] { display: none; }
+    .empty strong { color: var(--text); font-size: 14px; }
+    .bar {
+      flex: 0 0 auto;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-height: 52px;
+      padding: 8px 10px 10px 14px;
+      border-top: 1px solid var(--line);
+    }
+    .bar[hidden] { display: none; }
+    .who { flex: 1 1 auto; min-width: 0; }
+    .name { font-size: 14px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .sub { font-size: 11px; color: var(--text-light); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .pill {
+      flex: none;
+      padding: 4px 8px;
+      border-radius: 999px;
+      background: var(--pill-muted);
+      font-size: 12px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+    .pill.accent { background: var(--pill); color: var(--accent); }
+    .homey-dark-mode .pill.accent { color: #b8a4ff; }
+    .icon {
+      flex: none;
+      width: 32px;
+      height: 32px;
+      display: grid;
+      place-items: center;
+      padding: 0;
+      border: 0;
       border-radius: 50%;
-      border: 3px solid rgba(104, 61, 245, 0.16);
-      border-top-color: var(--narwal);
-      animation: spin 0.8s linear infinite;
+      background: var(--pill);
+      color: var(--accent);
+      cursor: pointer;
     }
+    .homey-dark-mode .icon { color: #b8a4ff; }
+    .icon:disabled { opacity: 0.5; }
+    .icon.spinning svg { animation: spin 0.9s linear infinite; }
     @keyframes spin { to { transform: rotate(360deg); } }
-    .error-text { color: #ff3b30; }
-    @media (prefers-color-scheme: dark) {
-      .wrap { background: radial-gradient(circle at 18% 10%, rgba(104, 61, 245, 0.24), transparent 34%), linear-gradient(145deg, #151826, #090b12); }
-      .map::before { background: rgba(15, 18, 30, 0.76); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08), 0 16px 42px rgba(0, 0, 0, 0.35); }
-      .topbar { background: rgba(21, 24, 38, 0.82); border-color: rgba(255, 255, 255, 0.08); }
-      .title { color: #f9fafb; }
-      .subtitle { color: #a1a7b3; }
-      .message { color: rgba(249, 250, 251, 0.68); text-shadow: none; }
-      .pill.muted { color: #cbd5e1; background: rgba(255, 255, 255, 0.10); }
-      .map canvas { background: #f7f8fc; box-shadow: 0 12px 30px rgba(0, 0, 0, 0.32); }
+    /* Small widgets: the bar keeps battery and refresh only. */
+    @media (max-width: 239px) {
+      .bar { gap: 6px; min-height: 44px; padding: 6px 8px; }
+      .who, #rooms { display: none; }
+      .chip { top: 6px; left: 6px; font-size: 11px; }
     }
+    .toast {
+      position: absolute;
+      left: 50%;
+      bottom: 62px;
+      transform: translateX(-50%);
+      max-width: calc(100% - 24px);
+      padding: 6px 12px;
+      border-radius: 10px;
+      background: var(--surface);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
+      font-size: 12px;
+      text-align: center;
+    }
+    .toast[hidden] { display: none; }
+    .toast.error { color: #ff453a; }
   </style>
 </head>
-<body class="homey-widget">
-  <div class="wrap">
-    <div class="map" id="map"><div class="empty" id="empty"><div class="spinner"></div>Loading map…</div></div>
-    <div class="topbar" id="status">
-      <div class="name">
-        <div class="title" id="name">Narwal</div>
-        <div class="subtitle"><span class="dot" id="dot"></span><span id="state">Loading…</span></div>
-      </div>
-      <div class="metrics">
-        <div class="pill" id="battery">--%</div>
-        <div class="pill muted" id="roomsCount">0 rooms</div>
-      </div>
+<body class="homey-widget-full">
+  <div class="card">
+    <div class="stage" id="stage">
+      <canvas id="map" aria-label="Robot map" role="img"></canvas>
+      <div class="empty" id="empty"><strong>Loading map…</strong></div>
+      <div class="chip" id="chip" hidden><span class="dot" id="dot"></span><span id="state"></span></div>
     </div>
-    <button class="refresh" id="refreshBtn" type="button" title="Refresh map" aria-label="Refresh map">↻</button>
-    <div class="message" id="message"></div>
+    <div class="bar" id="bar">
+      <div class="who">
+        <div class="name" id="name">Narwal</div>
+        <div class="sub" id="sub"></div>
+      </div>
+      <span class="pill accent" id="battery" hidden></span>
+      <span class="pill" id="rooms" hidden></span>
+      <button class="icon" id="refresh" type="button" aria-label="Refresh map" title="Refresh map">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 4v7h-7"/></svg>
+      </button>
+    </div>
+    <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
   </div>
 
   <script>
-    var HomeyRef = null;
-    var timer = null;
-    var resizeTimer = null;
-    var messageTimer = null;
-    var lastMapData = null;
-    var currentDevice = null;
+    // Room colour sets as in the Narwal app (base shade of each set).
+    var ROOM_COLORS = ['#B1BEFA', '#B8E2FC', '#D7CDF7', '#B3E5E5', '#BBD4FA', '#CCF0B6'];
+    var THEMES = {
+      light: { wall: '#323B6C', floor: '#DCDCE3', labelBg: 'rgba(50, 59, 108, 0.86)', labelText: '#ffffff', mix: null },
+      dark: { wall: '#C9CEF5', floor: '#3A3C48', labelBg: 'rgba(12, 14, 24, 0.82)', labelText: '#ffffff', mix: '#1C1D26' }
+    };
+    var ROOM_CODE_BASE = 10;
 
-    function selectedDeviceQuery(Homey) {
+    var HomeyRef = null;
+    var settings = {};
+    var pollTimer = null;
+    var toastTimer = null;
+    var resizeTimer = null;
+    var mapData = null;
+    var mapStamp = null;
+    var mapImage = null; // offscreen canvas, one pixel per cell
+
+    function byId(id) { return document.getElementById(id); }
+
+    function isDark() {
+      return document.body.classList.contains('homey-dark-mode')
+        || document.documentElement.classList.contains('homey-dark-mode');
+    }
+
+    function query() {
       try {
-        var ids = Homey.getDeviceIds ? Homey.getDeviceIds() : [];
-        if (ids && ids.length > 0) return '?did=' + encodeURIComponent(ids[0]);
-      } catch (err) {}
+        var ids = HomeyRef.getDeviceIds ? HomeyRef.getDeviceIds() : [];
+        if (ids && ids.length) return '?did=' + encodeURIComponent(ids[0]);
+      } catch (err) { /* no device selected */ }
       return '';
     }
 
     function api(method, path, body) {
-      var query = selectedDeviceQuery(HomeyRef);
-      return HomeyRef.api(method, path + query, body);
+      return HomeyRef.api(method, path + query(), body);
     }
 
-    function setText(id, value) {
-      document.getElementById(id).textContent = value;
+    function showToast(text, isError) {
+      var el = byId('toast');
+      el.textContent = text;
+      el.className = isError ? 'toast error' : 'toast';
+      el.hidden = !text;
+      clearTimeout(toastTimer);
+      if (text) toastTimer = setTimeout(function() { el.hidden = true; }, isError ? 6000 : 3000);
     }
 
-    function setMessage(message, isError) {
-      var el = document.getElementById('message');
-      el.textContent = message || '';
-      el.className = isError ? 'message error' : 'message';
+    function showEmpty(title, detail) {
+      var el = byId('empty');
+      el.innerHTML = '';
+      var strong = document.createElement('strong');
+      strong.textContent = title;
+      el.appendChild(strong);
+      if (detail) {
+        var small = document.createElement('div');
+        small.textContent = detail;
+        el.appendChild(small);
+      }
+      el.hidden = false;
+    }
+
+    // ---- Status ------------------------------------------------------------
+
+    function stateClass(device) {
+      var state = String(device.state || '').toLowerCase();
+      if (device.lastError && device.lastError !== 'None') return 'bad';
+      if (!device.connected) return '';
+      if (/clean|returning|mapping/.test(state)) return 'busy';
+      if (/dock|charg/.test(state)) return 'home';
+      return 'ok';
     }
 
     function updateStatus(device) {
-      currentDevice = device;
-      if (!device) {
-        setText('state', 'No vacuum selected');
-        return;
-      }
-
-      var dot = document.getElementById('dot');
-      dot.className = 'dot';
-      if (device.connected) dot.classList.add('connected');
-      if (String(device.state || '').toLowerCase().indexOf('clean') >= 0) dot.classList.add('cleaning');
-      if (device.lastError && device.lastError !== 'None') dot.classList.add('error');
-
-      setText('name', device.name || 'Narwal');
-      setText('state', device.lastError && device.lastError !== 'None' ? device.lastError : (device.state || 'Unknown'));
-      document.getElementById('state').className = device.lastError && device.lastError !== 'None' ? 'error-text' : '';
-      setText('battery', typeof device.battery === 'number' ? device.battery + '%' : '--%');
-      setText('roomsCount', (device.rooms ? device.rooms.length : 0) + ' rooms');
+      var chip = byId('chip');
+      chip.hidden = settings.showStatus === false;
+      byId('dot').className = 'dot ' + stateClass(device);
+      var hasError = device.lastError && device.lastError !== 'None';
+      byId('state').textContent = !device.connected ? 'Offline' : (hasError ? device.lastError : (device.state || 'Unknown'));
+      byId('name').textContent = device.name || 'Narwal';
+      var sub = [];
+      if (device.currentRoom) sub.push(device.currentRoom);
+      if (device.connected && typeof device.area === 'number' && device.area > 0 && /clean/i.test(device.state || '')) sub.push(device.area + ' m²');
+      byId('sub').textContent = sub.join(' · ');
+      var battery = byId('battery');
+      battery.hidden = typeof device.battery !== 'number';
+      battery.textContent = device.battery + '%';
+      var rooms = byId('rooms');
+      var count = device.rooms ? device.rooms.length : 0;
+      rooms.hidden = !count;
+      rooms.textContent = count + (count === 1 ? ' room' : ' rooms');
     }
 
-    function escapeHtml(value) {
-      return String(value || '').replace(/[<>&'"]/g, function(c) {
-        return { '<': '&lt;', '>': '&gt;', '&': '&amp;', "'": '&apos;', '"': '&quot;' }[c];
+    // ---- Map ---------------------------------------------------------------
+
+    function hexToRgb(hex) {
+      var n = parseInt(hex.slice(1), 16);
+      return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+    }
+
+    function mixColor(hex, withHex, amount) {
+      if (!withHex) return hexToRgb(hex);
+      var a = hexToRgb(hex);
+      var b = hexToRgb(withHex);
+      return [0, 1, 2].map(function(i) { return Math.round(a[i] * amount + b[i] * (1 - amount)); });
+    }
+
+    // Paints the cells once, one pixel each, in the current theme.
+    function buildMapImage(data) {
+      var theme = isDark() ? THEMES.dark : THEMES.light;
+      var colors = {};
+      colors[1] = hexToRgb(theme.wall);
+      colors[2] = hexToRgb(theme.floor);
+      (data.rooms || []).forEach(function(room) {
+        colors[room.code] = mixColor(ROOM_COLORS[room.colorIndex % ROOM_COLORS.length], theme.mix, 0.78);
+      });
+      var canvas = document.createElement('canvas');
+      canvas.width = data.width;
+      canvas.height = data.height;
+      var ctx = canvas.getContext('2d');
+      var image = ctx.createImageData(data.width, data.height);
+      var px = image.data;
+      var i = 0;
+      for (var r = 0; r < data.cells.length; r += 2) {
+        var code = data.cells[r];
+        var count = data.cells[r + 1];
+        var color = code >= ROOM_CODE_BASE ? (colors[code] || colors[2]) : colors[code];
+        for (var n = 0; n < count; n += 1, i += 4) {
+          if (!color) continue; // outside stays transparent
+          px[i] = color[0];
+          px[i + 1] = color[1];
+          px[i + 2] = color[2];
+          px[i + 3] = 255;
+        }
+      }
+      ctx.putImageData(image, 0, 0);
+      return canvas;
+    }
+
+    function roundRect(ctx, x, y, w, h, r) {
+      ctx.beginPath();
+      ctx.moveTo(x + r, y);
+      ctx.arcTo(x + w, y, x + w, y + h, r);
+      ctx.arcTo(x + w, y + h, x, y + h, r);
+      ctx.arcTo(x, y + h, x, y, r);
+      ctx.arcTo(x, y, x + w, y, r);
+      ctx.closePath();
+    }
+
+    // Labels for the biggest rooms first. A long name that is too wide for
+    // its room goes on two lines, as in the Narwal app; a label that still
+    // does not fit, or would cover another label or a marker, is left out.
+    function drawLabels(ctx, data, fit, markers) {
+      if (settings.showRoomNames === false || fit.scale < 0.8) return;
+      var theme = isDark() ? THEMES.dark : THEMES.light;
+      var fontSize = Math.max(9, Math.min(11, Math.round(fit.scale * 4.5)));
+      var lineH = fontSize + 2;
+      ctx.font = '600 ' + fontSize + 'px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      var placed = markers.slice();
+      var rooms = (data.rooms || []).slice().sort(function(a, b) { return b.cells - a.cells; });
+      rooms.forEach(function(room) {
+        if (!room.label || !room.name) return;
+        var roomW = (room.bbox.x1 - room.bbox.x0 + 1) * fit.scale;
+        var roomH = (room.bbox.y1 - room.bbox.y0 + 1) * fit.scale;
+        var lines = [room.name];
+        var textW = ctx.measureText(room.name).width;
+        var space = room.name.lastIndexOf(' ');
+        if (textW + 8 > roomW * 1.1 && space > 0) {
+          lines = [room.name.slice(0, space), room.name.slice(space + 1)];
+          textW = Math.max(ctx.measureText(lines[0]).width, ctx.measureText(lines[1]).width);
+        }
+        var w = textW + 8;
+        var h = lines.length * lineH + 3;
+        // A label may reach a little past a narrow room; overlaps are what hurt.
+        if (w > roomW * 1.6 || h > roomH * 1.2) return;
+        var cx = fit.x + (room.label.x + 0.5) * fit.scale;
+        var cy = fit.y + (room.label.y + 0.5) * fit.scale;
+        var box = { x: cx - w / 2, y: cy - h / 2, w: w, h: h };
+        box.x = Math.max(2, Math.min(box.x, fit.canvasW - w - 2));
+        box.y = Math.max(2, Math.min(box.y, fit.canvasH - h - 2));
+        var overlaps = placed.some(function(p) {
+          return box.x < p.x + p.w + 3 && p.x < box.x + box.w + 3 && box.y < p.y + p.h + 3 && p.y < box.y + box.h + 3;
+        });
+        if (overlaps) return;
+        placed.push(box);
+        ctx.fillStyle = theme.labelBg;
+        roundRect(ctx, box.x, box.y, w, h, Math.min(h / 2, 9));
+        ctx.fill();
+        ctx.fillStyle = theme.labelText;
+        lines.forEach(function(line, i) {
+          ctx.fillText(line, box.x + w / 2, box.y + 1.5 + lineH * (i + 0.5) + 0.5);
+        });
       });
     }
 
-    function setEmpty(message, detail) {
-      var map = document.getElementById('map');
-      map.innerHTML = '<div class="empty" id="empty">' + escapeHtml(message) + (detail ? '<small>' + escapeHtml(detail) + '</small>' : '') + '</div>';
+    function markerSize(fit) {
+      return Math.max(4, Math.min(7, fit.scale * 3.5));
     }
 
-    function drawCircle(ctx, point, radius, fill, stroke) {
-      if (!point || typeof point.x !== 'number' || typeof point.y !== 'number') return;
-      ctx.beginPath();
-      ctx.arc(point.x, point.y, radius, 0, Math.PI * 2);
-      ctx.fillStyle = fill;
+    function markerBox(point, fit) {
+      if (!point) return null;
+      var r = markerSize(fit) + 2;
+      var x = fit.x + (point.x + 0.5) * fit.scale;
+      var y = fit.y + (point.y + 0.5) * fit.scale;
+      return { x: x - r, y: y - r, w: r * 2, h: r * 2 };
+    }
+
+    function drawDock(ctx, point, fit) {
+      if (!point) return;
+      var x = fit.x + (point.x + 0.5) * fit.scale;
+      var y = fit.y + (point.y + 0.5) * fit.scale;
+      var r = markerSize(fit);
+      var k = r / 7;
+      ctx.fillStyle = '#ffffff';
+      roundRect(ctx, x - r, y - r, r * 2, r * 2, 4 * k);
       ctx.fill();
-      if (stroke) {
-        ctx.strokeStyle = stroke;
-        ctx.lineWidth = Math.max(1, radius / 3);
+      ctx.lineWidth = Math.max(1.5, 2 * k);
+      ctx.strokeStyle = '#683df5';
+      ctx.stroke();
+      // A small bolt: the charging dock.
+      ctx.fillStyle = '#683df5';
+      ctx.beginPath();
+      ctx.moveTo(x + 1 * k, y - 4.5 * k);
+      ctx.lineTo(x - 3 * k, y + 0.8 * k);
+      ctx.lineTo(x - 0.2 * k, y + 0.8 * k);
+      ctx.lineTo(x - 1 * k, y + 4.5 * k);
+      ctx.lineTo(x + 3 * k, y - 0.8 * k);
+      ctx.lineTo(x + 0.2 * k, y - 0.8 * k);
+      ctx.closePath();
+      ctx.fill();
+    }
+
+    function drawRobot(ctx, point, fit) {
+      if (!point) return;
+      var x = fit.x + (point.x + 0.5) * fit.scale;
+      var y = fit.y + (point.y + 0.5) * fit.scale;
+      ctx.beginPath();
+      ctx.arc(x, y, markerSize(fit), 0, Math.PI * 2);
+      ctx.fillStyle = '#683df5';
+      ctx.fill();
+      ctx.lineWidth = 2.5;
+      ctx.strokeStyle = '#ffffff';
+      ctx.stroke();
+      if (typeof point.theta === 'number') {
+        // Map y points up; the display is flipped.
+        var dx = Math.cos(point.theta);
+        var dy = -Math.sin(point.theta);
+        ctx.beginPath();
+        ctx.moveTo(x + dx * 2, y + dy * 2);
+        ctx.lineTo(x + dx * 5.5, y + dy * 5.5);
+        ctx.lineWidth = 2;
+        ctx.lineCap = 'round';
+        ctx.strokeStyle = '#ffffff';
         ctx.stroke();
       }
     }
 
-    function drawRoomLabels(ctx, labels, scale, width, height) {
-      if (!labels || !labels.length) return;
-      var fontSize = Math.max(9, Math.min(12, Math.round(Math.min(width * scale, height * scale) / 30)));
-      ctx.font = '850 ' + fontSize + 'px -apple-system, BlinkMacSystemFont, sans-serif';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      labels.forEach(function(label) {
-        if (!label || typeof label.x !== 'number' || typeof label.y !== 'number') return;
-        var text = String(label.name || ('Room ' + label.id));
-        var x = label.x * scale;
-        var y = label.y * scale;
-        ctx.lineWidth = 3;
-        ctx.strokeStyle = 'rgba(17, 24, 39, 0.68)';
-        ctx.strokeText(text, x, y);
-        ctx.fillStyle = '#fff';
-        ctx.fillText(text, x, y);
+    function drawMap() {
+      var canvas = byId('map');
+      var stage = byId('stage');
+      var rect = stage.getBoundingClientRect();
+      var dpr = Math.max(1, Math.min(window.devicePixelRatio || 1, 3));
+      canvas.width = Math.round(rect.width * dpr);
+      canvas.height = Math.round(rect.height * dpr);
+      var ctx = canvas.getContext('2d');
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.clearRect(0, 0, rect.width, rect.height);
+      if (!mapData || !mapImage) return;
+
+      var pad = 10;
+      var top = settings.showStatus === false ? pad : 34; // room for the status chip
+      var availW = Math.max(1, rect.width - pad * 2);
+      var availH = Math.max(1, rect.height - top - pad);
+      var scale = Math.min(availW / mapData.width, availH / mapData.height);
+      var fit = {
+        scale: scale,
+        x: (rect.width - mapData.width * scale) / 2,
+        y: top + (availH - mapData.height * scale) / 2,
+        canvasW: rect.width,
+        canvasH: rect.height
+      };
+      ctx.imageSmoothingEnabled = scale < 2;
+      ctx.drawImage(mapImage, fit.x, fit.y, mapData.width * scale, mapData.height * scale);
+      var robot = mapData.robot && !(mapData.dock && mapData.robot.x === mapData.dock.x && mapData.robot.y === mapData.dock.y)
+        ? mapData.robot : null;
+      drawLabels(ctx, mapData, fit, [markerBox(mapData.dock, fit), markerBox(robot, fit)].filter(Boolean));
+      drawDock(ctx, mapData.dock, fit);
+      drawRobot(ctx, robot, fit);
+    }
+
+    function setMap(data) {
+      if (!data || data.type !== 'narwal-map' || data.version !== 2 || !data.cells) {
+        mapData = null;
+        mapImage = null;
+        drawMap();
+        showEmpty('No map yet', 'The map appears once the robot has mapped your home. It refreshes automatically.');
+        return;
+      }
+      mapData = data;
+      mapImage = buildMapImage(data);
+      byId('empty').hidden = true;
+      drawMap();
+    }
+
+    // ---- Loading -------------------------------------------------------------
+
+    function load() {
+      return api('GET', '/data').then(function(device) {
+        updateStatus(device);
+        var stamp = device.mapUpdatedAt || null;
+        if (!mapData || stamp !== mapStamp) {
+          return api('GET', '/map').then(function(data) {
+            mapStamp = stamp;
+            setMap(data);
+          });
+        }
+        return null;
+      }).catch(function(err) {
+        if (!mapData) showEmpty('Could not load the robot', err && err.message ? err.message : '');
       });
     }
 
-    function getCanvasFit(mapWidth, mapHeight, frame) {
-      var box = frame.getBoundingClientRect();
-      var availableWidth = Math.max(1, box.width - 8);
-      var availableHeight = Math.max(1, box.height - 8);
-      var scale = Math.min(availableWidth / mapWidth, availableHeight / mapHeight) * 0.94;
-      scale = Math.max(0.1, Math.min(scale, 4));
-      return {
-        scale: scale,
-        width: Math.max(1, Math.floor(mapWidth * scale)),
-        height: Math.max(1, Math.floor(mapHeight * scale)),
-      };
-    }
-
-    function redrawScaledMap(canvas, sourceCanvas, data, frame) {
-      var width = Number(data.width) || 0;
-      var height = Number(data.height) || 0;
-      var fit = getCanvasFit(width, height, frame);
-      var dpr = Math.max(1, Math.min(window.devicePixelRatio || 1, 3));
-      canvas.style.width = fit.width + 'px';
-      canvas.style.height = fit.height + 'px';
-      canvas.width = Math.round(fit.width * dpr);
-      canvas.height = Math.round(fit.height * dpr);
-
-      var ctx = canvas.getContext('2d');
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.imageSmoothingEnabled = true;
-      ctx.setTransform(dpr * fit.scale, 0, 0, dpr * fit.scale, 0, 0);
-      ctx.drawImage(sourceCanvas, 0, 0);
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-
-      drawRoomLabels(ctx, data.roomLabels || [], fit.scale, width, height);
-      drawCircle(ctx, data.chargerPos ? { x: data.chargerPos.x * fit.scale, y: data.chargerPos.y * fit.scale } : null, 6, '#ffcc00', '#fff');
-      drawCircle(ctx, data.robotPos ? { x: data.robotPos.x * fit.scale, y: data.robotPos.y * fit.scale } : null, 7, '#34c759', '#fff');
-    }
-
-    function renderPixelMap(data) {
-      var map = document.getElementById('map');
-      var width = Number(data.width) || 0;
-      var height = Number(data.height) || 0;
-      if (!width || !height || !data.pixels) {
-        setEmpty('No map available yet', 'Use Refresh map once the robot has a map.');
-        return;
-      }
-
-      var sourceCanvas = document.createElement('canvas');
-      sourceCanvas.width = width;
-      sourceCanvas.height = height;
-      var sourceCtx = sourceCanvas.getContext('2d');
-      var image = sourceCtx.createImageData(width, height);
-      var raw = atob(data.pixels);
-      var max = Math.min(raw.length, image.data.length);
-      for (var i = 0; i < max; i += 1) image.data[i] = raw.charCodeAt(i);
-      sourceCtx.putImageData(image, 0, 0);
-
-      var canvas = document.createElement('canvas');
-      canvas.setAttribute('aria-label', 'Narwal map');
-      var frame = document.createElement('div');
-      frame.className = 'map-frame';
-      frame.appendChild(canvas);
-      map.innerHTML = '';
-      map.appendChild(frame);
-      redrawScaledMap(canvas, sourceCanvas, data, frame);
-      window.requestAnimationFrame(function() { redrawScaledMap(canvas, sourceCanvas, data, frame); });
-    }
-
-    function renderMap(data) {
-      lastMapData = data;
-      if (data && typeof data === 'object' && data.type === 'narwal-map') {
-        renderPixelMap(data);
-        return;
-      }
-
-      var svg = typeof data === 'string' ? data : data && data.svg;
-      var map = document.getElementById('map');
-      if (!svg || typeof svg !== 'string') {
-        setEmpty('No map available yet', 'Use Refresh map once the robot has a map.');
-        return;
-      }
-      map.innerHTML = '<div class="map-frame">' + svg + '</div>';
-    }
-
-    function load() {
-      api('GET', '/data')
-        .then(updateStatus)
-        .catch(function(err) { setText('state', err && err.message ? err.message : 'Could not load status'); });
-
-      api('GET', '/map')
-        .then(renderMap)
-        .catch(function() { setEmpty('Could not load map', 'Open the widget again or refresh the robot map.'); });
-    }
-
     function refreshMap() {
-      var btn = document.getElementById('refreshBtn');
+      var btn = byId('refresh');
+      if (btn.disabled) return;
       btn.disabled = true;
-      btn.classList.add('loading');
-      clearTimeout(messageTimer);
-      setMessage('Refreshing map…', false);
-      return api('POST', '/refresh-map', {}).then(function() {
-        setMessage('Map refreshed.', false);
-        clearTimeout(messageTimer);
-        messageTimer = setTimeout(function() { setMessage('', false); }, 4000);
+      btn.classList.add('spinning');
+      showToast('Refreshing map…', false);
+      api('POST', '/refresh-map', {}).then(function() {
+        mapStamp = null;
+        showToast('Map updated', false);
         return load();
       }).catch(function(err) {
-        setMessage(err && err.message ? err.message : 'Refresh failed', true);
+        showToast(err && err.message ? err.message : 'Refresh failed', true);
       }).then(function() {
         btn.disabled = false;
-        btn.classList.remove('loading');
+        btn.classList.remove('spinning');
       });
     }
 
     function onHomeyReady(Homey) {
       HomeyRef = Homey;
-      var settings = Homey.getSettings ? Homey.getSettings() : {};
-      if (settings.showStatus === false) document.getElementById('status').style.display = 'none';
-      load();
-      var seconds = Number(settings.refreshInterval || 30);
-      timer = setInterval(load, Math.max(15, seconds) * 1000);
-      Homey.ready();
+      settings = Homey.getSettings ? Homey.getSettings() || {} : {};
+      byId('bar').hidden = false;
+      byId('refresh').addEventListener('click', refreshMap);
+      load().then(function() { Homey.ready(); }, function() { Homey.ready(); });
+      var seconds = Math.max(15, Number(settings.refreshInterval || 30));
+      pollTimer = setInterval(load, seconds * 1000);
+
+      window.addEventListener('resize', function() {
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(drawMap, 150);
+      });
+      // Repaint when Homey switches between light and dark.
+      if (window.MutationObserver) {
+        var observer = new MutationObserver(function() {
+          if (mapData) {
+            mapImage = buildMapImage(mapData);
+            drawMap();
+          }
+        });
+        observer.observe(document.body, { attributes: true, attributeFilter: ['class'] });
+        observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+      }
     }
 
-    document.getElementById('refreshBtn').addEventListener('click', refreshMap);
-    // Resizing only redraws the map already loaded, once resizing settles;
-    // it does not ask the robot again.
-    window.addEventListener('resize', function() {
-      clearTimeout(resizeTimer);
-      resizeTimer = setTimeout(function() {
-        if (lastMapData) renderMap(lastMapData);
-      }, 200);
-    });
-    window.addEventListener('unload', function() { if (timer) clearInterval(timer); });
+    window.addEventListener('unload', function() { if (pollTimer) clearInterval(pollTimer); });
   </script>
 </body>
 </html>

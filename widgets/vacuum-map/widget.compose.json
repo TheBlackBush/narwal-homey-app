@@ -2,13 +2,21 @@
   "name": {
     "en": "Narwal Map"
   },
-  "height": "75%",
+  "height": "100%",
   "settings": [
     {
       "id": "showStatus",
       "type": "checkbox",
       "title": {
-        "en": "Show status bar"
+        "en": "Show status"
+      },
+      "value": true
+    },
+    {
+      "id": "showRoomNames",
+      "type": "checkbox",
+      "title": {
+        "en": "Show room names"
       },
       "value": true
     },
