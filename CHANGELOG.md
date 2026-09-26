@@ -3,7 +3,12 @@
 All notable changes to this project are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
-## [1.2.6] - 2026-09-26
+## [1.2.7] - 2026-09-26
+
+### Added
+- Cloud diagnostics also record refused messages, the broker's reason for closing the connection, and messages on unexpected topics (with IDs masked).
+
+ - 2026-09-26
 
 ### Fixed
 - A robot counts as connected only once it answers. A cloud connection that stays silent no longer flips between connected and disconnected every minute, or fires "Connection lost" each time.

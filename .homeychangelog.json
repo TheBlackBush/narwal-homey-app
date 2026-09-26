@@ -70,5 +70,8 @@
   },
   "1.2.6": {
     "en": "A robot now counts as connected only once it answers, so a silent cloud connection no longer flips between connected and disconnected. The status text updates again after reconnecting."
+  },
+  "1.2.7": {
+    "en": "More detailed cloud connection diagnostics, to find why some robots stay silent in Cloud mode."
   }
 }

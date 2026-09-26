@@ -335,3 +335,22 @@ test('the cloud socket counts what it subscribed, sent and received, without IDs
   assert.deepStrictEqual(stats.lastTopics, ['status/robot_base_status']);
   assert.ok(!JSON.stringify(stats).includes(DEVICE), 'no device id');
 });
+
+test('diagnostics record refused publishes, broker disconnects and messages for other topics, masked', async () => {
+  const { socket, client } = await openSocket();
+  client.publish = (topic, payload, opts, cb) => {
+    const err = new Error('Not authorized'); err.code = 135; cb(err);
+  };
+
+  socket.send(buildFrame(`${BASE}/common/yell`, Buffer.alloc(0)));
+  for (let i = 0; i < 4; i += 1) await tick();
+  client.emit('message', `${PRODUCT}/${DEVICE}/status/robot_base_status`, Buffer.alloc(0)); // no leading slash
+  client.emit('disconnect', { reasonCode: 142 });
+
+  const stats = socket.stats();
+  assert.strictEqual(stats.publishErrors, 1);
+  assert.strictEqual(stats.lastPublishError, '135 Not authorized');
+  assert.strictEqual(stats.rawReceived, 1);
+  assert.deepStrictEqual(stats.otherTopics, ['<product>/<device>/status/robot_base_status']);
+  assert.strictEqual(stats.disconnectReason, 142);
+});
