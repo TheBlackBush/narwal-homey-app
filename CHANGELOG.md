@@ -3,6 +3,11 @@
 All notable changes to this project are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## [1.3.5] - 2026-09-26
+
+### Fixed
+- Undoes the 1.3.4 changes (one request at a time over the cloud, the shorter wake-up, and map retries). They did not bring back the robot's replies and made the cloud connection drop about every minute.
+
 ## [1.3.4] - 2026-09-26
 
 ### Changed

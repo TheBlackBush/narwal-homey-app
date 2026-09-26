@@ -5,7 +5,7 @@ const assert = require('node:assert');
 const { EventEmitter } = require('node:events');
 
 const {
-  CloudSocket, OPEN, CLOSED, SUBSCRIBE_TIMEOUT_MS, CLOUD_REPLY_PACING_MS,
+  CloudSocket, OPEN, CLOSED, SUBSCRIBE_TIMEOUT_MS,
 } = require('../lib/cloud/CloudSocket');
 const { buildCloudPayload, splitCloudPayload } = require('../lib/cloud/cloudFrame');
 const {
@@ -114,11 +114,7 @@ test('keeps the order of frames sent back to back', async () => {
   socket.send(buildFrame(`${BASE}/common/notify_app_event`, Buffer.alloc(0)));
   socket.send(buildFrame(`${BASE}/common/active_robot_publish`, Buffer.alloc(0)));
   socket.send(buildFrame(`${BASE}/status/get_device_base_status`, Buffer.alloc(0)));
-  for (let n = 0; n < 3; n += 1) {
-    for (let i = 0; i < 4; i += 1) await tick();
-    // The robot replies, so the next request goes out.
-    client.emit('message', `${client.published.at(-1).topic}/response`, buildCloudPayload(UUID, Buffer.from([0x08, 0x01])));
-  }
+  for (let i = 0; i < 6; i += 1) await tick();
 
   assert.deepStrictEqual(client.published.map((p) => p.topic.split('/').slice(3).join('/')), [
     'common/notify_app_event', 'common/active_robot_publish', 'status/get_device_base_status',
@@ -234,8 +230,8 @@ test('an unconfirmed response subscription does not block later frames', async (
     socket.send(buildFrame(`${BASE}/common/yell`, Buffer.alloc(0)));
     socket.send(buildFrame(`${BASE}/task/pause`, Buffer.alloc(0)));
     for (let i = 0; i < 4; i += 1) {
-      test.mock.timers.tick(SUBSCRIBE_TIMEOUT_MS + CLOUD_REPLY_PACING_MS);
-      for (let t = 0; t < 4; t += 1) await tick();
+      test.mock.timers.tick(SUBSCRIBE_TIMEOUT_MS);
+      await Promise.resolve(); await Promise.resolve(); await Promise.resolve();
     }
 
     assert.deepStrictEqual(client.published.map((p) => p.topic.split('/').slice(3).join('/')), ['common/yell', 'task/pause']);
@@ -304,25 +300,21 @@ test('NarwalClient in cloud mode sends its wake sequence and reports status from
   try {
     mqtt.state.client.emit('connect', { reasonCode: 0 });
     for (let i = 0; i < 4; i += 1) await tick(); // subscription confirmed, socket open
-    test.mock.timers.tick(500); // the wake sequence follows the link opening
-    for (let n = 0; n < 4; n += 1) {
-      for (let i = 0; i < 6; i += 1) await tick();
-      test.mock.timers.tick(CLOUD_REPLY_PACING_MS); // no replies: paced one by one
-    }
-
-    const topics = mqtt.state.client.published.map((p) => p.topic.split('/').slice(3).join('/'));
-    const wake = topics.indexOf('common/notify_app_event');
-    assert.ok(wake >= 0, 'wake sequence published');
-    assert.ok(topics.indexOf('status/get_device_base_status', wake) > wake, 'base status is asked for after the wake event');
-    assert.ok(mqtt.state.client.published.every((p) => p.topic.startsWith(`${BASE}/`)), 'only this robot');
-
-    mqtt.state.client.emit('message', `${BASE}/status/robot_base_status`, buildCloudPayload(UUID, Buffer.from([0x1a, 0x02, 0x08, 0x0a])));
-    assert.strictEqual(statuses.at(-1).state, 'docked');
+    test.mock.timers.tick(500); // the wake burst follows discovery
+    for (let i = 0; i < 20; i += 1) await tick(); // frames are published one by one
   } finally {
-    // Real timers first: the polling interval was created before mocking.
     test.mock.timers.reset();
-    client.stop();
   }
+
+  const topics = mqtt.state.client.published.map((p) => p.topic.split('/').slice(3).join('/'));
+  const wake = topics.indexOf('common/notify_app_event');
+  assert.ok(wake >= 0, 'wake sequence published');
+  assert.ok(topics.indexOf('status/get_device_base_status', wake) > wake, 'base status is asked for after the wake event');
+  assert.ok(mqtt.state.client.published.every((p) => p.topic.startsWith(`${BASE}/`)), 'only this robot');
+
+  mqtt.state.client.emit('message', `${BASE}/status/robot_base_status`, buildCloudPayload(UUID, Buffer.from([0x1a, 0x02, 0x08, 0x0a])));
+  assert.strictEqual(statuses.at(-1).state, 'docked');
+  client.stop();
 });
 
 test('frames keep flowing when the broker never acknowledges a publish', async () => {
@@ -331,17 +323,9 @@ test('frames keep flowing when the broker never acknowledges a publish', async (
     client.published.push({ topic, payload, opts });
   }; // no callback, ever
 
-  test.mock.timers.enable({ apis: ['setTimeout'] });
-  try {
-    socket.send(buildFrame(`${BASE}/common/get_device_info`, Buffer.alloc(0)));
-    socket.send(buildFrame(`${BASE}/common/notify_app_event`, Buffer.alloc(0)));
-    for (let n = 0; n < 2; n += 1) {
-      for (let i = 0; i < 6; i += 1) await tick();
-      test.mock.timers.tick(CLOUD_REPLY_PACING_MS);
-    }
-  } finally {
-    test.mock.timers.reset();
-  }
+  socket.send(buildFrame(`${BASE}/common/get_device_info`, Buffer.alloc(0)));
+  socket.send(buildFrame(`${BASE}/common/notify_app_event`, Buffer.alloc(0)));
+  for (let i = 0; i < 6; i += 1) await tick();
 
   assert.deepStrictEqual(client.published.map((p) => p.topic.split('/').slice(3).join('/')), ['common/get_device_info', 'common/notify_app_event']);
 });
@@ -399,55 +383,6 @@ test('a cloud client renews the keep-publishing request every 30 seconds, offici
     const publish = sent.filter((f) => f.shortTopic === 'common/active_robot_publish');
     assert.strictEqual(publish.length, 1);
     assert.strictEqual(decodeProto(publish[0].payload)['2'], 60000);
-  } finally {
-    client.stop();
-    test.mock.timers.reset();
-  }
-});
-
-test('cloud requests go one at a time: the next waits for a reply or the pacing timeout', async () => {
-  const { socket, client } = await openSocket();
-  test.mock.timers.enable({ apis: ['setTimeout'] });
-  try {
-    socket.send(buildFrame(`${BASE}/status/get_device_base_status`, Buffer.alloc(0)));
-    socket.send(buildFrame(`${BASE}/common/yell`, Buffer.alloc(0)));
-    for (let i = 0; i < 6; i += 1) await Promise.resolve();
-    await tick(); await tick();
-    assert.deepStrictEqual(client.published.map((p) => p.topic.slice(BASE.length + 1)), ['status/get_device_base_status']);
-
-    client.emit('message', `${BASE}/status/get_device_base_status/response`, buildCloudPayload(UUID, Buffer.from([0x08, 0x01])));
-    await tick(); await tick(); await tick();
-    assert.deepStrictEqual(client.published.map((p) => p.topic.slice(BASE.length + 1)), ['status/get_device_base_status', 'common/yell']);
-
-    // No reply to yell: the queue moves on after the pacing timeout.
-    socket.send(buildFrame(`${BASE}/task/pause`, Buffer.alloc(0)));
-    await tick(); await tick();
-    assert.strictEqual(client.published.length, 2);
-    test.mock.timers.tick(CLOUD_REPLY_PACING_MS);
-    await tick(); await tick(); await tick();
-    assert.strictEqual(client.published.at(-1).topic, `${BASE}/task/pause`);
-  } finally {
-    test.mock.timers.reset();
-  }
-});
-
-test('a cloud client wakes the robot like the official app: keep-publishing, device page, status', async () => {
-  const { NarwalClient } = require('../lib/NarwalClient'); // eslint-disable-line global-require
-  const client = new NarwalClient({
-    productKey: PRODUCT, deviceId: DEVICE, pollInterval: 60000, cloud: { account: fakeAccount(), connect: () => {} },
-  });
-  const sent = [];
-  client._ws = {
-    readyState: 1, send: (f) => sent.push(parseFrame(f)), ping() {}, removeAllListeners() {}, terminate() {}, on() {},
-  };
-  test.mock.timers.enable({ apis: ['setInterval', 'setTimeout'] });
-  try {
-    client._onOpen();
-    test.mock.timers.tick(600);
-    assert.deepStrictEqual(sent.map((f) => f.shortTopic), [
-      'common/active_robot_publish', 'common/notify_app_event', 'status/get_device_base_status',
-    ]);
-    assert.deepStrictEqual(decodeProto(sent[1].payload), { 1: 2 });
   } finally {
     client.stop();
     test.mock.timers.reset();
